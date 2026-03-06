@@ -11,10 +11,24 @@
       background: white; padding: 12px 20px; border-radius: 15px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10; font-family: sans-serif;
     }
+    /* STYLE DE LA BULLE INFO AU CLIC */
+    #customPopup {
+      position: absolute; display: none; background: white; padding: 8px 12px;
+      border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      font-family: sans-serif; font-weight: bold; font-size: 14px;
+      z-index: 20; pointer-events: none; border: 1px solid #ddd;
+    }
+    #customPopup::after { /* Petite flèche sous la bulle */
+      content: ''; position: absolute; top: 100%; left: 50%;
+      margin-left: -5px; border-width: 5px; border-style: solid;
+      border-color: white transparent transparent transparent;
+    }
   </style>
 </head>
 <body>
   <div id="cesiumContainer"></div>
+  <div id="customPopup"></div>
+  
   <div class="panel">
     <div style="font-weight: bold; margin-bottom: 5px;">☀️ <span id="heureAffichee">14h00</span></div>
     <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25" style="width:200px;">
@@ -25,9 +39,7 @@
   
   const viewer = new Cesium.Viewer('cesiumContainer', {
       terrainProvider: Cesium.createWorldTerrain(),
-      // --- SUPPRESSION DU TABLEAU NOIR ET DES INFOS IMMEUBLES ---
-      infoBox: false, 
-      selectionIndicator: false,
+      infoBox: false, selectionIndicator: false,
       baseLayerPicker: false, skyBox: false, skyAtmosphere: false,
       navigationHelpButton: false, sceneModePicker: false, timeline: false, animation: false,
       geocoder: false, homeButton: false
@@ -37,9 +49,9 @@
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // --- FONCTION : MARQUEURS SOBRES ---
+  // --- LES RESTOS ---
   function ajouterResto(nom, lat, lng) {
-    viewer.entities.add({
+    return viewer.entities.add({
       name: nom,
       position: Cesium.Cartesian3.fromDegrees(lng, lat, 0),
       billboard: {
@@ -48,41 +60,47 @@
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
         heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
         disableDepthTestDistance: Number.POSITIVE_INFINITY
-      },
-      label: {
-        text: nom,
-        font: 'bold 14px sans-serif',
-        fillColor: Cesium.Color.BLACK,
-        outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 3,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        pixelOffset: new Cesium.Cartesian2(0, -35),
-        show: false, // Caché par défaut
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     });
   }
 
-  // Tes coordonnées
-  ajouterResto("L'Avant Comptoir", 44.83842, -0.56930);
-  ajouterResto("Les Frères Cailloux", 44.83872, -0.56905);
+  const resto1 = ajouterResto("L'Avant Comptoir", 44.83842, -0.56930);
+  const resto2 = ajouterResto("Les Frères Cailloux", 44.83872, -0.56905);
 
-  // --- GESTION DU CLIC (Afficher nom uniquement au clic) ---
+  // --- GESTION DE LA BULLE INFO ---
+  const popup = document.getElementById('customPopup');
+  let selectedEntity = null;
+
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
   handler.setInputAction(function(click) {
       const pickedObject = viewer.scene.pick(click.position);
       
-      // On cache tous les noms d'abord
-      viewer.entities.values.forEach(entity => {
-          if (entity.label) entity.label.show = false;
-      });
-
-      // Si on clique sur un marqueur, on affiche son nom
       if (Cesium.defined(pickedObject) && pickedObject.id) {
-          pickedObject.id.label.show = true;
+          selectedEntity = pickedObject.id;
+          popup.innerHTML = selectedEntity.name;
+          popup.style.display = 'block';
+          updatePopupPosition();
+      } else {
+          selectedEntity = null;
+          popup.style.display = 'none';
       }
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+  // Mettre à jour la position de la bulle pendant qu'on bouge la caméra
+  viewer.scene.postRender.addEventListener(function() {
+      if (selectedEntity && popup.style.display === 'block') {
+          updatePopupPosition();
+      }
+  });
+
+  function updatePopupPosition() {
+      const pos = selectedEntity.position.getValue(viewer.clock.currentTime);
+      const canvasPos = viewer.scene.cartesianToCanvasCoordinates(pos);
+      if (Cesium.defined(canvasPos)) {
+          popup.style.left = canvasPos.x - (popup.offsetWidth / 2) + "px";
+          popup.style.top = canvasPos.y - 45 + "px"; // Pile au dessus du marqueur
+      }
+  }
 
   viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 120),
