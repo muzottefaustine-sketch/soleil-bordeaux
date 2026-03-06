@@ -2,7 +2,7 @@
 <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
 <style>
-  body { margin: 0; padding: 0; overflow: hidden; }
+  body { margin: 0; padding: 0; overflow: hidden; background-color: #f0f0f0; }
   #cesiumContainer { width: 100vw; height: 100vh; }
   .panel {
     position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -16,27 +16,37 @@
 <div id="cesiumContainer"></div>
 
 <div class="panel">
-  <h3 style="margin: 0 0 10px 0;">☀️ Heure : <span id="heureAffichee">14</span>h00</h3>
+  <h3 style="margin: 0 0 10px 0;">☀️ Heure : <span id="heureAffichee">14</span>h 00</h3>
   <input type="range" id="timeSlider" min="8" max="20" value="14" step="1">
 </div>
 
 <script>
-  // ⚠️ N'OUBLIE PAS DE METTRE TA CLÉ CI-DESSOUS
+  // Clé Cesium intégrée
   Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
   const viewer = new Cesium.Viewer('cesiumContainer', {
       terrainProvider: Cesium.createWorldTerrain(),
-      baseLayerPicker: false, homeButton: false, infoBox: false,
-      navigationHelpButton: false, sceneModePicker: false,
-      animation: false, timeline: false, fullscreenButton: false, geocoder: false
+      skyBox: false, 
+      skyAtmosphere: false, 
+      baseLayerPicker: false, 
+      homeButton: false, 
+      infoBox: false,
+      navigationHelpButton: false, 
+      sceneModePicker: false,
+      animation: false, 
+      timeline: false, 
+      fullscreenButton: false, 
+      geocoder: false
   });
 
+  // Fond gris neutre pour un chargement plus propre
+  viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#f0f0f0');
   viewer.scene.globe.enableLighting = true;
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // Vue centrée sur Bordeaux centre
-  viewer.camera.flyTo({
+  // Position fixe immédiate sur Bordeaux
+  viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 500),
       orientation: {
           heading: Cesium.Math.toRadians(0),
@@ -56,5 +66,6 @@
       viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
   });
 
-  setTimeout(() => slider.dispatchEvent(new Event('input')), 1000);
+  // Force l'affichage du soleil dès le départ
+  setTimeout(() => slider.dispatchEvent(new Event('input')), 500);
 </script>
