@@ -1,19 +1,38 @@
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
-<link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-<style>
-  body { margin: 0; padding: 0; overflow: hidden; background: #fff; }
-  #cesiumContainer { width: 100vw; height: 100vh; }
-  .panel {
-    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-    background: white; padding: 12px 20px; border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10; font-family: sans-serif;
-  }
-</style>
-<div id="cesiumContainer"></div>
-<div class="panel">
-  <div style="font-weight: bold; margin-bottom: 5px;">☀️ <span id="heureAffichee">14h00</span></div>
-  <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25" style="width:200px;">
-</div>
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    body { margin: 0; padding: 0; overflow: hidden; }
+    #cesiumContainer { width: 100vw; height: 100vh; }
+    .panel {
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: white; padding: 12px 20px; border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10; font-family: sans-serif;
+    }
+    /* STYLE DES ÉTIQUETTES IMMOBILES */
+    .label-fixe {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #000;
+      font-family: sans-serif;
+      font-size: 12px;
+      font-weight: bold;
+      pointer-events: none; /* Ne gêne pas le clic sur la carte */
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div class="panel">
+    <div style="font-weight: bold; margin-bottom: 5px;">☀️ <span id="heureAffichee">14h00</span></div>
+    <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25" style="width:200px;">
+  </div>
+
 <script>
   Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
   
@@ -28,39 +47,41 @@
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  function ajouterMarqueurSol(nom, lat, lng) {
-    const position = Cesium.Cartesian3.fromDegrees(lng, lat);
-    
-    // 1. Le point rouge (fixé au sol)
-    viewer.entities.add({
-      position: position,
-      point: {
-        pixelSize: 10, color: Cesium.Color.RED, outlineColor: Cesium.Color.WHITE, outlineWidth: 2,
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-      }
+  // --- LES RESTOS ---
+  const restos = [
+    { name: "L'Avant Comptoir", lat: 44.83842, lng: -0.56930, id: 'label1' },
+    { name: "Les Frères Cailloux", lat: 44.83872, lng: -0.56905, id: 'label2' }
+  ];
+
+  restos.forEach(r => {
+    // 1. On crée le point rouge dans la 3D
+    r.entity = viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(r.lng, r.lat),
+      point: { pixelSize: 10, color: Cesium.Color.RED, outlineColor: Cesium.Color.WHITE, outlineWidth: 2 }
     });
 
-    // 2. Le texte "Peint" sur le sol pour ne plus bouger
-    viewer.entities.add({
-      position: position,
-      label: {
-        text: nom,
-        font: 'bold 14px sans-serif',
-        fillColor: Cesium.Color.BLACK,
-        outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 3,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        verticalOrigin: Cesium.VerticalOrigin.TOP,
-        pixelOffset: new Cesium.Cartesian2(0, 8),
-        disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        classificationType: Cesium.ClassificationType.TERRAIN // Verrouille le texte au sol
+    // 2. On crée l'élément HTML pour le nom
+    const el = document.createElement('div');
+    el.className = 'label-fixe';
+    el.id = r.id;
+    el.innerHTML = r.name;
+    document.body.appendChild(el);
+    r.element = el;
+  });
+
+  // --- BOUCLE DE MISE À JOUR (L'aimant) ---
+  viewer.scene.postRender.addEventListener(function() {
+    restos.forEach(r => {
+      const canvasPosition = viewer.scene.cartesianToCanvasCoordinates(r.entity.position.getValue(viewer.clock.currentTime));
+      if (Cesium.defined(canvasPosition)) {
+        r.element.style.display = "block";
+        r.element.style.left = canvasPosition.x - (r.element.offsetWidth / 2) + "px";
+        r.element.style.top = canvasPosition.y - 30 + "px"; // 30px au dessus du point
+      } else {
+        r.element.style.display = "none";
       }
     });
-  }
-
-  // --- TES COORDONNÉES ---
-  ajouterMarqueurSol("L'Avant Comptoir", 44.83842, -0.56930);
-  ajouterMarqueurSol("Les Frères Cailloux", 44.83872, -0.56905);
+  });
 
   viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 120),
@@ -77,3 +98,5 @@
       viewer.clock.currentTime = Cesium.JulianDate.fromDate(d);
   });
 </script>
+</body>
+</html>
