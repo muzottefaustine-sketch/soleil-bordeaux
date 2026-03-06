@@ -34,23 +34,39 @@
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // --- MARQUEURS CONIQUES (Soudés au sol) ---
+  // --- MARQUEURS FIXES ET DESIGN ---
   function ajouterResto(nom, lat, lng) {
     viewer.entities.add({
       name: nom,
       position: Cesium.Cartesian3.fromDegrees(lng, lat, 0),
-      // Un cylindre pointu qui sert de base fixe
+      // On garde le cylindre pour la stabilité technique mais on le rend transparent
       cylinder: {
-        length: 10.0,
-        topRadius: 0.0,
+        length: 0.1,
+        topRadius: 2.0,
         bottomRadius: 2.0,
-        material: Cesium.Color.RED.withAlpha(0.8),
-        outline: true,
-        outlineColor: Cesium.Color.WHITE,
+        material: Cesium.Color.TRANSPARENT,
         heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
       },
-      // Une petite sphère lumineuse au sommet
-      description: `<h3>${nom}</h3><p>Terrasse ensoleillée</p>`
+      // L'ÉPINGLE DESIGN (Style Maps)
+      billboard: {
+        image: 'https://img.icons8.com/color/96/marker.png',
+        width: 30, height: 30,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
+      },
+      // LE NOM DISCRET
+      label: {
+        text: nom,
+        font: 'bold 12px sans-serif',
+        fillColor: Cesium.Color.BLACK,
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -35),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
+      }
     });
   }
 
