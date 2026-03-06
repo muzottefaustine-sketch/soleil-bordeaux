@@ -25,54 +25,64 @@
   
   const viewer = new Cesium.Viewer('cesiumContainer', {
       terrainProvider: Cesium.createWorldTerrain(),
-      baseLayerPicker: false, infoBox: true, skyBox: false, skyAtmosphere: false,
+      // --- SUPPRESSION DU TABLEAU NOIR ET DES INFOS IMMEUBLES ---
+      infoBox: false, 
+      selectionIndicator: false,
+      baseLayerPicker: false, skyBox: false, skyAtmosphere: false,
       navigationHelpButton: false, sceneModePicker: false, timeline: false, animation: false,
-      geocoder: false, selectionIndicator: true, homeButton: false
+      geocoder: false, homeButton: false
   });
 
   viewer.scene.globe.enableLighting = true;
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // --- MARQUEURS FIXES ET DESIGN ---
+  // --- FONCTION : MARQUEURS SOBRES ---
   function ajouterResto(nom, lat, lng) {
     viewer.entities.add({
       name: nom,
       position: Cesium.Cartesian3.fromDegrees(lng, lat, 0),
-      // On garde le cylindre pour la stabilité technique mais on le rend transparent
-      cylinder: {
-        length: 0.1,
-        topRadius: 2.0,
-        bottomRadius: 2.0,
-        material: Cesium.Color.TRANSPARENT,
-        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
-      },
-      // L'ÉPINGLE DESIGN (Style Maps)
       billboard: {
         image: 'https://img.icons8.com/color/96/marker.png',
-        width: 30, height: 30,
+        width: 32, height: 32,
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
         heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
         disableDepthTestDistance: Number.POSITIVE_INFINITY
       },
-      // LE NOM DISCRET
       label: {
         text: nom,
-        font: 'bold 12px sans-serif',
+        font: 'bold 14px sans-serif',
         fillColor: Cesium.Color.BLACK,
         outlineColor: Cesium.Color.WHITE,
         outlineWidth: 3,
         style: Cesium.LabelStyle.FILL_AND_OUTLINE,
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
         pixelOffset: new Cesium.Cartesian2(0, -35),
+        show: false, // Caché par défaut
         disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     });
   }
 
-  // Tes coordonnées pour Bordeaux
+  // Tes coordonnées
   ajouterResto("L'Avant Comptoir", 44.83842, -0.56930);
   ajouterResto("Les Frères Cailloux", 44.83872, -0.56905);
+
+  // --- GESTION DU CLIC (Afficher nom uniquement au clic) ---
+  const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+  handler.setInputAction(function(click) {
+      const pickedObject = viewer.scene.pick(click.position);
+      
+      // On cache tous les noms d'abord
+      viewer.entities.values.forEach(entity => {
+          if (entity.label) entity.label.show = false;
+      });
+
+      // Si on clique sur un marqueur, on affiche son nom
+      if (Cesium.defined(pickedObject) && pickedObject.id) {
+          pickedObject.id.label.show = true;
+      }
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
   viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 120),
