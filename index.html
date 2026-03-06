@@ -18,7 +18,7 @@
     <div id="cesiumContainer"></div>
     <div class="panel">
         <h3 style="margin:0; font-family:sans-serif; color:#ff9800;">☀️ <span id="heureAffichee">14h00</span></h3>
-        <input type="range" id="timeSlider" min="8" max="21" step="0.25" style="width:200px; cursor:pointer;">
+        <input type="range" id="timeSlider" min="8" max="21" step="0.25" style="width:200px;">
     </div>
 
 <script>
@@ -34,41 +34,42 @@
     viewer.shadows = true;
     viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-    // --- MARQUEURS STYLE "SOLEIL" ---
+    // --- POSITIONNEMENT CHIRURGICAL ---
     const terrasses = [
-        { name: "L'Avant Comptoir 🍷", lat: 44.83835, lng: -0.56915 },
-        { name: "Les Frères Cailloux ☕", lat: 44.83865, lng: -0.56885 }
+        { name: "L'Avant Comptoir 🍷", lat: 44.83852, lng: -0.56935 }, 
+        { name: "Les Frères Cailloux ☕", lat: 44.83875, lng: -0.56905 }
     ];
 
     terrasses.forEach(t => {
         viewer.entities.add({
-            position: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 1),
-            // On crée un petit panneau vertical pour que ça se voie de loin
+            // On les fait flotter à 5 mètres de hauteur (le chiffre 5 à la fin)
+            position: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 5),
             billboard: {
                 image: 'https://img.icons8.com/emoji/48/000000/sun-emoji.png', 
-                width: 32, height: 32,
-                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
+                width: 40, height: 40,
+                heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+                disableDepthTestDistance: Number.POSITIVE_INFINITY // <--- TRÈS IMPORTANT : Le soleil passe "devant" tout
             },
             label: {
                 text: t.name,
-                font: 'bold 14px sans-serif',
-                fillColor: Cesium.Color.BLACK,
-                outlineColor: Cesium.Color.WHITE,
-                outlineWidth: 3,
+                font: 'bold 16px sans-serif',
+                fillColor: Cesium.Color.YELLOW,
+                outlineColor: Cesium.Color.BLACK,
+                outlineWidth: 4,
                 style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                pixelOffset: new Cesium.Cartesian2(0, -40),
-                verticalOrigin: Cesium.VerticalOrigin.BOTTOM
+                pixelOffset: new Cesium.Cartesian2(0, -50),
+                heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+                disableDepthTestDistance: Number.POSITIVE_INFINITY 
             }
         });
     });
 
-    // --- VUE ZOOMÉE ET BIEN PLACÉE ---
+    // --- VUE FOCUS SUR LES TERRASSES ---
     viewer.camera.setView({
-        destination: Cesium.Cartesian3.fromDegrees(-0.5691, 44.8384, 120), // Zoom à 120m du sol
+        destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8384, 80), // On descend encore plus bas (80m)
         orientation: {
-            heading: Cesium.Math.toRadians(15), // Légère rotation vers la droite
-            pitch: Cesium.Math.toRadians(-30),  // Angle parfait pour voir les ombres portées au sol
+            heading: Cesium.Math.toRadians(0), 
+            pitch: Cesium.Math.toRadians(-40),
             roll: 0
         }
     });
