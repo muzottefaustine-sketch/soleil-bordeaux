@@ -6,10 +6,27 @@
   <style>
     body { margin: 0; padding: 0; overflow: hidden; background: #000; }
     #cesiumContainer { width: 100vw; height: 100vh; }
+    
+    /* ON CHANGE LE LOOK DU TABLEAU MOCHE DE CESIUM */
+    .cesium-infoBox {
+      background: rgba(255, 255, 255, 0.95) !important;
+      border-radius: 15px !important;
+      color: black !important;
+      top: 10px !important;
+      right: 10px !important;
+      width: 200px !important;
+      height: auto !important;
+      max-height: 150px !important;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+    }
+    .cesium-infoBox-title { background: transparent !important; color: #333 !important; font-weight: bold !important; }
+    .cesium-infoBox-description { color: #555 !important; }
+    .cesium-infoBox-close { color: #333 !important; }
+
     .panel {
       position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
       background: white; padding: 12px 20px; border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; z-index: 10; font-family: sans-serif;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10; font-family: sans-serif;
     }
   </style>
 </head>
@@ -25,7 +42,8 @@
   
   const viewer = new Cesium.Viewer('cesiumContainer', {
       terrainProvider: Cesium.createWorldTerrain(),
-      infoBox: false, selectionIndicator: false,
+      infoBox: true, // ON GARDE LA FICHE QUI MARCHE
+      selectionIndicator: true,
       baseLayerPicker: false, skyBox: false, skyAtmosphere: false,
       navigationHelpButton: false, sceneModePicker: false, timeline: false, animation: false,
       geocoder: false, homeButton: false
@@ -36,50 +54,24 @@
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
   function ajouterResto(nom, lat, lng) {
-    const position = Cesium.Cartesian3.fromDegrees(lng, lat);
-    
     viewer.entities.add({
-      position: position,
-      // L'ÉPINGLE ROUGE (Stable)
+      name: nom,
+      // On met une description courte pour la fiche
+      description: 'Terrasse Bordeaux',
+      position: Cesium.Cartesian3.fromDegrees(lng, lat),
       billboard: {
         image: 'https://img.icons8.com/color/96/marker.png',
-        width: 30, height: 30,
+        width: 32, height: 32,
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
-      },
-      // LE NOM (À côté, bien lisible)
-      label: {
-        text: nom,
-        font: 'bold 14px sans-serif',
-        fillColor: Cesium.Color.WHITE,
-        outlineColor: Cesium.Color.BLACK,
-        outlineWidth: 4,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        horizontalOrigin: Cesium.HorizontalOrigin.LEFT, // Texte à droite du point
-        pixelOffset: new Cesium.Cartesian2(20, -15),   // Décalage propre
-        disableDepthTestDistance: Number.POSITIVE_INFINITY // Ne passe jamais derrière un mur
+        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     });
   }
 
-  // TES COORDONNÉES
+  // Tes points
   ajouterResto("L'Avant Comptoir", 44.83842, -0.56930);
   ajouterResto("Les Frères Cailloux", 44.83872, -0.56905);
 
   viewer.camera.setView({
-      destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 120),
-      orientation: { heading: 0, pitch: Cesium.Math.toRadians(-35), roll: 0 }
-  });
-
-  const slider = document.getElementById('timeSlider');
-  slider.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value);
-      const h = Math.floor(val);
-      const m = Math.round((val - h) * 60);
-      document.getElementById('heureAffichee').innerText = h + "h" + (m < 10 ? '0' + m : m);
-      const d = new Date(); d.setHours(h, m, 0, 0);
-      viewer.clock.currentTime = Cesium.JulianDate.fromDate(d);
-  });
-</script>
-</body>
-</html>
+      destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385,
