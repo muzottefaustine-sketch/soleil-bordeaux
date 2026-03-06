@@ -1,62 +1,52 @@
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
 <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-
 <style>
   body { margin: 0; padding: 0; overflow: hidden; }
   #cesiumContainer { width: 100vw; height: 100vh; }
   .panel {
     position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
     background: white; padding: 12px 20px; border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10;
-    font-family: sans-serif;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10; font-family: sans-serif;
   }
 </style>
-
 <div id="cesiumContainer"></div>
 <div class="panel">
   <div style="font-weight: bold; margin-bottom: 5px;">☀️ <span id="heureAffichee">14h00</span></div>
   <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25" style="width:200px;">
 </div>
-
 <script>
   Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
-
   const viewer = new Cesium.Viewer('cesiumContainer', {
       terrainProvider: Cesium.createWorldTerrain(),
       baseLayerPicker: false, infoBox: false, skyBox: false, skyAtmosphere: false,
       navigationHelpButton: false, sceneModePicker: false, timeline: false, animation: false,
       geocoder: false, selectionIndicator: false, homeButton: false
   });
-
   viewer.scene.globe.enableLighting = true;
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // --- LES MARQUEURS TYPE MAPS ---
   function ajouterPin(nom, lat, lng) {
     viewer.entities.add({
-      position: Cesium.Cartesian3.fromDegrees(lng, lat),
+      position: Cesium.Cartesian3.fromDegrees(lng, lat, 2), // Un peu élevé pour ne pas s'enfoncer
       billboard: {
         image: 'https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Assets/Textures/pin.png', 
-        color: Cesium.Color.fromCssColorString('#EA4335'), // Rouge Google Maps
+        color: Cesium.Color.RED,
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        width: 32, height: 32,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY // Pour que l'épingle soit toujours visible
+        width: 35, height: 35,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY // <--- LA SOLUTION AU BUG
       },
       label: {
-        text: nom,
-        font: '14px sans-serif',
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        outlineWidth: 2,
-        verticalOrigin: Cesium.VerticalOrigin.TOP,
-        pixelOffset: new Cesium.Cartesian2(0, 5)
+        text: nom, font: 'bold 14px sans-serif', fillColor: Cesium.Color.BLACK, outlineColor: Cesium.Color.WHITE, outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE, verticalOrigin: Cesium.VerticalOrigin.TOP, pixelOffset: new Cesium.Cartesian2(0, 5),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     });
   }
 
-  // Coordonnées ajustées pour être pile sur les bâtiments
-  ajouterPin("L'Avant Comptoir", 44.83845, -0.56930);
-  ajouterPin("Les Frères Cailloux", 44.83870, -0.56900);
+  // Coordonnées recalées Place du Palais
+  ajouterPin("L'Avant Comptoir", 44.83842, -0.56925);
+  ajouterPin("Les Frères Cailloux", 44.83868, -0.56900);
 
   viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8384, 150),
@@ -73,3 +63,4 @@
       viewer.clock.currentTime = Cesium.JulianDate.fromDate(d);
   });
 </script>
+
