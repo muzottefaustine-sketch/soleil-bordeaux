@@ -21,7 +21,7 @@
 </div>
 
 <script>
-  // Clé Cesium intégrée
+  // Ta clé Cesium sécurisée
   Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
   const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -36,16 +36,23 @@
       animation: false, 
       timeline: false, 
       fullscreenButton: false, 
-      geocoder: false
+      geocoder: false,
+      scene3DOnly: true
   });
 
-  // Fond gris neutre pour un chargement plus propre
+  // Activation des contrôles de zoom et rotation
+  viewer.scene.screenSpaceCameraController.enableZoom = true;
+  viewer.scene.screenSpaceCameraController.enableRotate = true;
+  viewer.scene.screenSpaceCameraController.enableTilt = true;
+  viewer.scene.screenSpaceCameraController.enableTranslate = true;
+
+  // Optimisation visuelle
   viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#f0f0f0');
   viewer.scene.globe.enableLighting = true;
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // Position fixe immédiate sur Bordeaux
+  // Positionnement sur Bordeaux
   viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 500),
       orientation: {
@@ -66,6 +73,5 @@
       viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
   });
 
-  // Force l'affichage du soleil dès le départ
   setTimeout(() => slider.dispatchEvent(new Event('input')), 500);
 </script>
