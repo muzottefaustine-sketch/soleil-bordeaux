@@ -29,30 +29,36 @@
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
   function ajouterMarqueur(nom, lat, lng) {
+    const position = Cesium.Cartesian3.fromDegrees(lng, lat);
+    
     viewer.entities.add({
-      position: Cesium.Cartesian3.fromDegrees(lng, lat, 0),
+      position: position,
+      // LE POINT ROUGE
       point: {
-        pixelSize: 15,
+        pixelSize: 12,
         color: Cesium.Color.RED,
         outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 3,
+        outlineWidth: 2,
         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
       },
+      // LE NOM JUSTE AU DESSUS
       label: {
         text: nom,
-        font: 'bold 14px sans-serif',
+        font: 'bold 12px sans-serif',
         fillColor: Cesium.Color.BLACK,
         outlineColor: Cesium.Color.WHITE,
         outlineWidth: 3,
         style: Cesium.LabelStyle.FILL_AND_OUTLINE,
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        pixelOffset: new Cesium.Cartesian2(0, -20),
+        pixelOffset: new Cesium.Cartesian2(0, -15), // Distance fixe entre le point et le nom
+        eyeOffset: new Cesium.Cartesian3(0, 0, -10), // Force le texte à rester devant sans "danser"
         disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     });
   }
 
-  ajouterMarqueur("L'Avant Comptoir", 44.838525, -0.568976);
+  // J'ai décalé l'Avant Comptoir vers la terrasse (sur le côté de la place)
+  ajouterMarqueur("L'Avant Comptoir", 44.83845, -0.56935);
   ajouterMarqueur("Les Frères Cailloux", 44.83872, -0.56905);
 
   viewer.camera.setView({
