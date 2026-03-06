@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <style>
@@ -9,62 +9,68 @@
         #cesiumContainer { width: 100vw; height: 100vh; }
         .panel {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: white; padding: 12px 20px; border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10;
-            width: 70%; max-width: 300px; font-family: sans-serif;
+            background: white; padding: 15px; border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; z-index: 10;
         }
-        input[type=range] { width: 100%; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-
-<div id="cesiumContainer"></div>
-
-<div class="panel">
-    <h3 style="margin: 0 0 5px 0; font-size: 16px;">☀️ <span id="heureAffichee">14h00</span></h3>
-    <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25">
-</div>
+    <div id="cesiumContainer"></div>
+    <div class="panel">
+        <h3 style="margin:0; font-family:sans-serif; color:#ff9800;">☀️ <span id="heureAffichee">14h00</span></h3>
+        <input type="range" id="timeSlider" min="8" max="21" step="0.25" style="width:200px; cursor:pointer;">
+    </div>
 
 <script>
-    // Ta clé Cesium
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
     const viewer = new Cesium.Viewer('cesiumContainer', {
         terrainProvider: Cesium.createWorldTerrain(),
-        skyBox: false, skyAtmosphere: false, baseLayerPicker: false, 
-        homeButton: false, infoBox: false, navigationHelpButton: false, 
-        sceneModePicker: false, animation: false, timeline: false, 
-        fullscreenButton: false, geocoder: false, scene3DOnly: true
+        baseLayerPicker: false, infoBox: false, skyBox: false, skyAtmosphere: false,
+        navigationHelpButton: false, sceneModePicker: false, timeline: false, animation: false
     });
 
     viewer.scene.globe.enableLighting = true;
     viewer.shadows = true;
     viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-    // --- LISTE DES TERRASSES (Vérifiée) ---
-    const places = [
-        { name: "L'Avant Comptoir 🍷", lat: 44.8383, lng: -0.5692 },
-        { name: "Les Freres Cailloux ☕", lat: 44.8387, lng: -0.5689 }
+    // --- MARQUEURS STYLE "SOLEIL" ---
+    const terrasses = [
+        { name: "L'Avant Comptoir 🍷", lat: 44.83835, lng: -0.56915 },
+        { name: "Les Frères Cailloux ☕", lat: 44.83865, lng: -0.56885 }
     ];
 
-    places.forEach(p => {
+    terrasses.forEach(t => {
         viewer.entities.add({
-            position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat, 2),
-            point: { pixelSize: 10, color: Cesium.Color.ORANGE, outlineWidth: 2 },
-            label: {
-                text: p.name,
-                font: '12px sans-serif',
+            position: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 1),
+            // On crée un petit panneau vertical pour que ça se voie de loin
+            billboard: {
+                image: 'https://img.icons8.com/emoji/48/000000/sun-emoji.png', 
+                width: 32, height: 32,
                 verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                pixelOffset: new Cesium.Cartesian2(0, -15),
-                disableDepthTestDistance: Number.POSITIVE_INFINITY // Garde le texte visible au-dessus des murs
+                heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
+            },
+            label: {
+                text: t.name,
+                font: 'bold 14px sans-serif',
+                fillColor: Cesium.Color.BLACK,
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 3,
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                pixelOffset: new Cesium.Cartesian2(0, -40),
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM
             }
         });
     });
 
-    // Vue directe Place du Palais
+    // --- VUE ZOOMÉE ET BIEN PLACÉE ---
     viewer.camera.setView({
-        destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 300),
-        orientation: { heading: 0, pitch: Cesium.Math.toRadians(-35), roll: 0 }
+        destination: Cesium.Cartesian3.fromDegrees(-0.5691, 44.8384, 120), // Zoom à 120m du sol
+        orientation: {
+            heading: Cesium.Math.toRadians(15), // Légère rotation vers la droite
+            pitch: Cesium.Math.toRadians(-30),  // Angle parfait pour voir les ombres portées au sol
+            roll: 0
+        }
     });
 
     const slider = document.getElementById('timeSlider');
@@ -72,17 +78,13 @@
 
     slider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
-        const heures = Math.floor(val);
-        const minutes = Math.round((val - heures) * 60);
-        const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-        affichage.innerText = heures + "h" + minutesStr;
-        
-        const date = new Date();
-        date.setHours(heures, minutes, 0, 0);
-        viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
+        const h = Math.floor(val);
+        const m = Math.round((val - h) * 60);
+        affichage.innerText = h + "h" + (m < 10 ? '0'+m : m);
+        const d = new Date(); d.setHours(h, m, 0, 0);
+        viewer.clock.currentTime = Cesium.JulianDate.fromDate(d);
     });
 
-    // Heure actuelle au démarrage
     const maintenant = new Date();
     slider.value = maintenant.getHours() + (Math.round(maintenant.getMinutes() / 15) * 15 / 60);
     slider.dispatchEvent(new Event('input'));
