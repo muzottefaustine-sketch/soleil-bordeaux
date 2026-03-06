@@ -5,12 +5,12 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background-color: #f0f0f0; }
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #000; }
         #cesiumContainer { width: 100vw; height: 100vh; }
         .panel {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: white; padding: 15px; border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; z-index: 10;
+            background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; z-index: 10;
         }
     </style>
 </head>
@@ -30,48 +30,51 @@
         navigationHelpButton: false, sceneModePicker: false, timeline: false, animation: false
     });
 
+    // --- ACTIVATION DU RÉALISME GOOGLE (Bâtiments avec photos) ---
+    async function setupGoogleTiles() {
+        try {
+            const tileset = await Cesium.createGooglePhotorealistic3DTileset();
+            viewer.scene.primitives.add(tileset);
+        } catch (error) {
+            console.log("Erreur Google Tiles, on garde le mode standard");
+        }
+    }
+    setupGoogleTiles();
+
     viewer.scene.globe.enableLighting = true;
     viewer.shadows = true;
-    viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-    // --- POSITIONNEMENT CHIRURGICAL ---
+    // --- MARQUEURS FLASHY (Inratables) ---
     const terrasses = [
-        { name: "L'Avant Comptoir 🍷", lat: 44.83852, lng: -0.56935 }, 
-        { name: "Les Frères Cailloux ☕", lat: 44.83875, lng: -0.56905 }
+        { name: "L'AVANT COMPTOIR 🍷", lat: 44.8385, lng: -0.5692 },
+        { name: "LES FRERES CAILLOUX ☕", lat: 44.8387, lng: -0.5690 }
     ];
 
     terrasses.forEach(t => {
         viewer.entities.add({
-            // On les fait flotter à 5 mètres de hauteur (le chiffre 5 à la fin)
-            position: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 5),
+            position: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 10), // Flotte à 10m
             billboard: {
-                image: 'https://img.icons8.com/emoji/48/000000/sun-emoji.png', 
-                width: 40, height: 40,
+                image: 'https://img.icons8.com/color/96/marker.png', // Gros marqueur rouge/jaune
+                width: 48, height: 48,
                 heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-                disableDepthTestDistance: Number.POSITIVE_INFINITY // <--- TRÈS IMPORTANT : Le soleil passe "devant" tout
+                disableDepthTestDistance: Number.POSITIVE_INFINITY 
             },
             label: {
                 text: t.name,
-                font: 'bold 16px sans-serif',
+                font: 'bold 18px sans-serif',
                 fillColor: Cesium.Color.YELLOW,
                 outlineColor: Cesium.Color.BLACK,
                 outlineWidth: 4,
-                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                pixelOffset: new Cesium.Cartesian2(0, -50),
-                heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+                pixelOffset: new Cesium.Cartesian2(0, -60),
                 disableDepthTestDistance: Number.POSITIVE_INFINITY 
             }
         });
     });
 
-    // --- VUE FOCUS SUR LES TERRASSES ---
+    // --- VUE SUR LA PLACE DU PALAIS ---
     viewer.camera.setView({
-        destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8384, 80), // On descend encore plus bas (80m)
-        orientation: {
-            heading: Cesium.Math.toRadians(0), 
-            pitch: Cesium.Math.toRadians(-40),
-            roll: 0
-        }
+        destination: Cesium.Cartesian3.fromDegrees(-0.5691, 44.8384, 150),
+        orientation: { heading: 0, pitch: Cesium.Math.toRadians(-40), roll: 0 }
     });
 
     const slider = document.getElementById('timeSlider');
