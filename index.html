@@ -23,40 +23,44 @@
 <script>
   Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
   
+  // ON DESACTIVE LE TERRAIN POUR AVOIR UN SOL PARFAITEMENT PLAT
   const viewer = new Cesium.Viewer('cesiumContainer', {
-      terrainProvider: Cesium.createWorldTerrain(),
-      baseLayerPicker: false, infoBox: true, skyBox: false, skyAtmosphere: false,
+      baseLayerPicker: false, infoBox: false, skyBox: false, skyAtmosphere: false,
       navigationHelpButton: false, sceneModePicker: false, timeline: false, animation: false,
-      geocoder: false, selectionIndicator: true, homeButton: false
+      geocoder: false, selectionIndicator: false, homeButton: false
   });
 
   viewer.scene.globe.enableLighting = true;
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // --- MARQUEURS CONIQUES (Soudés au sol) ---
-  function ajouterResto(nom, lat, lng) {
+  function ajouterMarqueur(nom, lat, lng) {
     viewer.entities.add({
-      name: nom,
-      position: Cesium.Cartesian3.fromDegrees(lng, lat, 0),
-      // Un cylindre pointu qui sert de base fixe
-      cylinder: {
-        length: 10.0,
-        topRadius: 0.0,
-        bottomRadius: 2.0,
-        material: Cesium.Color.RED.withAlpha(0.8),
-        outline: true,
+      position: Cesium.Cartesian3.fromDegrees(lng, lat),
+      // ON UTILISE UN POINT SIMPLE SOUDE AU SOL PLAT
+      point: {
+        pixelSize: 15,
+        color: Cesium.Color.RED,
         outlineColor: Cesium.Color.WHITE,
-        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
+        outlineWidth: 3
       },
-      // Une petite sphère lumineuse au sommet
-      description: `<h3>${nom}</h3><p>Terrasse ensoleillée</p>`
+      label: {
+        text: nom,
+        font: 'bold 14px sans-serif',
+        fillColor: Cesium.Color.BLACK,
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -20),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
+      }
     });
   }
 
-  // Tes coordonnées pour Bordeaux
-  ajouterResto("L'Avant Comptoir", 44.83842, -0.56930);
-  ajouterResto("Les Frères Cailloux", 44.83872, -0.56905);
+  // Tes coordonnées
+  ajouterMarqueur("L'Avant Comptoir", 44.83842, -0.56930);
+  ajouterMarqueur("Les Frères Cailloux", 44.83872, -0.56905);
 
   viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 120),
