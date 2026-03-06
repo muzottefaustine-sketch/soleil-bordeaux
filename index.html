@@ -35,46 +35,40 @@
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // --- CRÉATION DES ZONES DE TERRASSES (TAPIS AU SOL) ---
-  
-  // 1. L'Avant Comptoir (Zone rectangulaire)
-  viewer.entities.add({
-    name: "L'Avant Comptoir",
-    rectangle: {
-      coordinates: Cesium.Rectangle.fromDegrees(-0.56938, 44.83838, -0.56928, 44.83848),
-      material: Cesium.Color.ORANGE.withAlpha(0.7),
-      height: 0.2, // Juste au dessus du sol
-      outline: true,
-      outlineColor: Cesium.Color.BLACK
-    },
-    label: {
-      text: "L'Avant Comptoir 🍷",
-      font: 'bold 14px sans-serif',
-      pixelOffset: new Cesium.Cartesian2(0, -20),
-      disableDepthTestDistance: Number.POSITIVE_INFINITY
-    }
-  });
+  // FONCTION POUR COLLER LES TERRASSES AU SOL
+  function ajouterTerrasse(nom, coords) {
+    viewer.entities.add({
+      name: nom,
+      polygon: {
+        hierarchy: Cesium.Cartesian3.fromDegreesArray(coords),
+        material: Cesium.Color.YELLOW.withAlpha(0.6), // Jaune transparent
+        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+        classificationType: Cesium.ClassificationType.TERRAIN // Force le collage sur le sol
+      }
+    });
+  }
 
-  // 2. Les Frères Cailloux (Zone rectangulaire)
-  viewer.entities.add({
-    name: "Les Frères Cailloux",
-    rectangle: {
-      coordinates: Cesium.Rectangle.fromDegrees(-0.56910, 44.83860, -0.56900, 44.83870),
-      material: Cesium.Color.GOLD.withAlpha(0.7),
-      height: 0.2,
-      outline: true,
-      outlineColor: Cesium.Color.BLACK
-    },
-    label: {
-      text: "Les Frères Cailloux ☕",
-      font: 'bold 14px sans-serif',
-      pixelOffset: new Cesium.Cartesian2(0, -20),
-      disableDepthTestDistance: Number.POSITIVE_INFINITY
-    }
-  });
+  // --- COORDONNÉES PRÉCISES PLACE DU PALAIS ---
+  // On dessine des formes qui suivent les façades des restos
+  
+  // Terrasse L'Avant Comptoir (Le long du mur à gauche)
+  ajouterTerrasse("L'Avant Comptoir", [
+    -0.56935, 44.83840,
+    -0.56930, 44.83840,
+    -0.56930, 44.83848,
+    -0.56935, 44.83848
+  ]);
+
+  // Terrasse Les Frères Cailloux (Plus haut sur la place)
+  ajouterTerrasse("Les Frères Cailloux", [
+    -0.56910, 44.83865,
+    -0.56905, 44.83865,
+    -0.56905, 44.83872,
+    -0.56910, 44.83872
+  ]);
 
   viewer.camera.setView({
-      destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 150),
+      destination: Cesium.Cartesian3.fromDegrees(-0.5691, 44.8384, 120),
       orientation: { heading: 0, pitch: Cesium.Math.toRadians(-35), roll: 0 }
   });
 
