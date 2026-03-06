@@ -5,7 +5,7 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background-color: #e0e0e0; }
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #f0f0f0; }
         #cesiumContainer { width: 100vw; height: 100vh; }
         .panel {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -17,8 +17,8 @@
 <body>
     <div id="cesiumContainer"></div>
     <div class="panel">
-        <h3 style="margin:0; font-family:sans-serif; color:#d4a017;">☀️ <span id="heureAffichee">14h00</span></h3>
-        <input type="range" id="timeSlider" min="8" max="21" step="0.25" style="width:200px;">
+        <h3 style="margin:0; font-family:sans-serif; color:#ff9800;">☀️ <span id="heureAffichee">14h00</span></h3>
+        <input type="range" id="timeSlider" min="8" max="21" step="0.25" style="width:220px; cursor:pointer;">
     </div>
 
 <script>
@@ -33,50 +33,52 @@
     viewer.shadows = true;
     viewer.scene.globe.enableLighting = true;
 
-    // --- STYLE MAQUETTE BEIGE (Pierre de Bordeaux) ---
-    const buildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
-    buildings.style = new Cesium.Cesium3DTileStyle({
-        color: "color('#F5F5DC')", // Beige clair
-        show: true
-    });
+    // --- LES IMMEUBLES BLANCS (Retour V1) ---
+    viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-    // --- MARQUEURS TRÈS VISIBLES ---
-    const points = [
-        { name: "L'AVANT COMPTOIR", lat: 44.83842, lng: -0.56930 },
-        { name: "LES FRÈRES CAILLOUX", lat: 44.83868, lng: -0.56900 }
+    // --- MARQUEURS PLACÉS AVEC PRÉCISION ---
+    const terrasses = [
+        { name: "L'Avant Comptoir 🍷", lat: 44.83845, lng: -0.56925 },
+        { name: "Les Frères Cailloux ☕", lat: 44.83870, lng: -0.56895 }
     ];
 
-    points.forEach(p => {
+    terrasses.forEach(t => {
         viewer.entities.add({
-            position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat, 2),
-            point: { pixelSize: 15, color: Cesium.Color.ORANGE, outlineColor: Cesium.Color.WHITE, outlineWidth: 3 },
+            position: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 2),
+            point: { pixelSize: 12, color: Cesium.Color.ORANGE, outlineColor: Cesium.Color.WHITE, outlineWidth: 2 },
             label: {
-                text: p.name, font: 'bold 14px sans-serif',
-                fillColor: Cesium.Color.BLACK, outlineColor: Cesium.Color.WHITE, outlineWidth: 3,
+                text: t.name,
+                font: 'bold 14px sans-serif',
+                fillColor: Cesium.Color.BLACK,
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 3,
                 style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                pixelOffset: new Cesium.Cartesian2(0, -20),
+                pixelOffset: new Cesium.Cartesian2(0, -25),
                 disableDepthTestDistance: Number.POSITIVE_INFINITY
             }
         });
     });
 
+    // --- VUE PARFAITE SUR LA PLACE ---
     viewer.camera.setView({
         destination: Cesium.Cartesian3.fromDegrees(-0.5691, 44.8384, 150),
         orientation: { heading: 0, pitch: Cesium.Math.toRadians(-35), roll: 0 }
     });
 
     const slider = document.getElementById('timeSlider');
+    const affichage = document.getElementById('heureAffichee');
+
     slider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
         const h = Math.floor(val);
         const m = Math.round((val - h) * 60);
-        document.getElementById('heureAffichee').innerText = h + "h" + (m < 10 ? '0'+m : m);
+        affichage.innerText = h + "h" + (m < 10 ? '0'+m : m);
         const d = new Date(); d.setHours(h, m, 0, 0);
         viewer.clock.currentTime = Cesium.JulianDate.fromDate(d);
     });
 
     const maintenant = new Date();
-    slider.value = maintenant.getHours();
+    slider.value = maintenant.getHours() + (Math.round(maintenant.getMinutes() / 15) * 15 / 60);
     slider.dispatchEvent(new Event('input'));
 </script>
 </body>
