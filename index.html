@@ -11,19 +11,11 @@
       background: white; padding: 12px 20px; border-radius: 15px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10; font-family: sans-serif;
     }
-    /* STYLE DES ÉTIQUETTES (FIXES SUR L'ÉCRAN) */
-    .label-auto {
-      position: absolute;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 4px 8px;
-      border-radius: 6px;
-      border: 1.5px solid #333;
-      font-family: sans-serif;
-      font-size: 13px;
-      font-weight: bold;
-      pointer-events: none;
-      white-space: nowrap;
-      z-index: 5;
+    /* Style des étiquettes qui ne bougent pas */
+    .etiquette {
+      position: absolute; background: white; padding: 4px 8px;
+      border-radius: 5px; border: 1px solid black; font-family: sans-serif;
+      font-size: 12px; font-weight: bold; pointer-events: none; z-index: 5;
     }
   </style>
 </head>
@@ -49,16 +41,16 @@
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // --- CONFIGURATION DES MARQUEURS ---
-  const pointsInteret = [
+  // Liste des restos
+  const restos = [
     { nom: "L'Avant Comptoir", lat: 44.83842, lng: -0.56930 },
     { nom: "Les Frères Cailloux", lat: 44.83872, lng: -0.56905 }
   ];
 
-  pointsInteret.forEach(p => {
-    // 1. On crée l'épingle rouge
-    p.entity = viewer.entities.add({
-      position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat),
+  restos.forEach(r => {
+    // On crée l'épingle rouge (toujours stable)
+    r.entity = viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(r.lng, r.lat),
       billboard: {
         image: 'https://img.icons8.com/color/96/marker.png',
         width: 30, height: 30,
@@ -68,27 +60,25 @@
       }
     });
 
-    // 2. On crée l'étiquette HTML
+    // On crée l'étiquette en HTML pur
     const div = document.createElement('div');
-    div.className = 'label-auto';
-    div.innerHTML = p.nom;
+    div.className = 'etiquette';
+    div.innerHTML = r.nom;
     document.body.appendChild(div);
-    p.element = div;
+    r.el = div;
   });
 
-  // --- MISE À JOUR DE LA POSITION (L'aimant écran) ---
+  // Mise à jour de la position du texte à chaque mouvement de caméra
   viewer.scene.postRender.addEventListener(function() {
-    pointsInteret.forEach(p => {
-      const position = p.entity.position.getValue(viewer.clock.currentTime);
-      const canvasPos = viewer.scene.cartesianToCanvasCoordinates(position);
-      
+    restos.forEach(r => {
+      const pos = r.entity.position.getValue(viewer.clock.currentTime);
+      const canvasPos = viewer.scene.cartesianToCanvasCoordinates(pos);
       if (Cesium.defined(canvasPos)) {
-        p.element.style.display = "block";
-        // On centre l'étiquette pile au-dessus (offset de 40px vers le haut)
-        p.element.style.left = (canvasPos.x - p.element.offsetWidth / 2) + "px";
-        p.element.style.top = (canvasPos.y - 45) + "px";
+        r.el.style.display = 'block';
+        r.el.style.left = (canvasPos.x - r.el.offsetWidth / 2) + 'px';
+        r.el.style.top = (canvasPos.y - 40) + 'px'; // 40px au dessus de l'épingle
       } else {
-        p.element.style.display = "none";
+        r.el.style.display = 'none';
       }
     });
   });
