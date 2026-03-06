@@ -25,7 +25,8 @@
   
   const viewer = new Cesium.Viewer('cesiumContainer', {
       terrainProvider: Cesium.createWorldTerrain(),
-      infoBox: false, selectionIndicator: false,
+      infoBox: true, // On active la bulle d'info propre
+      selectionIndicator: false,
       baseLayerPicker: false, skyBox: false, skyAtmosphere: false,
       navigationHelpButton: false, sceneModePicker: false, timeline: false, animation: false,
       geocoder: false, homeButton: false
@@ -35,34 +36,22 @@
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // Fonction simplifiée au maximum
   function ajouterResto(nom, lat, lng) {
     viewer.entities.add({
+      name: nom,
+      description: `Terrasse de ${nom}`,
       position: Cesium.Cartesian3.fromDegrees(lng, lat),
-      // L'ÉPINGLE ROUGE
       billboard: {
         image: 'https://img.icons8.com/color/96/marker.png',
-        width: 32, height: 32,
+        width: 35, height: 35,
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
         heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY // FORCE L'AFFICHAGE DEVANT TOUT
-      },
-      // LE TEXTE SANS AUCUN CALCUL COMPLIQUÉ
-      label: {
-        text: nom,
-        font: 'bold 16px sans-serif',
-        fillColor: Cesium.Color.WHITE,
-        outlineColor: Cesium.Color.BLACK,
-        outlineWidth: 4,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        pixelOffset: new Cesium.Cartesian2(0, -40), // Pile au dessus de l'épingle
-        disableDepthTestDistance: Number.POSITIVE_INFINITY // FORCE L'AFFICHAGE DEVANT TOUT
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     });
   }
 
-  // Tes coordonnées (L'Avant Comptoir et Les Frères Cailloux)
+  // Tes points
   ajouterResto("L'Avant Comptoir", 44.83842, -0.56930);
   ajouterResto("Les Frères Cailloux", 44.83872, -0.56905);
 
