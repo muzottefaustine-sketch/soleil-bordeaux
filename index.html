@@ -1,12 +1,12 @@
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
 <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 <style>
-  body { margin: 0; padding: 0; overflow: hidden; background: #000; }
+  body { margin: 0; padding: 0; overflow: hidden; background: #fff; }
   #cesiumContainer { width: 100vw; height: 100vh; }
   .panel {
     position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
     background: white; padding: 12px 20px; border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; z-index: 10; font-family: sans-serif;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10; font-family: sans-serif;
   }
 </style>
 <div id="cesiumContainer"></div>
@@ -15,4 +15,58 @@
   <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25" style="width:200px;">
 </div>
 <script>
-  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk
+  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
+  
+  const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrainProvider: Cesium.createWorldTerrain(),
+      baseLayerPicker: false, infoBox: false, skyBox: false, skyAtmosphere: false,
+      navigationHelpButton: false, sceneModePicker: false, timeline: false, animation: false,
+      geocoder: false, selectionIndicator: false, homeButton: false
+  });
+
+  viewer.scene.globe.enableLighting = true;
+  viewer.shadows = true;
+  viewer.scene.primitives.add(Cesium.createOsmBuildings());
+
+  function ajouterMarqueur(nom, lat, lng) {
+    viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(lng, lat, 0),
+      point: {
+        pixelSize: 15,
+        color: Cesium.Color.RED,
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 3,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+      },
+      label: {
+        text: nom,
+        font: 'bold 14px sans-serif',
+        fillColor: Cesium.Color.BLACK,
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -20),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
+      }
+    });
+  }
+
+  ajouterMarqueur("L'Avant Comptoir", 44.83842, -0.56930);
+  ajouterMarqueur("Les Frères Cailloux", 44.83872, -0.56905);
+
+  viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 120),
+      orientation: { heading: 0, pitch: Cesium.Math.toRadians(-35), roll: 0 }
+  });
+
+  const slider = document.getElementById('timeSlider');
+  slider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      const h = Math.floor(val);
+      const m = Math.round((val - h) * 60);
+      document.getElementById('heureAffichee').innerText = h + "h" + (m < 10 ? '0' + m : m);
+      const d = new Date(); d.setHours(h, m, 0, 0);
+      viewer.clock.currentTime = Cesium.JulianDate.fromDate(d);
+  });
+</script>
