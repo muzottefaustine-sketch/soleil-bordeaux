@@ -4,18 +4,12 @@
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
   <style>
-    body { margin: 0; padding: 0; overflow: hidden; }
+    body { margin: 0; padding: 0; overflow: hidden; background: #000; }
     #cesiumContainer { width: 100vw; height: 100vh; }
     .panel {
       position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
       background: white; padding: 12px 20px; border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10; font-family: sans-serif;
-    }
-    /* Style des étiquettes qui ne bougent pas */
-    .etiquette {
-      position: absolute; background: white; padding: 4px 8px;
-      border-radius: 5px; border: 1px solid black; font-family: sans-serif;
-      font-size: 12px; font-weight: bold; pointer-events: none; z-index: 5;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; z-index: 10; font-family: sans-serif;
     }
   </style>
 </head>
@@ -41,47 +35,36 @@
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // Liste des restos
-  const restos = [
-    { nom: "L'Avant Comptoir", lat: 44.83842, lng: -0.56930 },
-    { nom: "Les Frères Cailloux", lat: 44.83872, lng: -0.56905 }
-  ];
-
-  restos.forEach(r => {
-    // On crée l'épingle rouge (toujours stable)
-    r.entity = viewer.entities.add({
-      position: Cesium.Cartesian3.fromDegrees(r.lng, r.lat),
+  // Fonction simplifiée au maximum
+  function ajouterResto(nom, lat, lng) {
+    viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(lng, lat),
+      // L'ÉPINGLE ROUGE
       billboard: {
         image: 'https://img.icons8.com/color/96/marker.png',
-        width: 30, height: 30,
+        width: 32, height: 32,
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
         heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
+        disableDepthTestDistance: Number.POSITIVE_INFINITY // FORCE L'AFFICHAGE DEVANT TOUT
+      },
+      // LE TEXTE SANS AUCUN CALCUL COMPLIQUÉ
+      label: {
+        text: nom,
+        font: 'bold 16px sans-serif',
+        fillColor: Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 4,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -40), // Pile au dessus de l'épingle
+        disableDepthTestDistance: Number.POSITIVE_INFINITY // FORCE L'AFFICHAGE DEVANT TOUT
       }
     });
+  }
 
-    // On crée l'étiquette en HTML pur
-    const div = document.createElement('div');
-    div.className = 'etiquette';
-    div.innerHTML = r.nom;
-    document.body.appendChild(div);
-    r.el = div;
-  });
-
-  // Mise à jour de la position du texte à chaque mouvement de caméra
-  viewer.scene.postRender.addEventListener(function() {
-    restos.forEach(r => {
-      const pos = r.entity.position.getValue(viewer.clock.currentTime);
-      const canvasPos = viewer.scene.cartesianToCanvasCoordinates(pos);
-      if (Cesium.defined(canvasPos)) {
-        r.el.style.display = 'block';
-        r.el.style.left = (canvasPos.x - r.el.offsetWidth / 2) + 'px';
-        r.el.style.top = (canvasPos.y - 40) + 'px'; // 40px au dessus de l'épingle
-      } else {
-        r.el.style.display = 'none';
-      }
-    });
-  });
+  // Tes coordonnées (L'Avant Comptoir et Les Frères Cailloux)
+  ajouterResto("L'Avant Comptoir", 44.83842, -0.56930);
+  ajouterResto("Les Frères Cailloux", 44.83872, -0.56905);
 
   viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 120),
