@@ -1,0 +1,60 @@
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
+<style>
+  body { margin: 0; padding: 0; overflow: hidden; }
+  #cesiumContainer { width: 100vw; height: 100vh; }
+  .panel {
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: white; padding: 15px 25px; border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10;
+    width: 80%; max-width: 400px; font-family: sans-serif;
+  }
+  input[type=range] { width: 100%; margin-top: 10px; cursor: pointer; }
+</style>
+
+<div id="cesiumContainer"></div>
+
+<div class="panel">
+  <h3 style="margin: 0 0 10px 0;">☀️ Heure : <span id="heureAffichee">14</span>h00</h3>
+  <input type="range" id="timeSlider" min="8" max="20" value="14" step="1">
+</div>
+
+<script>
+  // ⚠️ N'OUBLIE PAS DE METTRE TA CLÉ CI-DESSOUS
+  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
+
+  const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrainProvider: Cesium.createWorldTerrain(),
+      baseLayerPicker: false, homeButton: false, infoBox: false,
+      navigationHelpButton: false, sceneModePicker: false,
+      animation: false, timeline: false, fullscreenButton: false, geocoder: false
+  });
+
+  viewer.scene.globe.enableLighting = true;
+  viewer.shadows = true;
+  viewer.scene.primitives.add(Cesium.createOsmBuildings());
+
+  // Vue centrée sur Bordeaux centre
+  viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 500),
+      orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-45),
+          roll: 0.0
+      }
+  });
+
+  const slider = document.getElementById('timeSlider');
+  const affichage = document.getElementById('heureAffichee');
+
+  slider.addEventListener('input', (e) => {
+      const heure = parseInt(e.target.value);
+      affichage.innerText = heure;
+      const date = new Date();
+      date.setHours(heure, 0, 0, 0);
+      viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
+  });
+
+  setTimeout(() => slider.dispatchEvent(new Event('input')), 1000);
+</script>
