@@ -31,46 +31,51 @@
       fullscreenButton: false, geocoder: false, scene3DOnly: true
   });
 
-  viewer.scene.screenSpaceCameraController.enableZoom = true;
-  viewer.scene.screenSpaceCameraController.enableRotate = true;
-  viewer.scene.screenSpaceCameraController.enableTilt = true;
-  viewer.scene.screenSpaceCameraController.enableTranslate = true;
-
   viewer.scene.globe.enableLighting = true;
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // --- MARQUEURS PLACE DU PALAIS ---
-  const terrasses = [
-    { name: "L'Avant Comptoir 🍷", lat: 44.83845, lng: -0.56925 },
-    { name: "Les Frères Cailloux ☕", lat: 44.83870, lng: -0.56895 }
-  ];
-
-  terrasses.forEach(t => {
-    viewer.entities.add({
-      position: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 2),
-      point: { pixelSize: 12, color: Cesium.Color.ORANGE, outlineColor: Cesium.Color.WHITE, outlineWidth: 2 },
-      label: {
-        text: t.name,
-        font: 'bold 14px sans-serif',
-        fillColor: Cesium.Color.BLACK,
-        outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 3,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cesium.Cartesian2(0, -25),
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
-      }
-    });
+  // --- CRÉATION DES ZONES DE TERRASSES (TAPIS AU SOL) ---
+  
+  // 1. L'Avant Comptoir (Zone rectangulaire)
+  viewer.entities.add({
+    name: "L'Avant Comptoir",
+    rectangle: {
+      coordinates: Cesium.Rectangle.fromDegrees(-0.56938, 44.83838, -0.56928, 44.83848),
+      material: Cesium.Color.ORANGE.withAlpha(0.7),
+      height: 0.2, // Juste au dessus du sol
+      outline: true,
+      outlineColor: Cesium.Color.BLACK
+    },
+    label: {
+      text: "L'Avant Comptoir 🍷",
+      font: 'bold 14px sans-serif',
+      pixelOffset: new Cesium.Cartesian2(0, -20),
+      disableDepthTestDistance: Number.POSITIVE_INFINITY
+    }
   });
 
-  // Vue initiale optimisée
+  // 2. Les Frères Cailloux (Zone rectangulaire)
+  viewer.entities.add({
+    name: "Les Frères Cailloux",
+    rectangle: {
+      coordinates: Cesium.Rectangle.fromDegrees(-0.56910, 44.83860, -0.56900, 44.83870),
+      material: Cesium.Color.GOLD.withAlpha(0.7),
+      height: 0.2,
+      outline: true,
+      outlineColor: Cesium.Color.BLACK
+    },
+    label: {
+      text: "Les Frères Cailloux ☕",
+      font: 'bold 14px sans-serif',
+      pixelOffset: new Cesium.Cartesian2(0, -20),
+      disableDepthTestDistance: Number.POSITIVE_INFINITY
+    }
+  });
+
   viewer.camera.setView({
-      destination: Cesium.Cartesian3.fromDegrees(-0.5691, 44.8384, 150),
-      orientation: {
-          heading: 0,
-          pitch: Cesium.Math.toRadians(-35),
-          roll: 0
-      }
+      destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 150),
+      orientation: { heading: 0, pitch: Cesium.Math.toRadians(-35), roll: 0 }
   });
 
   const slider = document.getElementById('timeSlider');
@@ -80,16 +85,13 @@
       const val = parseFloat(e.target.value);
       const heures = Math.floor(val);
       const minutes = Math.round((val - heures) * 60);
-      const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-      affichage.innerText = heures + "h" + minutesStr;
-
+      affichage.innerText = heures + "h" + (minutes < 10 ? '0' + minutes : minutes);
       const date = new Date();
       date.setHours(heures, minutes, 0, 0);
       viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
   });
 
   const maintenant = new Date();
-  const heureDecimale = maintenant.getHours() + (Math.round(maintenant.getMinutes() / 15) * 15 / 60);
-  slider.value = heureDecimale;
+  slider.value = maintenant.getHours() + (Math.round(maintenant.getMinutes() / 15) * 15 / 60);
   slider.dispatchEvent(new Event('input'));
 </script>
