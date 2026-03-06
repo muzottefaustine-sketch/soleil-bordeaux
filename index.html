@@ -16,8 +16,8 @@
 <div id="cesiumContainer"></div>
 
 <div class="panel">
-  <h3 style="margin: 0 0 10px 0;">☀️ Heure : <span id="heureAffichee">14</span>h 00</h3>
-  <input type="range" id="timeSlider" min="8" max="20" value="14" step="1">
+  <h3 style="margin: 0 0 10px 0;">☀️ <span id="heureAffichee">14h00</span></h3>
+  <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25">
 </div>
 
 <script>
@@ -40,19 +40,18 @@
       scene3DOnly: true
   });
 
-  // Activation des contrôles de zoom et rotation
+  // Activation des contrôles complets
   viewer.scene.screenSpaceCameraController.enableZoom = true;
   viewer.scene.screenSpaceCameraController.enableRotate = true;
   viewer.scene.screenSpaceCameraController.enableTilt = true;
   viewer.scene.screenSpaceCameraController.enableTranslate = true;
 
-  // Optimisation visuelle
   viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#f0f0f0');
   viewer.scene.globe.enableLighting = true;
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // Positionnement sur Bordeaux
+  // Vue sur Bordeaux
   viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 500),
       orientation: {
@@ -66,12 +65,24 @@
   const affichage = document.getElementById('heureAffichee');
 
   slider.addEventListener('input', (e) => {
-      const heure = parseInt(e.target.value);
-      affichage.innerText = heure;
+      const val = parseFloat(e.target.value);
+      const heures = Math.floor(val);
+      const minutes = Math.round((val - heures) * 60);
+      
+      // Affichage propre (ex: 14h15)
+      const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+      affichage.innerText = heures + "h" + minutesStr;
+
       const date = new Date();
-      date.setHours(heure, 0, 0, 0);
+      date.setHours(heures, minutes, 0, 0);
       viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
   });
 
-  setTimeout(() => slider.dispatchEvent(new Event('input')), 500);
+  // SYNCHRONISATION DIRECTE AU CHARGEMENT
+  const maintenant = new Date();
+  const heureDecimale = maintenant.getHours() + (Math.round(maintenant.getMinutes() / 15) * 15 / 60);
+  
+  // On ajuste le curseur et on déclenche la mise à jour
+  slider.value = heureDecimale;
+  slider.dispatchEvent(new Event('input'));
 </script>
