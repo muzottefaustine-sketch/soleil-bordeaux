@@ -11,24 +11,10 @@
       background: white; padding: 12px 20px; border-radius: 15px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10; font-family: sans-serif;
     }
-    /* STYLE DE LA BULLE INFO AU CLIC */
-    #customPopup {
-      position: absolute; display: none; background: white; padding: 8px 12px;
-      border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-      font-family: sans-serif; font-weight: bold; font-size: 14px;
-      z-index: 20; pointer-events: none; border: 1px solid #ddd;
-    }
-    #customPopup::after { /* Petite flèche sous la bulle */
-      content: ''; position: absolute; top: 100%; left: 50%;
-      margin-left: -5px; border-width: 5px; border-style: solid;
-      border-color: white transparent transparent transparent;
-    }
   </style>
 </head>
 <body>
   <div id="cesiumContainer"></div>
-  <div id="customPopup"></div>
-  
   <div class="panel">
     <div style="font-weight: bold; margin-bottom: 5px;">☀️ <span id="heureAffichee">14h00</span></div>
     <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25" style="width:200px;">
@@ -49,58 +35,39 @@
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  // --- LES RESTOS ---
   function ajouterResto(nom, lat, lng) {
-    return viewer.entities.add({
-      name: nom,
-      position: Cesium.Cartesian3.fromDegrees(lng, lat, 0),
+    const position = Cesium.Cartesian3.fromDegrees(lng, lat);
+    
+    viewer.entities.add({
+      position: position,
+      // L'ÉPINGLE (Le point de repère)
       billboard: {
         image: 'https://img.icons8.com/color/96/marker.png',
         width: 32, height: 32,
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
         heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
         disableDepthTestDistance: Number.POSITIVE_INFINITY
+      },
+      // LE TEXTE (Aimanté à la même position)
+      label: {
+        text: nom,
+        font: 'bold 14px sans-serif',
+        fillColor: Cesium.Color.BLACK,
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 4,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        // Ces trois lignes forcent le texte à rester SUR le marqueur
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -35),
+        eyeOffset: new Cesium.Cartesian3(0, 0, -50), // Force l'affichage au premier plan
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     });
   }
 
-  const resto1 = ajouterResto("L'Avant Comptoir", 44.83842, -0.56930);
-  const resto2 = ajouterResto("Les Frères Cailloux", 44.83872, -0.56905);
-
-  // --- GESTION DE LA BULLE INFO ---
-  const popup = document.getElementById('customPopup');
-  let selectedEntity = null;
-
-  const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-  handler.setInputAction(function(click) {
-      const pickedObject = viewer.scene.pick(click.position);
-      
-      if (Cesium.defined(pickedObject) && pickedObject.id) {
-          selectedEntity = pickedObject.id;
-          popup.innerHTML = selectedEntity.name;
-          popup.style.display = 'block';
-          updatePopupPosition();
-      } else {
-          selectedEntity = null;
-          popup.style.display = 'none';
-      }
-  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-  // Mettre à jour la position de la bulle pendant qu'on bouge la caméra
-  viewer.scene.postRender.addEventListener(function() {
-      if (selectedEntity && popup.style.display === 'block') {
-          updatePopupPosition();
-      }
-  });
-
-  function updatePopupPosition() {
-      const pos = selectedEntity.position.getValue(viewer.clock.currentTime);
-      const canvasPos = viewer.scene.cartesianToCanvasCoordinates(pos);
-      if (Cesium.defined(canvasPos)) {
-          popup.style.left = canvasPos.x - (popup.offsetWidth / 2) + "px";
-          popup.style.top = canvasPos.y - 45 + "px"; // Pile au dessus du marqueur
-      }
-  }
+  // Tes coordonnées exactes
+  ajouterResto("L'Avant Comptoir", 44.83842, -0.56930);
+  ajouterResto("Les Frères Cailloux", 44.83872, -0.56905);
 
   viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 120),
@@ -119,3 +86,4 @@
 </script>
 </body>
 </html>
+
