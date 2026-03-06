@@ -11,6 +11,20 @@
       background: white; padding: 12px 20px; border-radius: 15px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10; font-family: sans-serif;
     }
+    /* STYLE DES ÉTIQUETTES (FIXES SUR L'ÉCRAN) */
+    .label-auto {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1.5px solid #333;
+      font-family: sans-serif;
+      font-size: 13px;
+      font-weight: bold;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 5;
+    }
   </style>
 </head>
 <body>
@@ -35,39 +49,49 @@
   viewer.shadows = true;
   viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-  function ajouterResto(nom, lat, lng) {
-    const position = Cesium.Cartesian3.fromDegrees(lng, lat);
-    
-    viewer.entities.add({
-      position: position,
-      // L'ÉPINGLE (Le point de repère)
+  // --- CONFIGURATION DES MARQUEURS ---
+  const pointsInteret = [
+    { nom: "L'Avant Comptoir", lat: 44.83842, lng: -0.56930 },
+    { nom: "Les Frères Cailloux", lat: 44.83872, lng: -0.56905 }
+  ];
+
+  pointsInteret.forEach(p => {
+    // 1. On crée l'épingle rouge
+    p.entity = viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(p.lng, p.lat),
       billboard: {
         image: 'https://img.icons8.com/color/96/marker.png',
-        width: 32, height: 32,
+        width: 30, height: 30,
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
         heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
         disableDepthTestDistance: Number.POSITIVE_INFINITY
-      },
-      // LE TEXTE (Aimanté à la même position)
-      label: {
-        text: nom,
-        font: 'bold 14px sans-serif',
-        fillColor: Cesium.Color.BLACK,
-        outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 4,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        // Ces trois lignes forcent le texte à rester SUR le marqueur
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        pixelOffset: new Cesium.Cartesian2(0, -35),
-        eyeOffset: new Cesium.Cartesian3(0, 0, -50), // Force l'affichage au premier plan
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
     });
-  }
 
-  // Tes coordonnées exactes
-  ajouterResto("L'Avant Comptoir", 44.83842, -0.56930);
-  ajouterResto("Les Frères Cailloux", 44.83872, -0.56905);
+    // 2. On crée l'étiquette HTML
+    const div = document.createElement('div');
+    div.className = 'label-auto';
+    div.innerHTML = p.nom;
+    document.body.appendChild(div);
+    p.element = div;
+  });
+
+  // --- MISE À JOUR DE LA POSITION (L'aimant écran) ---
+  viewer.scene.postRender.addEventListener(function() {
+    pointsInteret.forEach(p => {
+      const position = p.entity.position.getValue(viewer.clock.currentTime);
+      const canvasPos = viewer.scene.cartesianToCanvasCoordinates(position);
+      
+      if (Cesium.defined(canvasPos)) {
+        p.element.style.display = "block";
+        // On centre l'étiquette pile au-dessus (offset de 40px vers le haut)
+        p.element.style.left = (canvasPos.x - p.element.offsetWidth / 2) + "px";
+        p.element.style.top = (canvasPos.y - 45) + "px";
+      } else {
+        p.element.style.display = "none";
+      }
+    });
+  });
 
   viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-0.5692, 44.8385, 120),
@@ -86,4 +110,3 @@
 </script>
 </body>
 </html>
-
