@@ -2,44 +2,32 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Bordeaux Soleil Terrasse</title>
+    <title>Bordeaux Soleil Terrasse - Version Stable</title>
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <style>
         html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-        #toolbar { position: absolute; top: 10px; left: 10px; background: rgba(0, 0, 0, 0.8); padding: 15px; border-radius: 8px; color: white; z-index: 10; font-family: sans-serif; }
-        /* Fenêtre de la photo */
-        #restoCard { position: absolute; top: 20px; right: 20px; width: 280px; background: white; border-radius: 10px; display: none; z-index: 100; font-family: sans-serif; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        #restoPhoto { width: 100%; height: 160px; object-fit: cover; }
-        .info { padding: 12px; color: #333; }
+        #toolbar {
+            position: absolute; top: 10px; left: 10px; background: rgba(42, 42, 42, 0.8);
+            padding: 15px; border-radius: 8px; color: white; font-family: sans-serif; z-index: 10;
+        }
     </style>
 </head>
 <body>
 
-<div id="cesiumContainer"></div>
+    <div id="cesiumContainer"></div>
 
-<div id="toolbar">
-    <label>☀️ Heure :</label> <span id="hourLabel">14h</span><br>
-    <input type="range" id="timeSlider" min="7" max="21" value="14" style="width:150px;">
-</div>
-
-<div id="restoCard">
-    <img id="restoPhoto" src="">
-    <div class="info">
-        <h3 id="restoName" style="margin:0">Nom du lieu</h3>
-        <p id="restoRating" style="margin:5px 0">⭐ Note</p>
-        <button onclick="document.getElementById('restoCard').style.display='none'" style="width:100%; padding:8px; cursor:pointer; background:#eee; border:none; border-radius:4px;">Fermer</button>
+    <div id="toolbar">
+        <label>☀️ Heure du soleil :</label><br>
+        <input type="range" id="timeSlider" min="6" max="22" value="14" style="width:200px;">
+        <span id="hourLabel">14h</span>
     </div>
-</div>
 
 <script>
-    // 1. TES CLÉS
-    const CESIUM_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YmE0YzRhOC1lYmE3LTQ4MDktOGFlMy02YmI4Y2E4YjE0YjUiLCJpZCI6MjM5MzY5LCJpYXQiOjE3MDk4NDg0NDN9.ZHU4X0S_O1I6ZpS5Jk8f_XwP6NqY5u7sBjw-qXs';
-    const GOOGLE_KEY = "AIzaSyAyW2v-rWrpw4yYcEDirAdY5u7sBjw-qXs";
+    // --- TA CLÉ CESIUM ION ---
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YmE0YzRhOC1lYmE3LTQ4MDktOGFlMy02YmI4Y2E4YjE0YjUiLCJpZCI6MjM5MzY5LCJpYXQiOjE3MDk4NDg0NDN9.ZHU4X0S_O1I6ZpS5Jk8f_XwP6NqY5u7sBjw-qXs';
 
-    Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
-
-    // 2. CONFIGURATION CESIUM (L'ancienne version qui marchait)
+    // Initialisation du viewer
     const viewer = new Cesium.Viewer('cesiumContainer', {
         terrainProvider: Cesium.createWorldTerrain(),
         shadows: true,
@@ -48,42 +36,49 @@
         timeline: false
     });
 
-    // Bâtiments 3D
+    // Ajout des bâtiments 3D pour voir les ombres portées
     const buildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-    // Caméra sur Bordeaux
+    // Positionner la caméra sur le centre de Bordeaux (Miroir d'eau)
     viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(-0.579, 44.837, 800)
+        destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 800),
+        orientation: {
+            pitch: Cesium.Math.toRadians(-35)
+        }
     });
 
-    // 3. LE SLIDER (Comme hier)
-    document.getElementById('timeSlider').addEventListener('input', (e) => {
-        const h = e.target.value;
-        document.getElementById('hourLabel').innerText = h + "h";
+    // --- GESTION DU SOLEIL ---
+    const slider = document.getElementById('timeSlider');
+    slider.addEventListener('input', () => {
+        const hour = parseInt(slider.value);
+        document.getElementById('hourLabel').innerText = hour + "h";
+        
+        // On règle l'heure de la scène
         const date = new Date();
-        date.setHours(h);
+        date.setHours(hour);
         viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
     });
 
-    // 4. LES POINTS DE TESTS (Stables)
-    const points = [
-        { name: "Le Bar du Soleil", lat: 44.837, lon: -0.579 },
-        { name: "Terrasse Place de la Bourse", lat: 44.841, lon: -0.570 }
+    // --- AJOUT MANUEL DE QUELQUES POINTS TESTS ---
+    const terrasses = [
+        { name: "Terrasse Test 1", lat: 44.837, lon: -0.579 },
+        { name: "Terrasse Test 2", lat: 44.841, lon: -0.570 }
     ];
 
-    points.forEach(p => {
+    terrasses.forEach(t => {
         viewer.entities.add({
-            name: p.name,
-            position: Cesium.Cartesian3.fromDegrees(p.lon, p.lat),
-            point: { pixelSize: 15, color: Cesium.Color.GOLD, outlineWidth: 2 }
+            name: t.name,
+            position: Cesium.Cartesian3.fromDegrees(t.lon, t.lat),
+            point: {
+                pixelSize: 12,
+                color: Cesium.Color.GOLD,
+                outlineColor: Cesium.Color.BLACK,
+                outlineWidth: 2,
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            }
         });
     });
 
-    // 5. CLIC POUR PHOTO (Nouveauté)
-    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-    handler.setInputAction(async (click) => {
-        const picked = viewer.scene.pick(click.position);
-        if (Cesium.defined(picked)) {
-            const card = document.getElementById('restoCard');
-            const nom = picked.id.name;
-            document.getElementById('restoName').innerText =
+</script>
+</body>
+</html>
