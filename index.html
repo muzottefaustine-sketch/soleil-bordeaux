@@ -2,14 +2,23 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Bordeaux Soleil Terrasse - Version Stable</title>
+    <title>Bordeaux Soleil Terrasse</title>
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <style>
         html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        
+        /* Style du menu Slider */
         #toolbar {
-            position: absolute; top: 10px; left: 10px; background: rgba(42, 42, 42, 0.8);
-            padding: 15px; border-radius: 8px; color: white; font-family: sans-serif; z-index: 10;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(42, 42, 42, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            font-family: sans-serif;
+            z-index: 10;
         }
     </style>
 </head>
@@ -24,10 +33,10 @@
     </div>
 
 <script>
-    // --- TA CLÉ CESIUM ION ---
+    // --- TA CLÉ CESIUM ION (Celle qui marche) ---
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YmE0YzRhOC1lYmE3LTQ4MDktOGFlMy02YmI4Y2E4YjE0YjUiLCJpZCI6MjM5MzY5LCJpYXQiOjE3MDk4NDg0NDN9.ZHU4X0S_O1I6ZpS5Jk8f_XwP6NqY5u7sBjw-qXs';
 
-    // Initialisation du viewer
+    // Initialisation du Viewer avec les ombres activées
     const viewer = new Cesium.Viewer('cesiumContainer', {
         terrainProvider: Cesium.createWorldTerrain(),
         shadows: true,
@@ -36,49 +45,33 @@
         timeline: false
     });
 
-    // Ajout des bâtiments 3D pour voir les ombres portées
+    // Ajout des bâtiments 3D de Bordeaux
     const buildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-    // Positionner la caméra sur le centre de Bordeaux (Miroir d'eau)
+    // Positionner la caméra au-dessus de Bordeaux
     viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 800),
+        destination: Cesium.Cartesian3.fromDegrees(-0.579, 44.837, 800),
         orientation: {
             pitch: Cesium.Math.toRadians(-35)
         }
     });
 
-    // --- GESTION DU SOLEIL ---
+    // --- GESTION DU SLIDER DE SOLEIL ---
     const slider = document.getElementById('timeSlider');
+    const label = document.getElementById('hourLabel');
+
     slider.addEventListener('input', () => {
         const hour = parseInt(slider.value);
-        document.getElementById('hourLabel').innerText = hour + "h";
+        label.innerText = hour + "h";
         
-        // On règle l'heure de la scène
+        // On change l'heure de la simulation pour voir les ombres bouger
         const date = new Date();
         date.setHours(hour);
         viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
     });
 
-    // --- AJOUT MANUEL DE QUELQUES POINTS TESTS ---
+    // --- AJOUT DE TES POINTS (TERRASSES) ---
+    // Tu peux en rajouter d'autres ici manuellement
     const terrasses = [
-        { name: "Terrasse Test 1", lat: 44.837, lon: -0.579 },
-        { name: "Terrasse Test 2", lat: 44.841, lon: -0.570 }
-    ];
-
-    terrasses.forEach(t => {
-        viewer.entities.add({
-            name: t.name,
-            position: Cesium.Cartesian3.fromDegrees(t.lon, t.lat),
-            point: {
-                pixelSize: 12,
-                color: Cesium.Color.GOLD,
-                outlineColor: Cesium.Color.BLACK,
-                outlineWidth: 2,
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-            }
-        });
-    });
-
-</script>
-</body>
-</html>
+        { name: "Place de la Bourse", lat: 44.841, lon: -0.570 },
+        { name: "Miroir d'Eau",
