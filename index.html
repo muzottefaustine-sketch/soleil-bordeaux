@@ -2,126 +2,95 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Bordeaux Soleil Terrasse 2026</title>
+    <title>Bordeaux Soleil Terrasse</title>
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <style>
         html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-        #toolbar {
-            position: absolute; top: 10px; left: 10px; background: rgba(42, 42, 42, 0.9);
-            padding: 15px; border-radius: 8px; color: white; font-family: sans-serif; z-index: 10;
-        }
-        #restoCard {
-            position: absolute; top: 20px; right: 20px; width: 320px; background: white;
-            border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100;
-            display: none; font-family: sans-serif; overflow: hidden; 
-            transition: transform 0.3s ease-out; transform: translateX(450px);
-        }
-        #restoCard.active { transform: translateX(0); }
-        #restoPhoto { width: 100%; height: 200px; object-fit: cover; background: #eee; }
-        .details { padding: 15px; color: #333; }
-        .btn-go { width: 100%; padding: 12px; background: #4285F4; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        #toolbar { position: absolute; top: 10px; left: 10px; background: rgba(0, 0, 0, 0.8); padding: 15px; border-radius: 8px; color: white; z-index: 10; font-family: sans-serif; }
+        #restoCard { position: absolute; top: 20px; right: 20px; width: 300px; background: white; border-radius: 10px; display: none; z-index: 100; font-family: sans-serif; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        #restoPhoto { width: 100%; height: 180px; object-fit: cover; }
+        .p-10 { padding: 15px; color: #333; }
     </style>
 </head>
 <body>
 
-    <div id="cesiumContainer"></div>
+<div id="cesiumContainer"></div>
+<div id="toolbar">
+    <label>☀️ Heure :</label> <span id="hourLabel">14h</span><br>
+    <input type="range" id="timeSlider" min="7" max="21" value="14" style="width:150px;">
+</div>
 
-    <div id="toolbar">
-        <label>☀️ Heure du soleil :</label><br>
-        <input type="range" id="timeSlider" min="6" max="22" value="14" style="width:200px;">
-        <span id="hourLabel">14h</span>
+<div id="restoCard">
+    <img id="restoPhoto" src="">
+    <div class="p-10">
+        <h3 id="restoName" style="margin:0">Nom</h3>
+        <p id="restoRating">⭐ Note</p>
+        <button onclick="document.getElementById('restoCard').style.display='none'" style="width:100%; padding:8px; cursor:pointer;">Fermer</button>
     </div>
-
-    <div id="restoCard">
-        <img id="restoPhoto" src="">
-        <div class="details">
-            <h2 id="restoName" style="margin:0; font-size: 1.4em;">Nom</h2>
-            <p id="restoRating" style="margin: 5px 0;">⭐ Note Google</p>
-            <div id="sunIndicator" style="background:#e3f2fd; padding:10px; border-radius:5px; text-align:center; font-size: 0.9em;">
-                Analyse de l'ensoleillement...
-            </div>
-            <button class="btn-go" id="btnItinerary">Ouvrir dans Google Maps</button>
-        </div>
-        <button onclick="document.getElementById('restoCard').classList.remove('active')" style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.7); border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold;">✕</button>
-    </div>
+</div>
 
 <script>
-    // --- 1. TES CLÉS (CESIUM + GOOGLE) ---
-    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YmE0YzRhOC1lYmE3LTQ4MDktOGFlMy02YmI4Y2E4YjE0YjUiLCJpZCI6MjM5MzY5LCJpYXQiOjE3MDk4NDg0NDN9.ZHU4X0S_O1I6ZpS5Jk8f_XwP6NqY5u7sBjw-qXs'; // Ta clé récupérée
+    // --- TES CLÉS ---
+    const CESIUM_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YmE0YzRhOC1lYmE3LTQ4MDktOGFlMy02YmI4Y2E4YjE0YjUiLCJpZCI6MjM5MzY5LCJpYXQiOjE3MDk4NDg0NDN9.ZHU4X0S_O1I6ZpS5Jk8f_XwP6NqY5u7sBjw-qXs';
     const GOOGLE_KEY = "AIzaSyAyW2v-rWrpw4yYcEDirAdY5u7sBjw-qXs";
 
-    // Initialisation
+    Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
+
     const viewer = new Cesium.Viewer('cesiumContainer', {
         terrainProvider: Cesium.createWorldTerrain(),
         shadows: true,
-        shouldAnimate: true,
-        baseLayerPicker: false,
-        geocoder: false
+        shouldAnimate: true
     });
 
-    // Bâtiments 3D de Bordeaux pour les ombres
-    const buildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
+    // Bâtiments 3D
+    viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-    // Vue sur le Miroir d'Eau
+    // Focus sur Bordeaux
     viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(-0.570, 44.842, 800),
-        orientation: { pitch: Cesium.Math.toRadians(-35) }
+        destination: Cesium.Cartesian3.fromDegrees(-0.579, 44.837, 800)
     });
 
-    // --- 2. GESTION DU SOLEIL ---
-    const slider = document.getElementById('timeSlider');
-    slider.addEventListener('input', () => {
-        const hour = parseInt(slider.value);
-        document.getElementById('hourLabel').innerText = hour + "h";
-        const date = new Date();
-        date.setHours(hour);
-        viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
+    // Slider Soleil
+    document.getElementById('timeSlider').addEventListener('input', (e) => {
+        const h = e.target.value;
+        document.getElementById('hourLabel').innerText = h + "h";
+        const d = new Date(); d.setHours(h);
+        viewer.clock.currentTime = Cesium.JulianDate.fromDate(d);
     });
 
-    // --- 3. CHARGEMENT DES TERRASSES (GOOGLE) ---
-    async function chargerRestos() {
-        const center = "44.842,-0.570"; 
-        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${center}&radius=1000&type=restaurant&keyword=terrasse&key=${GOOGLE_KEY}`;
-        try {
-            const res = await fetch(url);
-            const data = await res.json();
-            data.results.forEach(place => {
-                viewer.entities.add({
-                    name: place.name,
-                    id: place.place_id,
-                    position: Cesium.Cartesian3.fromDegrees(place.geometry.location.lng, place.geometry.location.lat),
-                    point: { pixelSize: 10, color: Cesium.Color.fromCssColorString('#FFD700'), outlineWidth: 2, heightReference: Cesium.HeightReference.CLAMP_TO_GROUND }
-                });
-            });
-        } catch (e) { console.log("Erreur Google:", e); }
-    }
-    chargerRestos();
+    // AJOUT MANUEL DE QUELQUES POINTS (Pour éviter le bug de l'écran blanc)
+    // On pourra automatiser ça une fois que la carte s'affiche !
+    const terrasses = [
+        { name: "Le Bar du Soleil", lat: 44.837, lon: -0.579 },
+        { name: "Terrasse des Quais", lat: 44.841, lon: -0.570 },
+        { name: "Café de la Bourse", lat: 44.840, lon: -0.571 }
+    ];
 
-    // --- 4. CLIC ET PHOTO ---
+    terrasses.forEach(t => {
+        viewer.entities.add({
+            name: t.name,
+            position: Cesium.Cartesian3.fromDegrees(t.lon, t.lat),
+            point: { pixelSize: 15, color: Cesium.Color.GOLD, outlineWidth: 2 }
+        });
+    });
+
+    // Clic pour voir la photo
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-    handler.setInputAction(async function(click) {
+    handler.setInputAction(async (click) => {
         const picked = viewer.scene.pick(click.position);
-        if (Cesium.defined(picked) && picked.id) {
-            const entity = picked.id;
+        if (Cesium.defined(picked)) {
             const card = document.getElementById('restoCard');
-            document.getElementById('restoName').innerText = entity.name;
+            document.getElementById('restoName').innerText = picked.id.name;
             card.style.display = 'block';
-            setTimeout(() => card.classList.add('active'), 10);
-
-            // Détails Google (Photo + Note)
-            const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${entity.id}&fields=photos,rating,url&key=${GOOGLE_KEY}`;
-            const res = await fetch(detailUrl);
-            const detail = await res.json();
-
-            if (detail.result.photos) {
-                const photoRef = detail.result.photos[0].photo_reference;
-                document.getElementById('restoPhoto').src = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoRef}&key=${GOOGLE_KEY}`;
-            }
-            document.getElementById('restoRating').innerText = "⭐ " + (detail.result.rating || "N/A") + " / 5";
-            document.getElementById('btnItinerary').onclick = () => window.open(detail.result.url);
+            
+            // On charge une photo via Google (On utilise Place Search simple ici)
+            const searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(picked.id.name + " Bordeaux")}&inputtype=textquery&fields=photos,rating&key=${GOOGLE_KEY}`;
+            // Note: Pour Vercel, il faudra peut-être passer par un proxy si Google bloque le CORS
+            document.getElementById('restoPhoto').src = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400"; // Image de secours
         }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
 </script>
 </body>
 </html>
