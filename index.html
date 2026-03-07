@@ -1,41 +1,88 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8">
-    <title>Bordeaux Soleil - Chez Fred</title>
-    <script src="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Cesium.js"></script>
-    <link href="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-    <style>
-        html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #000; }
-        #toolbar { 
-            position: absolute; top: 10px; left: 10px; 
-            background: rgba(42, 42, 42, 0.9); padding: 15px; 
-            border-radius: 8px; color: white; z-index: 10; 
-            font-family: sans-serif; 
-        }
-    </style>
-</head>
-<body>
-    <div id="cesiumContainer"></div>
-    <div id="toolbar">
-        ☀️ Heure : <span id="hourLabel">14h</span><br>
-        <input type="range" id="timeSlider" min="7" max="21" value="14" style="width:150px;">
-    </div>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
+<style>
+  body { margin: 0; padding: 0; overflow: hidden; background-color: #f0f0f0; }
+  #cesiumContainer { width: 100vw; height: 100vh; }
+  .panel {
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: white; padding: 15px 25px; border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; z-index: 10;
+    width: 80%; max-width: 400px; font-family: sans-serif;
+  }
+  input[type=range] { width: 100%; margin-top: 10px; cursor: pointer; }
+</style>
+
+<div id="cesiumContainer"></div>
+
+<div class="panel">
+  <h3 style="margin: 0 0 10px 0;">☀️ <span id="heureAffichee">14h00</span></h3>
+  <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25">
+</div>
+
 <script>
-    // --- TA NOUVELLE CLÉ CESIUM ION (VÉRIFIÉE) ---
-    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
+  // Ta clé Cesium sécurisée
+  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
-    const viewer = new Cesium.Viewer('cesiumContainer', {
-        terrainProvider: Cesium.createWorldTerrain(),
-        shadows: true,
-        shouldAnimate: true,
-        animation: false,
-        timeline: false
-    });
+  const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrainProvider: Cesium.createWorldTerrain(),
+      skyBox: false, 
+      skyAtmosphere: false, 
+      baseLayerPicker: false, 
+      homeButton: false, 
+      infoBox: false,
+      navigationHelpButton: false, 
+      sceneModePicker: false,
+      animation: false, 
+      timeline: false, 
+      fullscreenButton: false, 
+      geocoder: false,
+      scene3DOnly: true
+  });
 
-    // Ajout des bâtiments 3D pour voir l'ombre sur la terrasse
-    viewer.scene.primitives.add(Cesium.createOsmBuildings());
+  // Activation des contrôles complets
+  viewer.scene.screenSpaceCameraController.enableZoom = true;
+  viewer.scene.screenSpaceCameraController.enableRotate = true;
+  viewer.scene.screenSpaceCameraController.enableTilt = true;
+  viewer.scene.screenSpaceCameraController.enableTranslate = true;
 
-    // Vue sur la Place du Palais (Chez Fred)
-    viewer.camera.flyTo({
-        destination: Cesium
+  viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#f0f0f0');
+  viewer.scene.globe.enableLighting = true;
+  viewer.shadows = true;
+  viewer.scene.primitives.add(Cesium.createOsmBuildings());
+
+  // Vue sur Bordeaux
+  viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 500),
+      orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-45),
+          roll: 0.0
+      }
+  });
+
+  const slider = document.getElementById('timeSlider');
+  const affichage = document.getElementById('heureAffichee');
+
+  slider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      const heures = Math.floor(val);
+      const minutes = Math.round((val - heures) * 60);
+      
+      // Affichage propre (ex: 14h15)
+      const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+      affichage.innerText = heures + "h" + minutesStr;
+
+      const date = new Date();
+      date.setHours(heures, minutes, 0, 0);
+      viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
+  });
+
+  // SYNCHRONISATION DIRECTE AU CHARGEMENT
+  const maintenant = new Date();
+  const heureDecimale = maintenant.getHours() + (Math.round(maintenant.getMinutes() / 15) * 15 / 60);
+  
+  // On ajuste le curseur et on déclenche la mise à jour
+  slider.value = heureDecimale;
+  slider.dispatchEvent(new Event('input'));
+</script>
