@@ -2,30 +2,28 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Soleil en Terrasse - Bordeaux</title>
+    <title>Bordeaux Soleil - Chez Fred</title>
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <style>
-        html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-        #toolbar {
-            position: absolute; top: 10px; left: 10px; background: rgba(42, 42, 42, 0.9);
-            padding: 15px; border-radius: 8px; color: white; font-family: sans-serif; z-index: 10;
+        html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #000; }
+        #toolbar { 
+            position: absolute; top: 10px; left: 10px; 
+            background: rgba(0,0,0,0.8); padding: 15px; 
+            border-radius: 8px; color: white; z-index: 10; 
+            font-family: sans-serif; 
         }
-        input[type=range] { width: 150px; }
     </style>
 </head>
 <body>
-
     <div id="cesiumContainer"></div>
-
     <div id="toolbar">
-        <label>☀️ Heure : <span id="hourLabel">14h</span></label><br>
-        <input type="range" id="timeSlider" min="7" max="21" value="14">
+        ☀️ Heure : <span id="hourLabel">14h</span><br>
+        <input type="range" id="timeSlider" min="7" max="21" value="14" style="width:150px;">
     </div>
-
 <script>
-    // TA CLÉ CESIUM ION
-    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YmE0YzRhOC1lYmE3LTQ4MDktOGFlMy02YmI4Y2E4YjE0YjUiLCJpZCI6MjM5MzY5LCJpYXQiOjE3MDk4NDg0NDN9.ZHU4X0S_O1I6ZpS5Jk8f_XwP6NqY5u7sBjw-qXs';
+    // --- TON NOUVEAU TOKEN CESIUM ---
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
     const viewer = new Cesium.Viewer('cesiumContainer', {
         terrainProvider: Cesium.createWorldTerrain(),
@@ -35,19 +33,36 @@
         timeline: false
     });
 
-    // Activation des bâtiments 3D
-    const buildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
+    // Ajout des bâtiments 3D pour l'analyse d'ombre
+    viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
     // Vue sur la Place du Palais (Chez Fred)
     viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(-0.5695, 44.8385, 500),
-        orientation: {
-            pitch: Cesium.Math.toRadians(-30)
-        }
+        destination: Cesium.Cartesian3.fromDegrees(-0.5695, 44.8385, 400),
+        orientation: { pitch: Cesium.Math.toRadians(-30) }
     });
 
-    // Gestion du slider pour voir l'ombre sur la terrasse
+    // Gestion du slider
     const slider = document.getElementById('timeSlider');
-    slider.addEventListener('input', () => {
-        const hour = parseInt(slider.value);
-        document.getElementById('hourLabel').innerText = hour + "h";
+    slider.addEventListener('input', (e) => {
+        const h = e.target.value;
+        document.getElementById('hourLabel').innerText = h + "h";
+        const d = new Date(); d.setHours(h);
+        viewer.clock.currentTime = Cesium.JulianDate.fromDate(d);
+    });
+
+    // Point "Chez Fred"
+    viewer.entities.add({
+        name: "Chez Fred",
+        position: Cesium.Cartesian3.fromDegrees(-0.56958, 44.83845),
+        point: { 
+            pixelSize: 15, 
+            color: Cesium.Color.GOLD, 
+            outlineColor: Cesium.Color.BLACK, 
+            outlineWidth: 2,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND 
+        }
+    });
+</script>
+</body>
+</html>
