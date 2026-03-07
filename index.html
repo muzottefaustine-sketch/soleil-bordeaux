@@ -19,24 +19,80 @@
     }
     html, body { height: 100%; overflow: hidden; font-family: 'Outfit', sans-serif; background: #000; }
 
+    /* ── SPLASH SCREEN ── */
+    #splash {
+      position: fixed; inset: 0;
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 1000;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    #splash.fade-out { opacity: 0; transform: scale(1.03); pointer-events: none; }
+
+    .splash-sun {
+      font-size: 64px;
+      animation: splash-pulse 2s ease-in-out infinite;
+      margin-bottom: 24px;
+      filter: drop-shadow(0 0 24px rgba(255,149,0,0.5));
+    }
+    @keyframes splash-pulse {
+      0%, 100% { transform: scale(1);    filter: drop-shadow(0 0 20px rgba(255,149,0,0.4)); }
+      50%       { transform: scale(1.08); filter: drop-shadow(0 0 36px rgba(255,149,0,0.7)); }
+    }
+
+    .splash-title {
+      font-size: 32px; font-weight: 600;
+      color: white; letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .splash-title span { color: var(--sun); }
+
+    .splash-sub {
+      font-size: 14px; color: rgba(255,255,255,0.45);
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 48px;
+    }
+
+    .splash-loader {
+      display: flex; gap: 7px; align-items: center;
+    }
+    .splash-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--sun); opacity: 0.3;
+      animation: splash-bounce 1.2s ease-in-out infinite;
+    }
+    .splash-dot:nth-child(2) { animation-delay: 0.2s; }
+    .splash-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes splash-bounce {
+      0%, 100% { opacity: 0.3; transform: translateY(0); }
+      50%       { opacity: 1;   transform: translateY(-6px); }
+    }
+
+    .splash-status {
+      margin-top: 18px;
+      font-size: 12px; color: rgba(255,255,255,0.3);
+      letter-spacing: 0.3px;
+    }
+
+    /* ── MAP ── */
     #cesiumContainer { position: fixed; inset: 0; width: 100vw; height: 100vh; }
 
-    /* ── CURSEUR FLOTTANT — style original ── */
+    /* Supprimer TOUS les curseurs/sélections verts de Cesium */
+    .cesium-widget canvas { outline: none !important; }
+    .cesium-selection-wrapper { display: none !important; }
+    .cesium-infoBox { display: none !important; }
+
+    /* ── CURSEUR FLOTTANT ── */
     .panel-map {
-      position: fixed;
-      bottom: 30px; left: 50%; transform: translateX(-50%);
-      background: white; padding: 14px 22px;
-      border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      text-align: center; z-index: 30;
-      width: 80%; max-width: 400px;
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: white; padding: 14px 22px; border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center;
+      z-index: 30; width: 80%; max-width: 400px;
     }
     .panel-map h3 {
       margin: 0 0 10px 0; font-size: 16px; font-weight: 600; color: var(--text);
       display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .sun-count-badge {
-      font-size: 12px; font-weight: 500; color: var(--sun);
-      background: var(--sun-bg); padding: 2px 9px; border-radius: 20px;
     }
     .panel-map input[type=range] {
       width: 100%; margin-top: 4px; cursor: pointer;
@@ -49,31 +105,25 @@
       background: white; border: 2.5px solid var(--sun);
       box-shadow: 0 1px 8px rgba(0,0,0,0.15); cursor: pointer;
     }
+    .panel-map input[type=range]:focus { outline: none; }
+    .panel-map input[type=range]:focus::-webkit-slider-thumb { outline: none; }
 
-    /* ── TOOLTIP NOM ── */
+    /* ── TOOLTIP ── */
     #tooltip {
-      position: fixed;
-      z-index: 50;
-      background: rgba(10,10,15,0.88);
-      color: white;
-      padding: 8px 13px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 500;
+      position: fixed; z-index: 50;
+      background: rgba(10,10,15,0.88); color: white;
+      padding: 8px 13px; border-radius: 10px;
+      font-size: 13px; font-weight: 500;
       pointer-events: none;
-      white-space: nowrap;
-      opacity: 0;
-      transform: translateY(4px);
+      opacity: 0; transform: translateY(4px);
       transition: opacity 0.15s, transform 0.15s;
       backdrop-filter: blur(8px);
-      max-width: 220px;
-      white-space: normal;
-      text-align: center;
+      max-width: 220px; text-align: center;
     }
     #tooltip.visible { opacity: 1; transform: translateY(0); }
-    #tooltip .tt-type { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 2px; }
-    #tooltip .tt-sun { font-size: 11px; margin-top: 3px; }
-    #tooltip .tt-sun.sun { color: var(--sun); }
+    #tooltip .tt-type { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    #tooltip .tt-sun  { font-size: 11px; margin-top: 3px; }
+    #tooltip .tt-sun.sun   { color: var(--sun); }
     #tooltip .tt-sun.shade { color: #93b4d4; }
 
     /* ── BOUTON LISTE ── */
@@ -168,23 +218,39 @@
 </head>
 <body>
 
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-sun">☀️</div>
+  <div class="splash-title">Terrasses<span>.</span></div>
+  <div class="splash-sub">Bordeaux</div>
+  <div class="splash-loader">
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+  </div>
+  <div class="splash-status" id="splashStatus">Chargement de la carte…</div>
+</div>
+
+<!-- MAP -->
 <div id="cesiumContainer"></div>
 
+<!-- CURSEUR FLOTTANT -->
 <div class="panel-map">
-  <h3>☀️ <span id="heureAffichee">14h00</span>
-    <span class="sun-count-badge" id="sunBadge">…</span>
-  </h3>
+  <h3>☀️ <span id="heureAffichee">14h00</span></h3>
   <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25">
 </div>
 
+<!-- BOUTON LISTE -->
 <button id="btnListe" onclick="openDrawer()">📋 Terrasses</button>
 
+<!-- TOOLTIP -->
 <div id="tooltip">
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
   <div class="tt-sun" id="ttSun"></div>
 </div>
 
+<!-- DRAWER -->
 <div id="drawer">
   <div class="drawer-handle" id="drawerHandle"><div class="drawer-bar"></div></div>
   <div class="drawer-header">
@@ -215,32 +281,28 @@
 const drawer = document.getElementById('drawer');
 function openDrawer()  { drawer.classList.add('open'); }
 function closeDrawer() { drawer.classList.remove('open'); }
-
 const dhandle = document.getElementById('drawerHandle');
 let touchStartY = 0;
 dhandle.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive:true });
 dhandle.addEventListener('touchend',   e => { if (e.changedTouches[0].clientY - touchStartY > 50) closeDrawer(); }, { passive:true });
 
-// ── CESIUM — map qui s'affiche immédiatement ──
+// ── CESIUM ──
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
   terrainProvider: Cesium.createWorldTerrain(),
   skyBox: false, skyAtmosphere: false,
   baseLayerPicker: false, homeButton: false,
-  infoBox: false, navigationHelpButton: false,
-  sceneModePicker: false, animation: false,
-  timeline: false, fullscreenButton: false,
-  geocoder: false, scene3DOnly: true,
-  // Désactiver le chargement bloquant au démarrage
-  requestRenderMode: false,
+  infoBox: false, selectionIndicator: false, // ← supprime le curseur vert
+  navigationHelpButton: false, sceneModePicker: false,
+  animation: false, timeline: false,
+  fullscreenButton: false, geocoder: false,
+  scene3DOnly: true,
 });
 
-// Map s'affiche tout de suite — tuiles chargent en arrière-plan
-viewer.scene.globe.maximumScreenSpaceError = 4; // moins agressif = moins de blocage
+viewer.scene.globe.maximumScreenSpaceError = 4;
 viewer.scene.globe.tileCacheSize = 100;
-viewer.scene.globe.preloadAncestors = false; // ne pas bloquer sur les ancêtres
-
+viewer.scene.globe.preloadAncestors = false;
 viewer.scene.screenSpaceCameraController.enableZoom = true;
 viewer.scene.screenSpaceCameraController.enableRotate = true;
 viewer.scene.screenSpaceCameraController.enableTilt = true;
@@ -248,9 +310,7 @@ viewer.scene.screenSpaceCameraController.enableTranslate = true;
 viewer.scene.globe.enableLighting = true;
 viewer.shadows = true;
 
-// Bâtiments OSM — chargés en différé pour ne pas bloquer la map
 const osmBuildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
-// Niveau de détail réduit pour performances
 osmBuildings.maximumScreenSpaceError = 8;
 
 viewer.camera.setView({
@@ -264,6 +324,37 @@ let sunStates = {};
 let searchQuery = '';
 let currentHeure = 14;
 const markerEntities = {};
+
+// ── SPLASH — disparaît quand la map est prête ──
+function hideSplash() {
+  const splash = document.getElementById('splash');
+  splash.classList.add('fade-out');
+  setTimeout(() => { splash.style.display = 'none'; }, 650);
+}
+
+// On attend que le globe soit chargé et les premières tuiles visibles
+let splashGone = false;
+viewer.scene.globe.tileLoadProgressEvent.addEventListener(remaining => {
+  if (!splashGone) {
+    document.getElementById('splashStatus').textContent =
+      remaining > 0 ? `Chargement de la carte… (${remaining})` : 'Presque prêt…';
+  }
+});
+
+// Dès que les tuiles principales sont chargées → cacher le splash
+viewer.scene.postRender.addEventListener(function checkReady() {
+  if (splashGone) return;
+  if (viewer.scene.globe.tilesLoaded) {
+    splashGone = true;
+    viewer.scene.postRender.removeEventListener(checkReady);
+    hideSplash();
+  }
+});
+
+// Fallback : max 4 secondes de splash quoi qu'il arrive
+setTimeout(() => {
+  if (!splashGone) { splashGone = true; hideSplash(); }
+}, 4000);
 
 // ── OVERPASS ──
 const BBOX = '44.820,-0.605,44.875,-0.535';
@@ -350,14 +441,13 @@ async function runShadow() {
       sunStates[t.id] = checkSunny(t, sunDir);
     }
     syncDots();
-    updateBadge();
     renderList(currentHeure, searchQuery);
     await new Promise(r => setTimeout(r, 0));
   }
   computing = false;
 }
 
-// ── DOTS 8px ──
+// ── DOTS ──
 function makeDot(sunny) {
   const c = document.createElement('canvas');
   c.width = 16; c.height = 16;
@@ -396,11 +486,6 @@ function syncDots() {
   });
 }
 
-function updateBadge() {
-  const n = terrasses.filter(t => sunStates[t.id]===true).length;
-  document.getElementById('sunBadge').textContent = `${n} au soleil`;
-}
-
 // ── TOOLTIP ──
 const tooltip = document.getElementById('tooltip');
 let tooltipTimeout = null;
@@ -412,15 +497,10 @@ function showTooltip(t, x, y) {
   const ttSun = document.getElementById('ttSun');
   ttSun.textContent = sunny ? '☀ Au soleil' : '🌥 À l\'ombre';
   ttSun.className = 'tt-sun ' + (sunny ? 'sun' : 'shade');
-
-  // Positionner au-dessus du clic
-  const tw = 200;
-  const left = Math.min(Math.max(x - tw/2, 10), window.innerWidth - tw - 10);
-  const top  = Math.max(y - 90, 10);
-  tooltip.style.left = left + 'px';
-  tooltip.style.top  = top + 'px';
+  const tw = 220;
+  tooltip.style.left = Math.min(Math.max(x - tw/2, 10), window.innerWidth - tw - 10) + 'px';
+  tooltip.style.top  = Math.max(y - 95, 10) + 'px';
   tooltip.classList.add('visible');
-
   clearTimeout(tooltipTimeout);
   tooltipTimeout = setTimeout(() => tooltip.classList.remove('visible'), 3000);
 }
@@ -453,7 +533,7 @@ function renderList(h, query) {
     normalize(t.nom).includes(q)||normalize(t.type).includes(q)||normalize(t.adresse).includes(q));
   const sorted = [...filtered].sort((a,b)=>(sunStates[b.id]?1:0)-(sunStates[a.id]?1:0));
   const sunnyN = filtered.filter(t=>sunStates[t.id]===true).length;
-  countEl.textContent = q?`${sorted.length} résultat${sorted.length>1?'s':''}`:`${sunnyN} au soleil`;
+  countEl.textContent = q ? `${sorted.length} résultat${sorted.length>1?'s':''}` : `${sunnyN} au soleil`;
   list.innerHTML = '';
   if (!sorted.length) { list.innerHTML=`<div class="no-results">Aucun résultat pour<br><strong>"${query}"</strong></div>`; return; }
   sorted.forEach(t => {
@@ -497,13 +577,12 @@ searchClear.addEventListener('click', () => {
 
 // ── SLIDER ──
 const slider = document.getElementById('timeSlider');
-slider.addEventListener('input', (e) => {
+slider.addEventListener('input', e => {
   const val = parseFloat(e.target.value);
-  const heures = Math.floor(val);
-  const minutes = Math.round((val-heures)*60);
-  document.getElementById('heureAffichee').textContent = heures+'h'+(minutes<10?'0'+minutes:minutes);
+  const h = Math.floor(val), m = Math.round((val-h)*60);
+  document.getElementById('heureAffichee').textContent = h+'h'+(m<10?'0'+m:m);
   slider.style.setProperty('--pct', ((val-8)/13)*100+'%');
-  const date = new Date(); date.setHours(heures, minutes, 0, 0);
+  const date = new Date(); date.setHours(h, m, 0, 0);
   viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
   currentHeure = val;
   hideTooltip();
@@ -516,13 +595,11 @@ handler.setInputAction(click => {
   const picked = viewer.scene.pick(click.position);
   if (Cesium.defined(picked) && picked.id) {
     const id = picked.id.properties?.id?.getValue();
-    const t  = terrasses.find(x => String(x.id) === String(id));
+    const t  = terrasses.find(x => String(x.id)===String(id));
     if (t) {
       showTooltip(t, click.position.x, click.position.y);
-      // Highlight dans la liste si le drawer est ouvert
-      document.querySelectorAll('.card').forEach(c => {
-        c.classList.toggle('active', String(c.dataset.id)===String(id));
-      });
+      document.querySelectorAll('.card').forEach(c =>
+        c.classList.toggle('active', String(c.dataset.id)===String(id)));
       return;
     }
   }
@@ -533,29 +610,26 @@ handler.setInputAction(click => {
 async function init() {
   const maintenant = new Date();
   const heureDecimale = maintenant.getHours() + (Math.round(maintenant.getMinutes()/15)*15/60);
-  const initH = Math.min(21, Math.max(8, heureDecimale));
-  slider.value = initH;
+  slider.value = Math.min(21, Math.max(8, heureDecimale));
   slider.dispatchEvent(new Event('input'));
 
-  // Fetch terrasses en parallèle du chargement map (non bloquant)
   let data;
   try { data = await fetchTerrasses(); }
   catch(e) {
     document.getElementById('loadingState').style.display='none';
     document.getElementById('terrasseList').style.display='block';
-    document.getElementById('terrasseList').innerHTML=`<div class="no-results">Erreur de chargement.<br>Vérifiez votre connexion.</div>`;
+    document.getElementById('terrasseList').innerHTML=
+      `<div class="no-results">Erreur de chargement.<br>Vérifiez votre connexion.</div>`;
     return;
   }
 
   document.getElementById('loadingState').style.display='none';
   document.getElementById('terrasseList').style.display='block';
-
   terrasses = data;
   terrasses.forEach(t => { sunStates[t.id]=false; });
   document.getElementById('footerText').textContent=`${terrasses.length} terrasses · OpenStreetMap`;
   renderList(currentHeure,'');
 
-  // Ray casting après premier rendu
   viewer.scene.postRender.addEventListener(function once() {
     viewer.scene.postRender.removeEventListener(once);
     runShadow();
