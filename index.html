@@ -9,7 +9,7 @@
         html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #000; }
         #toolbar { 
             position: absolute; top: 10px; left: 10px; 
-            background: rgba(0,0,0,0.8); padding: 15px; 
+            background: rgba(42, 42, 42, 0.9); padding: 15px; 
             border-radius: 8px; color: white; z-index: 10; 
             font-family: sans-serif; 
         }
@@ -22,7 +22,7 @@
         <input type="range" id="timeSlider" min="7" max="21" value="14" style="width:150px;">
     </div>
 <script>
-    // --- TON NOUVEAU TOKEN CESIUM ---
+    // --- TA NOUVELLE CLÉ CESIUM ION (VÉRIFIÉE) ---
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
     const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -33,36 +33,9 @@
         timeline: false
     });
 
-    // Ajout des bâtiments 3D pour l'analyse d'ombre
+    // Ajout des bâtiments 3D pour voir l'ombre sur la terrasse
     viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
     // Vue sur la Place du Palais (Chez Fred)
     viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(-0.5695, 44.8385, 400),
-        orientation: { pitch: Cesium.Math.toRadians(-30) }
-    });
-
-    // Gestion du slider
-    const slider = document.getElementById('timeSlider');
-    slider.addEventListener('input', (e) => {
-        const h = e.target.value;
-        document.getElementById('hourLabel').innerText = h + "h";
-        const d = new Date(); d.setHours(h);
-        viewer.clock.currentTime = Cesium.JulianDate.fromDate(d);
-    });
-
-    // Point "Chez Fred"
-    viewer.entities.add({
-        name: "Chez Fred",
-        position: Cesium.Cartesian3.fromDegrees(-0.56958, 44.83845),
-        point: { 
-            pixelSize: 15, 
-            color: Cesium.Color.GOLD, 
-            outlineColor: Cesium.Color.BLACK, 
-            outlineWidth: 2,
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND 
-        }
-    });
-</script>
-</body>
-</html>
+        destination: Cesium
