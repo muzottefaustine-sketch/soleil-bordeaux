@@ -24,21 +24,17 @@
       width: calc(100vw - var(--panel-w)); height: 100vh;
     }
     #panel {
-      position: fixed; left: 0; top: 0;
-      width: var(--panel-w); height: 100vh;
-      background: var(--white); display: flex;
-      flex-direction: column; z-index: 10;
-      border-right: 1px solid var(--divider);
+      position: fixed; left: 0; top: 0; width: var(--panel-w); height: 100vh;
+      background: var(--white); display: flex; flex-direction: column;
+      z-index: 10; border-right: 1px solid var(--divider);
     }
 
-    /* HEADER */
     .header { padding: 20px 20px 0; flex-shrink: 0; }
     .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .app-name { font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
     .app-name span { color: var(--sun); }
     .city-tag { font-size: 11px; font-weight: 500; color: var(--text-2); background: var(--bg); padding: 4px 10px; border-radius: 20px; }
 
-    /* TIME */
     .time-widget { background: var(--bg); border-radius: var(--radius-md); padding: 13px 15px; margin-bottom: 12px; }
     .time-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
     .time-value { font-size: 28px; font-weight: 600; color: var(--text); letter-spacing: -1px; line-height: 1; }
@@ -57,7 +53,6 @@
     }
     input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 
-    /* SEARCH */
     .search-wrap { position: relative; margin-bottom: 12px; }
     .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 14px; pointer-events: none; }
     #searchInput {
@@ -72,21 +67,18 @@
       position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
       background: var(--text-3); color: white; border: none; border-radius: 50%;
       width: 16px; height: 16px; font-size: 10px; cursor: pointer;
-      display: none; align-items: center; justify-content: center; line-height: 1;
+      display: none; align-items: center; justify-content: center;
     }
     .search-clear.visible { display: flex; }
 
-    /* SECTION */
     .section-title { padding: 2px 20px 8px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .section-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.8px; }
     .count-pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; background: var(--sun-bg); color: var(--sun); }
 
-    /* LOADING */
     #loadingState { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-3); font-size: 13px; }
     .spinner { width: 28px; height: 28px; border: 2.5px solid var(--divider); border-top-color: var(--sun); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* LIST */
     .list { flex: 1; overflow-y: auto; padding: 0 12px 20px; scrollbar-width: none; }
     .list::-webkit-scrollbar { display: none; }
     .card { display: flex; align-items: center; gap: 11px; padding: 10px; border-radius: var(--radius-md); cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--divider); }
@@ -103,11 +95,10 @@
     .card-badge.shade { background: var(--shade-bg); color: var(--shade); }
     .no-results { padding: 30px 20px; text-align: center; color: var(--text-3); font-size: 13px; line-height: 1.6; }
 
-    /* FOOTER */
     .panel-footer { padding: 11px 20px; border-top: 1px solid var(--divider); display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .footer-text { font-size: 10px; color: var(--text-3); }
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #30D158; animation: blink 2s ease-in-out infinite; }
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
     .cesium-widget-credits { display: none !important; }
   </style>
@@ -149,7 +140,7 @@
 
   <div class="panel-footer">
     <div class="live-dot"></div>
-    <span class="footer-text" id="footerText">Ombres 3D · OpenStreetMap</span>
+    <span class="footer-text" id="footerText">Ombres 3D Cesium · Google Places</span>
   </div>
 </div>
 
@@ -182,68 +173,140 @@
 
   // ── STATE ──
   let terrasses = [];
+  let sunStates = {};
   let searchQuery = '';
   let currentHeure = 14;
   const markerEntities = {};
 
-  // ── OVERPASS ──
-  // Bordeaux centre + Chartrons (rive gauche nord) + Bacalan
-  const BBOX = '44.820,-0.600,44.875,-0.535';
+  // ── GOOGLE PLACES via proxy CORS ──
+  const GOOGLE_API_KEY = 'AIzaSyAyW2v-rWrpw4yYcEDirAdY5u7sBjw-qXs';
+  const CENTER = { lat: 44.8484, lng: -0.5700 };
 
-  const QUERY = `[out:json][timeout:30];
-(
-  node["amenity"="bar"]["outdoor_seating"="yes"](${BBOX});
-  node["amenity"="cafe"]["outdoor_seating"="yes"](${BBOX});
-  node["amenity"="restaurant"]["outdoor_seating"="yes"](${BBOX});
-  node["amenity"="pub"]["outdoor_seating"="yes"](${BBOX});
-  node["amenity"="biergarten"](${BBOX});
-  node["amenity"="bar"](${BBOX});
-  node["amenity"="cafe"](${BBOX});
-);
-out body;`;
-
-  function typeLabel(a) {
-    return { bar:'Bar', cafe:'Café', restaurant:'Restaurant', pub:'Pub', biergarten:'Brasserie' }[a] || 'Terrasse';
+  async function placesNearby(type, pageToken) {
+    const params = new URLSearchParams({
+      location: `${CENTER.lat},${CENTER.lng}`,
+      radius: 3000,
+      type,
+      key: GOOGLE_API_KEY,
+      ...(pageToken ? { pagetoken: pageToken } : {})
+    });
+    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${params}`;
+    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+    if (!res.ok) throw new Error(res.status);
+    return res.json();
   }
 
-  // Simple sun heuristic based on longitude (orientation est/ouest dans Bordeaux)
-  // Will be replaced by proper ray casting later
-  function sunWindow(lng) {
-    // Rues orientées N-S : soleil matin + soir. E-O : midi.
-    // Rive gauche centre : ~10h-18h en moyenne
-    const base = 9 + (lng + 0.58) * 10; // slight variation by position
-    return { sunStart: Math.round(Math.max(8, Math.min(11, base))), sunEnd: Math.round(Math.min(21, Math.max(16, base + 8))) };
-  }
-
-  async function fetchTerrasses() {
-    try {
-      const res = await fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST',
-        body: 'data=' + encodeURIComponent(QUERY)
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-
-      return data.elements
-        .filter(el => el.lat && el.lon && el.tags && el.tags.name)
-        .map(el => {
-          const { sunStart, sunEnd } = sunWindow(el.lon);
-          return {
-            id: el.id,
-            nom: el.tags.name,
-            adresse: el.tags['addr:street']
-              ? ((el.tags['addr:housenumber'] || '') + ' ' + el.tags['addr:street']).trim()
-              : 'Bordeaux',
-            type: typeLabel(el.tags.amenity),
-            lng: el.lon,
-            lat: el.lat,
-            sunStart, sunEnd
-          };
-        });
-    } catch (e) {
-      console.error('Overpass error:', e);
-      return null;
+  async function fetchAllPlaces() {
+    const seen = new Set();
+    const results = [];
+    for (const type of ['bar', 'cafe', 'restaurant']) {
+      try {
+        let data = await placesNearby(type);
+        let all = [...(data.results || [])];
+        for (let p = 0; p < 2 && data.next_page_token; p++) {
+          await new Promise(r => setTimeout(r, 2000));
+          data = await placesNearby(type, data.next_page_token);
+          all = all.concat(data.results || []);
+        }
+        for (const p of all) {
+          if (!seen.has(p.place_id) && p.geometry) {
+            seen.add(p.place_id);
+            results.push({
+              id: p.place_id,
+              nom: p.name,
+              adresse: p.vicinity || 'Bordeaux',
+              type: typeLabel(p.types),
+              lng: p.geometry.location.lng,
+              lat: p.geometry.location.lat,
+              rating: p.rating || null,
+            });
+          }
+        }
+      } catch (e) { console.warn('Places error', type, e); }
     }
+    return results;
+  }
+
+  function typeLabel(types) {
+    if (!types) return 'Établissement';
+    if (types.includes('bar')) return 'Bar';
+    if (types.includes('cafe')) return 'Café';
+    if (types.includes('restaurant')) return 'Restaurant';
+    return 'Établissement';
+  }
+
+  // ── RAY CASTING ──
+  // Lance un rayon depuis le point vers le soleil APRÈS que Cesium a rendu la frame.
+  // On utilise scene.pickFromRay qui interroge la géométrie 3D réelle (bâtiments OSM).
+
+  function computeSunDirection(julianDate) {
+    // Position soleil en ICRF → convertie en ECEF
+    const sunIcrf = Cesium.Simon1994PlanetaryPositions.computeSunPositionInEarthInertialFrame(julianDate);
+    const mtx = Cesium.Transforms.computeIcrfToFixedMatrix(julianDate);
+    if (!mtx) return null;
+    const dir = new Cesium.Cartesian3();
+    Cesium.Matrix3.multiplyByVector(mtx, sunIcrf, dir);
+    return Cesium.Cartesian3.normalize(dir, dir);
+  }
+
+  function isSunnyRaycast(t, sunDir) {
+    if (!sunDir) return null;
+
+    const pos = Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 1.5); // hauteur terrasse ~1.5m
+
+    // Vérifier que le soleil est au-dessus de l'horizon local
+    const up = Cesium.Cartesian3.normalize(pos, new Cesium.Cartesian3());
+    if (Cesium.Cartesian3.dot(sunDir, up) <= 0.05) return false; // nuit / soleil trop bas
+
+    const ray = new Cesium.Ray(pos, sunDir);
+
+    // pickFromRay retourne le premier objet intersecté (bâtiment OSM)
+    // On exclut les entités Cesium (markers) pour ne tester que les primitives 3D
+    const hit = viewer.scene.pickFromRay(ray, Object.values(markerEntities));
+
+    return !hit; // pas de hit = au soleil
+  }
+
+  // Calcul post-render : on attend une frame rendue pour avoir les bâtiments à jour
+  let shadowDebounce = null;
+  let isComputing = false;
+
+  function scheduleShadowUpdate() {
+    clearTimeout(shadowDebounce);
+    shadowDebounce = setTimeout(() => {
+      // Attendre la prochaine frame Cesium rendue
+      viewer.scene.postRender.addEventListener(function onPostRender() {
+        viewer.scene.postRender.removeEventListener(onPostRender);
+        if (!isComputing) runShadowUpdate();
+      });
+    }, 400); // 400ms après fin du glissement
+  }
+
+  async function runShadowUpdate() {
+    isComputing = true;
+    const jd = viewer.clock.currentTime;
+    const sunDir = computeSunDirection(jd);
+
+    // On fait les calculs par petits batches pour rester fluide
+    const BATCH = 8;
+    for (let i = 0; i < terrasses.length; i += BATCH) {
+      const batch = terrasses.slice(i, i + BATCH);
+
+      // Forcer un rendu pour que pickFromRay soit à jour
+      viewer.scene.render(jd);
+
+      for (const t of batch) {
+        const sunny = isSunnyRaycast(t, sunDir);
+        if (sunny !== null) sunStates[t.id] = sunny;
+      }
+
+      updateMarkersFromState();
+      renderList(currentHeure, searchQuery);
+
+      await new Promise(r => setTimeout(r, 0)); // yield UI
+    }
+
+    isComputing = false;
   }
 
   // ── MARKERS ──
@@ -252,19 +315,26 @@ out body;`;
     c.width = 44; c.height = 56;
     const ctx = c.getContext('2d');
     const cx = 22, r = 16;
+    const color = sunny ? '#FF9500' : '#8E9BAD';
+
     ctx.shadowColor = 'rgba(0,0,0,0.25)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
     ctx.beginPath(); ctx.arc(cx, r + 2, r, 0, Math.PI * 2);
-    ctx.fillStyle = sunny ? '#FF9500' : '#8E9BAD'; ctx.fill();
+    ctx.fillStyle = color; ctx.fill();
+
     ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
     ctx.beginPath(); ctx.moveTo(cx - 6, r + 14); ctx.lineTo(cx + 6, r + 14); ctx.lineTo(cx, 54);
-    ctx.closePath(); ctx.fillStyle = sunny ? '#FF9500' : '#8E9BAD'; ctx.fill();
-    ctx.beginPath(); ctx.arc(cx, r + 2, r - 5, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill();
+    ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+
+    ctx.beginPath(); ctx.arc(cx, r + 2, r - 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'white'; ctx.fill();
+
     ctx.font = '13px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(sunny ? '☀️' : '🌥', cx, r + 2);
     return c.toDataURL();
   }
 
-  function addOrUpdateMarker(t, sunny) {
+  function addOrUpdateMarker(t) {
+    const sunny = sunStates[t.id] ?? false;
     if (markerEntities[t.id]) {
       markerEntities[t.id].billboard.image = makePin(sunny);
       return;
@@ -283,15 +353,23 @@ out body;`;
     markerEntities[t.id] = entity;
   }
 
-  function updateMarkers(h) {
+  function updateMarkersFromState() {
     terrasses.forEach(t => {
       const e = markerEntities[t.id];
-      if (e) e.billboard.image = makePin(isSunny(t, h));
+      if (e) e.billboard.image = makePin(sunStates[t.id] ?? false);
     });
   }
 
   // ── HELPERS ──
-  function isSunny(t, h) { return h >= t.sunStart && h < t.sunEnd; }
+  function normalize(str) {
+    return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function highlight(text, query) {
+    if (!query) return text;
+    const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(re, '<mark style="background:var(--sun-bg);color:var(--sun);border-radius:3px;padding:0 2px">$1</mark>');
+  }
 
   function sunPhaseLabel(h) {
     if (h < 10) return "Matinée";
@@ -302,17 +380,7 @@ out body;`;
     return "Soirée";
   }
 
-  function normalize(str) {
-    return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  }
-
-  function highlight(text, query) {
-    if (!query) return text;
-    const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    return text.replace(re, '<mark style="background:var(--sun-bg);color:var(--sun);border-radius:3px;padding:0 2px">$1</mark>');
-  }
-
-  // ── RENDER ──
+  // ── RENDER LIST ──
   function renderList(h, query) {
     const list = document.getElementById('terrasseList');
     const countEl = document.getElementById('sunCount');
@@ -327,23 +395,26 @@ out body;`;
       );
     }
 
-    const sorted = [...filtered].sort((a, b) => isSunny(b, h) - isSunny(a, h));
-    const sunnyCount = filtered.filter(t => isSunny(t, h)).length;
+    const sorted = [...filtered].sort((a, b) => {
+      const sa = sunStates[a.id] ?? false;
+      const sb = sunStates[b.id] ?? false;
+      return sb - sa;
+    });
+
+    const sunnyCount = filtered.filter(t => sunStates[t.id] === true).length;
+    countEl.textContent = q
+      ? `${sorted.length} résultat${sorted.length > 1 ? 's' : ''}`
+      : `${sunnyCount} au soleil`;
 
     list.innerHTML = '';
 
     if (sorted.length === 0) {
       list.innerHTML = `<div class="no-results">Aucun résultat pour<br><strong>"${query}"</strong></div>`;
-      countEl.textContent = '0 résultat';
       return;
     }
 
-    countEl.textContent = q
-      ? `${sorted.length} résultat${sorted.length > 1 ? 's' : ''}`
-      : `${sunnyCount} au soleil`;
-
     sorted.forEach(t => {
-      const s = isSunny(t, h);
+      const s = sunStates[t.id] ?? false;
       const card = document.createElement('div');
       card.className = 'card';
       card.dataset.id = t.id;
@@ -351,7 +422,7 @@ out body;`;
         <div class="card-icon ${s ? 'sun' : 'shade'}">${s ? '☀️' : '🌥'}</div>
         <div class="card-body">
           <div class="card-name">${highlight(t.nom, query)}</div>
-          <div class="card-sub">${t.type} · ${t.adresse}</div>
+          <div class="card-sub">${t.type} · ${t.adresse}${t.rating ? ' · ⭐ ' + t.rating : ''}</div>
         </div>
         <div class="card-badge ${s ? 'sun' : 'shade'}">${s ? 'Soleil' : 'Ombre'}</div>
       `;
@@ -386,7 +457,7 @@ out body;`;
     renderList(currentHeure, '');
   });
 
-  // ── TIME ──
+  // ── TIME SLIDER ──
   const slider = document.getElementById('timeSlider');
 
   function updateTime(val) {
@@ -398,20 +469,18 @@ out body;`;
     document.getElementById('sunPhase').textContent = sunPhaseLabel(val);
     slider.style.setProperty('--pct', ((val - 8) / 13) * 100 + '%');
 
-    // Aujourd'hui, heure choisie
+    // Date aujourd'hui + heure choisie → ombres Cesium exactes
     const date = new Date();
     date.setHours(h, m, 0, 0);
     viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
 
-    if (terrasses.length > 0) {
-      updateMarkers(val);
-      renderList(val, searchQuery);
-    }
+    // Le curseur reste fluide : on schedule le ray casting APRÈS le glissement
+    if (terrasses.length > 0) scheduleShadowUpdate();
   }
 
   slider.addEventListener('input', e => updateTime(parseFloat(e.target.value)));
 
-  // ── CLICK MARKER ──
+  // ── CLICK MARKER → highlight card ──
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
   handler.setInputAction(click => {
     const picked = viewer.scene.pick(click.position);
@@ -432,24 +501,51 @@ out body;`;
     const now = new Date();
     const initH = Math.min(21, Math.max(8, now.getHours() + Math.round(now.getMinutes() / 15) * 15 / 60));
     slider.value = initH;
-    updateTime(initH);
+    currentHeure = initH;
 
-    const data = await fetchTerrasses();
+    const date = new Date();
+    date.setHours(Math.floor(initH), Math.round((initH % 1) * 60), 0, 0);
+    viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
+
+    slider.style.setProperty('--pct', ((initH - 8) / 13) * 100 + '%');
+    document.getElementById('heureAffichee').textContent =
+      `${Math.floor(initH)}h${Math.round((initH % 1) * 60).toString().padStart(2, '0')}`;
+    document.getElementById('sunPhase').textContent = sunPhaseLabel(initH);
+
+    // Fetch places
+    let data = null;
+    try {
+      data = await fetchAllPlaces();
+    } catch (e) {
+      console.error(e);
+    }
 
     document.getElementById('loadingState').style.display = 'none';
     document.getElementById('terrasseList').style.display = 'block';
 
     if (!data || data.length === 0) {
       document.getElementById('terrasseList').innerHTML =
-        `<div class="no-results">Impossible de charger les données.<br>Vérifiez votre connexion internet.</div>`;
+        `<div class="no-results">Impossible de charger les données.<br>Vérifiez votre connexion.</div>`;
       document.getElementById('sunCount').textContent = '—';
       return;
     }
 
     terrasses = data;
-    terrasses.forEach(t => addOrUpdateMarker(t, isSunny(t, currentHeure)));
-    document.getElementById('footerText').textContent = `${terrasses.length} terrasses · OpenStreetMap`;
+    document.getElementById('footerText').textContent = `${terrasses.length} terrasses · Google Places`;
+
+    // Init sunStates à false, markers ajoutés
+    terrasses.forEach(t => {
+      sunStates[t.id] = false;
+      addOrUpdateMarker(t);
+    });
+
     renderList(currentHeure, '');
+
+    // Premier calcul d'ombres dès que la scène est prête
+    viewer.scene.postRender.addEventListener(function firstRender() {
+      viewer.scene.postRender.removeEventListener(firstRender);
+      runShadowUpdate();
+    });
   }
 
   init();
