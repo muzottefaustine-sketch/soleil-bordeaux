@@ -7,24 +7,20 @@
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <style>
         html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-        
-        /* Slider de l'heure */
         #toolbar {
-            position: absolute; top: 10px; left: 10px; background: rgba(42, 42, 42, 0.8);
+            position: absolute; top: 10px; left: 10px; background: rgba(42, 42, 42, 0.9);
             padding: 15px; border-radius: 8px; color: white; font-family: sans-serif; z-index: 10;
         }
-
-        /* Fiche Restaurant Google */
         #restoCard {
             position: absolute; top: 20px; right: 20px; width: 320px; background: white;
             border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100;
-            display: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden; transition: transform 0.3s ease-out; transform: translateX(400px);
+            display: none; font-family: sans-serif; overflow: hidden; 
+            transition: transform 0.3s ease-out; transform: translateX(450px);
         }
         #restoCard.active { transform: translateX(0); }
         #restoPhoto { width: 100%; height: 200px; object-fit: cover; background: #eee; }
-        .details { padding: 15px; }
-        .btn-go { width: 100%; padding: 10px; background: #4285F4; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .details { padding: 15px; color: #333; }
+        .btn-go { width: 100%; padding: 12px; background: #4285F4; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -32,98 +28,89 @@
     <div id="cesiumContainer"></div>
 
     <div id="toolbar">
-        <label>Heure du soleil :</label><br>
-        <input type="range" id="timeSlider" min="0" max="23" value="14" style="width:200px;">
+        <label>☀️ Heure du soleil :</label><br>
+        <input type="range" id="timeSlider" min="6" max="22" value="14" style="width:200px;">
         <span id="hourLabel">14h</span>
     </div>
 
     <div id="restoCard">
         <img id="restoPhoto" src="">
-        <button onclick="document.getElementById('restoCard').classList.remove('active')" style="position:absolute; top:10px; right:10px; border-radius:50%; border:none; cursor:pointer;">✕</button>
         <div class="details">
-            <h2 id="restoName" style="margin:0;">Nom</h2>
-            <p id="restoRating" style="color:#f1c40f; margin:5px 0;">⭐ 4.5</p>
-            <div style="background:#fff9e6; border:1px solid #ffeaa7; padding:8px; border-radius:5px; text-align:center; margin-bottom:10px;">
-                <span id="sunStatus">☀️ Analyse du soleil...</span>
+            <h2 id="restoName" style="margin:0; font-size: 1.4em;">Nom</h2>
+            <p id="restoRating" style="margin: 5px 0;">⭐ Note Google</p>
+            <div id="sunIndicator" style="background:#e3f2fd; padding:10px; border-radius:5px; text-align:center; font-size: 0.9em;">
+                Analyse de l'ensoleillement...
             </div>
-            <button class="btn-go" id="btnItinerary">Y aller (Google Maps)</button>
+            <button class="btn-go" id="btnItinerary">Ouvrir dans Google Maps</button>
         </div>
+        <button onclick="document.getElementById('restoCard').classList.remove('active')" style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.7); border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold;">✕</button>
     </div>
 
 <script>
-    // --- 1. CONFIGURATION ---
+    // --- 1. TES CLÉS (CESIUM + GOOGLE) ---
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YmE0YzRhOC1lYmE3LTQ4MDktOGFlMy02YmI4Y2E4YjE0YjUiLCJpZCI6MjM5MzY5LCJpYXQiOjE3MDk4NDg0NDN9.ZHU4X0S_O1I6ZpS5Jk8f_XwP6NqY5u7sBjw-qXs'; // Ta clé récupérée
     const GOOGLE_KEY = "AIzaSyAyW2v-rWrpw4yYcEDirAdY5u7sBjw-qXs";
-    
-    // Initialisation de Cesium
+
+    // Initialisation
     const viewer = new Cesium.Viewer('cesiumContainer', {
         terrainProvider: Cesium.createWorldTerrain(),
-        shadows: true, // Active les ombres pour ton slider !
-        shouldAnimate: true
+        shadows: true,
+        shouldAnimate: true,
+        baseLayerPicker: false,
+        geocoder: false
     });
 
-    // On ajoute les bâtiments 3D d'OSM pour voir les ombres
+    // Bâtiments 3D de Bordeaux pour les ombres
     const buildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
 
-    // Positionner la caméra sur Bordeaux
+    // Vue sur le Miroir d'Eau
     viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 1000)
+        destination: Cesium.Cartesian3.fromDegrees(-0.570, 44.842, 800),
+        orientation: { pitch: Cesium.Math.toRadians(-35) }
     });
 
-    // --- 2. GESTION DU SOLEIL (SLIDER) ---
+    // --- 2. GESTION DU SOLEIL ---
     const slider = document.getElementById('timeSlider');
     slider.addEventListener('input', () => {
         const hour = parseInt(slider.value);
         document.getElementById('hourLabel').innerText = hour + "h";
-        
-        // On change l'heure de la scène Cesium
         const date = new Date();
         date.setHours(hour);
         viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
     });
 
-    // --- 3. CHARGEMENT DES RESTOS (GOOGLE NEARBY) ---
+    // --- 3. CHARGEMENT DES TERRASSES (GOOGLE) ---
     async function chargerRestos() {
-        const center = "44.837789,-0.57918"; // Centre de Bordeaux
-        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${center}&radius=1500&type=restaurant&keyword=terrasse&key=${GOOGLE_KEY}`;
-
+        const center = "44.842,-0.570"; 
+        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${center}&radius=1000&type=restaurant&keyword=terrasse&key=${GOOGLE_KEY}`;
         try {
             const res = await fetch(url);
             const data = await res.json();
-
             data.results.forEach(place => {
                 viewer.entities.add({
                     name: place.name,
-                    id: place.place_id, // On stocke l'ID Google
+                    id: place.place_id,
                     position: Cesium.Cartesian3.fromDegrees(place.geometry.location.lng, place.geometry.location.lat),
-                    point: {
-                        pixelSize: 12,
-                        color: Cesium.Color.GOLD,
-                        outlineColor: Cesium.Color.BLACK,
-                        outlineWidth: 2,
-                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                    }
+                    point: { pixelSize: 10, color: Cesium.Color.fromCssColorString('#FFD700'), outlineWidth: 2, heightReference: Cesium.HeightReference.CLAMP_TO_GROUND }
                 });
             });
-        } catch (e) { console.error("Erreur Google Places:", e); }
+        } catch (e) { console.log("Erreur Google:", e); }
     }
     chargerRestos();
 
-    // --- 4. CLIC SUR UN RESTO ---
+    // --- 4. CLIC ET PHOTO ---
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
     handler.setInputAction(async function(click) {
         const picked = viewer.scene.pick(click.position);
         if (Cesium.defined(picked) && picked.id) {
             const entity = picked.id;
-            const placeId = entity.id;
-
-            // Afficher la fiche
             const card = document.getElementById('restoCard');
             document.getElementById('restoName').innerText = entity.name;
             card.style.display = 'block';
             setTimeout(() => card.classList.add('active'), 10);
 
-            // Chercher les détails (Photos)
-            const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=photos,rating,url&key=${GOOGLE_KEY}`;
+            // Détails Google (Photo + Note)
+            const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${entity.id}&fields=photos,rating,url&key=${GOOGLE_KEY}`;
             const res = await fetch(detailUrl);
             const detail = await res.json();
 
@@ -131,11 +118,10 @@
                 const photoRef = detail.result.photos[0].photo_reference;
                 document.getElementById('restoPhoto').src = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoRef}&key=${GOOGLE_KEY}`;
             }
-            document.getElementById('restoRating').innerText = "⭐ " + (detail.result.rating || "N/A");
+            document.getElementById('restoRating').innerText = "⭐ " + (detail.result.rating || "N/A") + " / 5";
             document.getElementById('btnItinerary').onclick = () => window.open(detail.result.url);
         }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
 </script>
 </body>
 </html>
