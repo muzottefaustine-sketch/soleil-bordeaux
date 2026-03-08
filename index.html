@@ -331,9 +331,9 @@ setTimeout(completeSplash, 5000);
 // ══ CESIUM — fond OSM avec noms de rues ══
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
-// Fond Carto Light — rues et noms uniquement, sans POI ni icônes
+// Fond Carto Voyager — chaud, rues et noms, sans POI
 const osmProvider = new Cesium.UrlTemplateImageryProvider({
-  url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+  url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png',
   subdomains: ['a','b','c','d'],
   credit: 'CartoDB · OpenStreetMap',
   maximumLevel: 19,
