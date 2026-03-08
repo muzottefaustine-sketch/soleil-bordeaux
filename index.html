@@ -15,16 +15,15 @@
       --text: #1C1C1E; --text-2: #6C6C70; --text-3: #AEAEB2;
       --divider: #E5E5EA; --panel-w: 320px;
       --radius-md: 14px; --radius-sm: 10px;
+      --glass: rgba(255,255,255,0.82);
       --white: #FFFFFF; --bg: #F2F2F7;
     }
     html, body { height: 100%; overflow: hidden; font-family: 'Outfit', sans-serif; background: #fff; }
 
-    /* ════════════════════════════════
-       SPLASH
-    ════════════════════════════════ */
+    /* ══ SPLASH ══ */
     #splash {
       position: fixed; inset: 0; z-index: 1000;
-      background: #ffffff;
+      background: #fff;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       transition: opacity 0.5s ease;
@@ -32,54 +31,96 @@
     #splash.out { opacity: 0; pointer-events: none; }
 
     .splash-sun {
-      width: 90px; height: 90px;
-      margin-bottom: 22px;
+      width: 90px; height: 90px; margin-bottom: 22px;
       animation: splash-pulse 2.5s ease-in-out infinite;
     }
     @keyframes splash-pulse {
-      0%, 100% { transform: scale(1) rotate(0deg); }
-      50%       { transform: scale(1.07) rotate(6deg); }
+      0%,100% { transform: scale(1) rotate(0deg); }
+      50%      { transform: scale(1.07) rotate(6deg); }
     }
+    .splash-name { font-size: 26px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px; }
+    .splash-city { font-size: 13px; color: var(--text-3); letter-spacing: 0.3px; }
+    .splash-progress-wrap { position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%); width: 120px; }
+    .splash-progress-track { width: 100%; height: 2px; background: #E5E5EA; border-radius: 2px; overflow: hidden; }
+    .splash-progress-bar { height: 100%; border-radius: 2px; background: #FFD600; width: 0%; transition: width 0.3s ease; }
 
-    .splash-name {
-      font-size: 26px; font-weight: 600;
-      color: var(--text); letter-spacing: -0.5px;
-      margin-bottom: 4px;
-    }
-    .splash-city {
-      font-size: 13px; font-weight: 400;
-      color: var(--text-3); letter-spacing: 0.3px;
-    }
-
-    .splash-progress-wrap {
-      position: absolute; bottom: 52px;
-      left: 50%; transform: translateX(-50%);
-      width: 120px;
-    }
-    .splash-progress-track {
-      width: 100%; height: 2px;
-      background: #E5E5EA; border-radius: 2px; overflow: hidden;
-    }
-    .splash-progress-bar {
-      height: 100%; border-radius: 2px;
-      background: #FFD600; width: 0%;
-      transition: width 0.3s ease;
-    }
-
-    /* ════════════════════════════════
-       MAP
-    ════════════════════════════════ */
+    /* ══ MAP ══ */
     #cesiumContainer { position: fixed; inset: 0; width: 100vw; height: 100vh; }
     .cesium-widget canvas { outline: none !important; }
     .cesium-selection-wrapper, .cesium-infoBox { display: none !important; }
+    .cesium-widget-credits { display: none !important; }
 
-    /* ════════════════════════════════
-       CURSEUR FLOTTANT
-    ════════════════════════════════ */
+    /* ══ BARRE RECHERCHE HAUT — glassmorphism ══ */
+    #topBar {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 30; width: calc(100% - 32px); max-width: 480px;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .search-glass {
+      flex: 1; display: flex; align-items: center; gap: 8px;
+      background: var(--glass);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 0 14px;
+      height: 48px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+    .search-glass svg { flex-shrink: 0; opacity: 0.4; }
+    #searchInput {
+      flex: 1; border: none; background: transparent;
+      font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--text);
+      outline: none;
+    }
+    #searchInput::placeholder { color: var(--text-3); }
+    .search-clear-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-3); font-size: 16px; padding: 0;
+      display: none; align-items: center; justify-content: center;
+      width: 20px; height: 20px;
+    }
+    .search-clear-btn.visible { display: flex; }
+
+    /* Bouton liste */
+    #btnListe {
+      flex-shrink: 0;
+      width: 48px; height: 48px;
+      background: var(--glass);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 14px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #btnListe:active { background: rgba(255,255,255,0.95); }
+
+    /* Bouton géoloc */
+    #btnGeo {
+      flex-shrink: 0;
+      width: 48px; height: 48px;
+      background: var(--glass);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 14px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    #btnGeo:active { background: rgba(255,255,255,0.95); }
+    #btnGeo.locating { animation: geo-pulse 1s ease-in-out infinite; }
+    @keyframes geo-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ══ CURSEUR BAS — glassmorphism ══ */
     .panel-map {
-      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-      background: white; padding: 14px 22px; border-radius: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: var(--glass);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.5);
+      padding: 14px 22px; border-radius: 22px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.7);
       text-align: center; z-index: 30;
       width: 80%; max-width: 400px;
     }
@@ -90,7 +131,7 @@
     .panel-map input[type=range] {
       width: 100%; cursor: pointer;
       -webkit-appearance: none; height: 3px; border-radius: 2px;
-      background: linear-gradient(to right, var(--sun) var(--pct,46%), #E5E5EA var(--pct,46%));
+      background: linear-gradient(to right, var(--sun) var(--pct,46%), rgba(0,0,0,0.12) var(--pct,46%));
       outline: none;
     }
     .panel-map input[type=range]::-webkit-slider-thumb {
@@ -99,12 +140,10 @@
       box-shadow: 0 1px 8px rgba(0,0,0,0.15); cursor: pointer;
     }
 
-    /* ════════════════════════════════
-       TOOLTIP
-    ════════════════════════════════ */
+    /* ══ TOOLTIP ══ */
     #tooltip {
       position: fixed; z-index: 50;
-      background: rgba(28,28,30,0.9); color: white;
+      background: rgba(28,28,30,0.88); color: white;
       padding: 9px 14px; border-radius: 12px;
       font-size: 13px; font-weight: 500;
       pointer-events: none;
@@ -119,22 +158,7 @@
     #tooltip .tt-sun.sun   { color: #FFB74D; }
     #tooltip .tt-sun.shade { color: #90CAF9; }
 
-    /* ════════════════════════════════
-       BOUTON LISTE
-    ════════════════════════════════ */
-    #btnListe {
-      position: fixed; top: 20px; right: 20px; z-index: 30;
-      background: white; border: none; border-radius: 50px;
-      padding: 10px 18px; font-family: 'Outfit', sans-serif;
-      font-size: 13px; font-weight: 500; color: var(--text);
-      box-shadow: 0 2px 16px rgba(0,0,0,0.12); cursor: pointer;
-      display: flex; align-items: center; gap: 7px;
-    }
-    #btnListe:active { background: var(--bg); }
-
-    /* ════════════════════════════════
-       DRAWER
-    ════════════════════════════════ */
+    /* ══ DRAWER ══ */
     #drawer {
       position: fixed; z-index: 40; background: var(--white);
       display: flex; flex-direction: column;
@@ -148,7 +172,6 @@
       #drawer { left:0; bottom:0; width:100%; height:78vh; border-radius:18px 18px 0 0; border-top:1px solid var(--divider); box-shadow:0 -4px 30px rgba(0,0,0,0.1); transform:translateY(110%); }
       #drawer.open { transform:translateY(0); }
     }
-
     .drawer-handle { display:none; justify-content:center; padding:10px 0 4px; flex-shrink:0; cursor:pointer; }
     .drawer-bar { width:36px; height:4px; background:var(--divider); border-radius:2px; }
     @media (max-width:640px) { .drawer-handle { display:flex; } }
@@ -159,13 +182,10 @@
     .drawer-title span { color:var(--sun); }
     #btnClose { background:var(--bg); border:none; border-radius:50%; width:30px; height:30px; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-2); }
 
-    .search-wrap { position:relative; margin-bottom:12px; }
-    .search-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--text-3); font-size:13px; pointer-events:none; }
-    #searchInput { width:100%; padding:9px 30px 9px 32px; border-radius:var(--radius-sm); border:none; background:var(--bg); font-family:'Outfit',sans-serif; font-size:13px; color:var(--text); outline:none; }
-    #searchInput::placeholder { color:var(--text-3); }
-    #searchInput:focus { background:#EBEBF0; }
-    .search-clear { position:absolute; right:9px; top:50%; transform:translateY(-50%); background:var(--text-3); color:white; border:none; border-radius:50%; width:16px; height:16px; font-size:10px; cursor:pointer; display:none; align-items:center; justify-content:center; }
-    .search-clear.visible { display:flex; }
+    .drawer-search-wrap { position:relative; margin-bottom:12px; }
+    .drawer-search-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--text-3); font-size:13px; pointer-events:none; }
+    #drawerSearch { width:100%; padding:9px 30px 9px 32px; border-radius:var(--radius-sm); border:none; background:var(--bg); font-family:'Outfit',sans-serif; font-size:13px; color:var(--text); outline:none; }
+    #drawerSearch::placeholder { color:var(--text-3); }
 
     .section-title { padding:4px 20px 8px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
     .section-label { font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.8px; }
@@ -181,11 +201,10 @@
     .card:last-child { border-bottom:none; }
     .card:active, .card.active { background:var(--bg); border-color:transparent; }
     .card-icon { width:36px; height:36px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
-    .card-icon.sun { background:var(--sun-bg); }
-    .card-icon.shade { background:var(--shade-bg); }
+    .card-icon.sun { background:var(--sun-bg); } .card-icon.shade { background:var(--shade-bg); }
     .card-body { flex:1; min-width:0; }
     .card-name { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
-    .card-sub { font-size:11px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .card-sub  { font-size:11px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .card-badge { flex-shrink:0; font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; }
     .card-badge.sun { background:var(--sun-bg); color:var(--sun); }
     .card-badge.shade { background:var(--shade-bg); color:var(--shade); }
@@ -195,51 +214,33 @@
     .footer-text { font-size:10px; color:var(--text-3); }
     .live-dot { width:6px; height:6px; border-radius:50%; background:#30D158; animation:blink 2s ease-in-out infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-    .cesium-widget-credits { display:none !important; }
   </style>
 </head>
 <body>
 
 <!-- ══ SPLASH ══ -->
 <div id="splash">
-
-  <!-- Soleil style aquarelle/dessiné SVG -->
   <div class="splash-sun">
     <svg viewBox="0 0 100 100" width="90" height="90" xmlns="http://www.w3.org/2000/svg">
-      <!-- Rayons irréguliers orientés comme l'image -->
       <g fill="#FFD600">
-        <!-- haut -->
-        <ellipse cx="50" cy="11" rx="3.2" ry="7" transform="rotate(0 50 50)"/>
-        <!-- haut-droite 1 -->
+        <ellipse cx="50" cy="11" rx="3.2" ry="7"   transform="rotate(0 50 50)"/>
         <ellipse cx="50" cy="11" rx="2.8" ry="6.5" transform="rotate(40 50 50)"/>
-        <!-- droite-haut -->
         <ellipse cx="50" cy="11" rx="3.4" ry="7.5" transform="rotate(75 50 50)"/>
-        <!-- droite -->
-        <ellipse cx="50" cy="11" rx="3" ry="6.8" transform="rotate(110 50 50)"/>
-        <!-- droite-bas -->
+        <ellipse cx="50" cy="11" rx="3"   ry="6.8" transform="rotate(110 50 50)"/>
         <ellipse cx="50" cy="11" rx="2.8" ry="6.2" transform="rotate(145 50 50)"/>
-        <!-- bas -->
         <ellipse cx="50" cy="11" rx="3.3" ry="7.2" transform="rotate(180 50 50)"/>
-        <!-- bas-gauche -->
         <ellipse cx="50" cy="11" rx="2.9" ry="6.5" transform="rotate(215 50 50)"/>
-        <!-- gauche-bas -->
-        <ellipse cx="50" cy="11" rx="3.5" ry="7" transform="rotate(250 50 50)"/>
-        <!-- gauche -->
+        <ellipse cx="50" cy="11" rx="3.5" ry="7"   transform="rotate(250 50 50)"/>
         <ellipse cx="50" cy="11" rx="2.8" ry="6.3" transform="rotate(285 50 50)"/>
-        <!-- gauche-haut -->
         <ellipse cx="50" cy="11" rx="3.1" ry="7.2" transform="rotate(320 50 50)"/>
       </g>
-      <!-- Cercle central avec légère irrégularité organique -->
       <circle cx="50" cy="50" r="21" fill="#FFD600"/>
       <circle cx="48" cy="48" r="17" fill="#FFE000" opacity="0.55"/>
       <circle cx="52" cy="52" r="14" fill="#FFC400" opacity="0.25"/>
     </svg>
   </div>
-
   <div class="splash-name">Terrasses</div>
   <div class="splash-city">Bordeaux</div>
-
   <div class="splash-progress-wrap">
     <div class="splash-progress-track">
       <div class="splash-progress-bar" id="progressBar"></div>
@@ -250,21 +251,37 @@
 <!-- ══ MAP ══ -->
 <div id="cesiumContainer"></div>
 
-<!-- ══ CURSEUR ══ -->
+<!-- ══ BARRE HAUT ══ -->
+<div id="topBar">
+  <div class="search-glass">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="6.5" cy="6.5" r="5" stroke="#1C1C1E" stroke-width="1.5"/>
+      <path d="M10.5 10.5L14 14" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <input type="text" id="searchInput" placeholder="Bar, café, restaurant…">
+    <button class="search-clear-btn" id="searchClear">✕</button>
+  </div>
+  <button id="btnListe" onclick="openDrawer()" title="Liste des terrasses">
+    <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+      <rect width="18" height="2" rx="1" fill="#1C1C1E"/>
+      <rect y="6" width="18" height="2" rx="1" fill="#1C1C1E"/>
+      <rect y="12" width="18" height="2" rx="1" fill="#1C1C1E"/>
+    </svg>
+  </button>
+  <button id="btnGeo" onclick="geolocate()" title="Ma position">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="3.5" fill="#007AFF"/>
+      <circle cx="10" cy="10" r="3.5" fill="#007AFF" opacity="0.3" transform="scale(2.2)" style="transform-origin:10px 10px"/>
+      <path d="M10 2V4M10 16V18M2 10H4M16 10H18" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+</div>
+
+<!-- ══ CURSEUR BAS ══ -->
 <div class="panel-map">
   <h3>☀️ <span id="heureAffichee">14h00</span></h3>
   <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25">
 </div>
-
-<!-- ══ BOUTON ══ -->
-<button id="btnListe" onclick="openDrawer()">
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-    <rect y="1" width="14" height="2" rx="1" fill="#1C1C1E"/>
-    <rect y="6" width="14" height="2" rx="1" fill="#1C1C1E"/>
-    <rect y="11" width="14" height="2" rx="1" fill="#1C1C1E"/>
-  </svg>
-  Terrasses
-</button>
 
 <!-- ══ TOOLTIP ══ -->
 <div id="tooltip">
@@ -280,11 +297,6 @@
     <div class="drawer-top">
       <div class="drawer-title">Terrasses<span>.</span></div>
       <button id="btnClose" onclick="closeDrawer()">✕</button>
-    </div>
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="searchInput" placeholder="Rechercher…">
-      <button class="search-clear" id="searchClear">✕</button>
     </div>
   </div>
   <div class="section-title">
@@ -317,8 +329,7 @@ const progressInterval = setInterval(() => {
 }, 200);
 
 function completeSplash() {
-  if (splashDone) return;
-  splashDone = true;
+  if (splashDone) return; splashDone = true;
   clearInterval(progressInterval);
   progressBar.style.transition = 'width 0.4s ease';
   progressBar.style.width = '100%';
@@ -353,19 +364,98 @@ viewer.scene.screenSpaceCameraController.enableRotate = true;
 viewer.scene.screenSpaceCameraController.enableTilt = true;
 viewer.scene.screenSpaceCameraController.enableTranslate = true;
 
+// Vue par défaut — Bordeaux centre (fallback si pas de géoloc)
+const DEFAULT_LNG = -0.57918, DEFAULT_LAT = 44.837789;
 viewer.camera.setView({
-  destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 500),
-  orientation: { heading: Cesium.Math.toRadians(0), pitch: Cesium.Math.toRadians(-45), roll: 0.0 }
+  destination: Cesium.Cartesian3.fromDegrees(DEFAULT_LNG, DEFAULT_LAT, 500),
+  orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 }
 });
 
-let osmBuildings = null, osmAdded = false;
+// Bâtiments OSM après stabilisation
+let osmAdded = false;
 viewer.scene.postRender.addEventListener(function waitGlobe() {
   if (viewer.scene.globe.tilesLoaded && !osmAdded) {
     osmAdded = true;
     viewer.scene.postRender.removeEventListener(waitGlobe);
-    osmBuildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
-    osmBuildings.maximumScreenSpaceError = 6;
+    const osm = viewer.scene.primitives.add(Cesium.createOsmBuildings());
+    osm.maximumScreenSpaceError = 6;
     completeSplash();
+  }
+});
+
+// ══ GÉOLOCALISATION ══
+let userPosition = null;
+let userDot = null;
+
+function geolocate() {
+  if (!navigator.geolocation) return;
+  const btn = document.getElementById('btnGeo');
+  btn.classList.add('locating');
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    btn.classList.remove('locating');
+    const lng = pos.coords.longitude, lat = pos.coords.latitude;
+    userPosition = { lng, lat };
+
+    // Fly vers la position
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(lng, lat, 400),
+      orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 },
+      duration: 1.8
+    });
+
+    // Dot bleu position utilisateur
+    if (userDot) viewer.entities.remove(userDot);
+    userDot = viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(lng, lat, 3),
+      billboard: {
+        image: makeUserDot(),
+        verticalOrigin: Cesium.VerticalOrigin.CENTER,
+        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+        width: 20, height: 20,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
+      }
+    });
+  }, () => { btn.classList.remove('locating'); }, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+function makeUserDot() {
+  const c = document.createElement('canvas'); c.width = 20; c.height = 20;
+  const ctx = c.getContext('2d');
+  // Halo bleu
+  ctx.beginPath(); ctx.arc(10,10,9,0,Math.PI*2);
+  ctx.fillStyle = 'rgba(0,122,255,0.2)'; ctx.fill();
+  // Cercle blanc
+  ctx.beginPath(); ctx.arc(10,10,6,0,Math.PI*2);
+  ctx.fillStyle = 'white'; ctx.fill();
+  // Point bleu
+  ctx.beginPath(); ctx.arc(10,10,4,0,Math.PI*2);
+  ctx.fillStyle = '#007AFF'; ctx.fill();
+  return c.toDataURL();
+}
+
+// Géoloc automatique au démarrage
+window.addEventListener('load', () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const lng = pos.coords.longitude, lat = pos.coords.latitude;
+      userPosition = { lng, lat };
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(lng, lat, 500),
+        orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 }
+      });
+      if (userDot) viewer.entities.remove(userDot);
+      userDot = viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(lng, lat, 3),
+        billboard: {
+          image: makeUserDot(),
+          verticalOrigin: Cesium.VerticalOrigin.CENTER,
+          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+          width: 20, height: 20,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY
+        }
+      });
+    }, () => {}, { enableHighAccuracy: false, timeout: 5000 });
   }
 });
 
@@ -421,8 +511,7 @@ function checkSunny(t, sunDir) {
   const pos = Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 1.5);
   const up  = Cesium.Cartesian3.normalize(pos, new Cesium.Cartesian3());
   if (Cesium.Cartesian3.dot(sunDir, up) <= 0.05) return false;
-  const hit = viewer.scene.pickFromRay(new Cesium.Ray(pos, sunDir), Object.values(markerEntities));
-  return !hit;
+  return !viewer.scene.pickFromRay(new Cesium.Ray(pos, sunDir), Object.values(markerEntities));
 }
 
 let shadowDebounce = null, computing = false;
@@ -464,7 +553,7 @@ function syncDots() {
     if (!markerEntities[t.id]) {
       markerEntities[t.id] = viewer.entities.add({
         position: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 2),
-        billboard: { image: s?DOT_SUN:DOT_SHADE, verticalOrigin:Cesium.VerticalOrigin.CENTER, heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND, width:16, height:16, disableDepthTestDistance:Number.POSITIVE_INFINITY },
+        billboard: { image:s?DOT_SUN:DOT_SHADE, verticalOrigin:Cesium.VerticalOrigin.CENTER, heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND, width:16, height:16, disableDepthTestDistance:Number.POSITIVE_INFINITY },
         properties: { id: t.id }
       });
     } else { markerEntities[t.id].billboard.image = s?DOT_SUN:DOT_SHADE; }
@@ -505,8 +594,7 @@ function renderList(h, query) {
   let filtered=terrasses;
   if (q) filtered=terrasses.filter(t=>normalize(t.nom).includes(q)||normalize(t.type).includes(q)||normalize(t.adresse).includes(q));
   const sorted=[...filtered].sort((a,b)=>(sunStates[b.id]?1:0)-(sunStates[a.id]?1:0));
-  const sunnyN=filtered.filter(t=>sunStates[t.id]===true).length;
-  countEl.textContent=q?`${sorted.length} résultat${sorted.length>1?'s':''}`:`${sunnyN} au soleil`;
+  countEl.textContent=q?`${sorted.length} résultat${sorted.length>1?'s':''}`:  `${sorted.filter(t=>sunStates[t.id]===true).length} au soleil`;
   list.innerHTML='';
   if (!sorted.length) { list.innerHTML=`<div class="no-results">Aucun résultat pour<br><strong>"${query}"</strong></div>`; return; }
   sorted.forEach(t=>{
@@ -531,12 +619,21 @@ function renderList(h, query) {
 
 // ══ SEARCH ══
 const searchInput=document.getElementById('searchInput'), searchClear=document.getElementById('searchClear');
-searchInput.addEventListener('input',e=>{ searchQuery=e.target.value; searchClear.classList.toggle('visible',searchQuery.length>0); renderList(currentHeure,searchQuery); });
-searchClear.addEventListener('click',()=>{ searchInput.value=''; searchQuery=''; searchClear.classList.remove('visible'); renderList(currentHeure,''); });
+searchInput.addEventListener('input', e => {
+  searchQuery = e.target.value;
+  searchClear.classList.toggle('visible', searchQuery.length > 0);
+  renderList(currentHeure, searchQuery);
+  if (searchQuery.length > 0) openDrawer();
+});
+searchClear.addEventListener('click', () => {
+  searchInput.value=''; searchQuery='';
+  searchClear.classList.remove('visible');
+  renderList(currentHeure,'');
+});
 
 // ══ SLIDER ══
 const slider=document.getElementById('timeSlider');
-slider.addEventListener('input',e=>{
+slider.addEventListener('input', e => {
   const val=parseFloat(e.target.value), h=Math.floor(val), m=Math.round((val-h)*60);
   document.getElementById('heureAffichee').textContent=h+'h'+(m<10?'0'+m:m);
   slider.style.setProperty('--pct',((val-8)/13)*100+'%');
