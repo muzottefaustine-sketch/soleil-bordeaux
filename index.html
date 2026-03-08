@@ -26,21 +26,44 @@
       background: #fff;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
+      gap: 0;
       transition: opacity 0.5s ease;
     }
     #splash.out { opacity: 0; pointer-events: none; }
 
     .splash-sun {
-      width: 90px; height: 90px; margin-bottom: 22px;
+      width: 90px; height: 90px; margin-bottom: 24px;
       animation: splash-pulse 2.5s ease-in-out infinite;
     }
     @keyframes splash-pulse {
       0%,100% { transform: scale(1) rotate(0deg); }
       50%      { transform: scale(1.07) rotate(6deg); }
     }
-    .splash-name { font-size: 26px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px; }
-    .splash-city { font-size: 13px; color: var(--text-3); letter-spacing: 0.3px; }
-    .splash-progress-wrap { position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%); width: 120px; }
+
+    .splash-name {
+      font-size: 28px; font-weight: 600;
+      color: var(--text); letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .splash-tagline {
+      font-size: 14px; font-weight: 400;
+      color: var(--text-2);
+      text-align: center;
+      line-height: 1.5;
+      max-width: 220px;
+      margin-bottom: 0;
+    }
+    .splash-tagline strong {
+      color: var(--sun);
+      font-weight: 600;
+    }
+
+    .splash-progress-wrap {
+      position: absolute; bottom: 52px;
+      left: 50%; transform: translateX(-50%);
+      width: 120px;
+    }
     .splash-progress-track { width: 100%; height: 2px; background: #E5E5EA; border-radius: 2px; overflow: hidden; }
     .splash-progress-bar { height: 100%; border-radius: 2px; background: #FFD600; width: 0%; transition: width 0.3s ease; }
 
@@ -50,70 +73,46 @@
     .cesium-selection-wrapper, .cesium-infoBox { display: none !important; }
     .cesium-widget-credits { display: none !important; }
 
-    /* ══ BARRE RECHERCHE HAUT — glassmorphism ══ */
+    /* ══ BARRE HAUT ══ */
     #topBar {
       position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
       z-index: 30; width: calc(100% - 32px); max-width: 480px;
       display: flex; align-items: center; gap: 10px;
     }
-
     .search-glass {
       flex: 1; display: flex; align-items: center; gap: 8px;
       background: var(--glass);
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-radius: 16px;
-      padding: 0 14px;
-      height: 48px;
+      border-radius: 16px; padding: 0 14px; height: 48px;
       box-shadow: 0 2px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
       border: 1px solid rgba(255,255,255,0.5);
     }
     .search-glass svg { flex-shrink: 0; opacity: 0.4; }
     #searchInput {
       flex: 1; border: none; background: transparent;
-      font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--text);
-      outline: none;
+      font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--text); outline: none;
     }
     #searchInput::placeholder { color: var(--text-3); }
     .search-clear-btn {
       background: none; border: none; cursor: pointer;
       color: var(--text-3); font-size: 16px; padding: 0;
-      display: none; align-items: center; justify-content: center;
-      width: 20px; height: 20px;
+      display: none; align-items: center; justify-content: center; width: 20px; height: 20px;
     }
     .search-clear-btn.visible { display: flex; }
 
-    /* Bouton liste */
-    #btnListe {
-      flex-shrink: 0;
-      width: 48px; height: 48px;
+    .icon-btn {
+      flex-shrink: 0; width: 48px; height: 48px;
       background: var(--glass);
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.5);
-      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.5); border-radius: 14px;
       box-shadow: 0 2px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
-    #btnListe:active { background: rgba(255,255,255,0.95); }
-
-    /* Bouton géoloc */
-    #btnGeo {
-      flex-shrink: 0;
-      width: 48px; height: 48px;
-      background: var(--glass);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.5);
-      border-radius: 14px;
-      box-shadow: 0 2px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s;
-    }
-    #btnGeo:active { background: rgba(255,255,255,0.95); }
+    .icon-btn:active { background: rgba(255,255,255,0.95); }
     #btnGeo.locating { animation: geo-pulse 1s ease-in-out infinite; }
     @keyframes geo-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-    /* ══ CURSEUR BAS — glassmorphism ══ */
+    /* ══ CURSEUR BAS ══ */
     .panel-map {
       position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
       background: var(--glass);
@@ -121,16 +120,14 @@
       border: 1px solid rgba(255,255,255,0.5);
       padding: 14px 22px; border-radius: 22px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.7);
-      text-align: center; z-index: 30;
-      width: 80%; max-width: 400px;
+      text-align: center; z-index: 30; width: 80%; max-width: 400px;
     }
     .panel-map h3 {
       margin: 0 0 10px 0; font-size: 16px; font-weight: 600; color: var(--text);
       display: flex; align-items: center; justify-content: center; gap: 8px;
     }
     .panel-map input[type=range] {
-      width: 100%; cursor: pointer;
-      -webkit-appearance: none; height: 3px; border-radius: 2px;
+      width: 100%; cursor: pointer; -webkit-appearance: none; height: 3px; border-radius: 2px;
       background: linear-gradient(to right, var(--sun) var(--pct,46%), rgba(0,0,0,0.12) var(--pct,46%));
       outline: none;
     }
@@ -144,13 +141,10 @@
     #tooltip {
       position: fixed; z-index: 50;
       background: rgba(28,28,30,0.88); color: white;
-      padding: 9px 14px; border-radius: 12px;
-      font-size: 13px; font-weight: 500;
-      pointer-events: none;
-      opacity: 0; transform: translateY(5px);
+      padding: 9px 14px; border-radius: 12px; font-size: 13px; font-weight: 500;
+      pointer-events: none; opacity: 0; transform: translateY(5px);
       transition: opacity 0.18s, transform 0.18s;
-      backdrop-filter: blur(10px);
-      max-width: 230px; text-align: center;
+      backdrop-filter: blur(10px); max-width: 230px; text-align: center;
     }
     #tooltip.visible { opacity: 1; transform: translateY(0); }
     #tooltip .tt-type { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 2px; }
@@ -181,11 +175,6 @@
     .drawer-title { font-size:18px; font-weight:600; color:var(--text); letter-spacing:-0.3px; }
     .drawer-title span { color:var(--sun); }
     #btnClose { background:var(--bg); border:none; border-radius:50%; width:30px; height:30px; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-2); }
-
-    .drawer-search-wrap { position:relative; margin-bottom:12px; }
-    .drawer-search-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--text-3); font-size:13px; pointer-events:none; }
-    #drawerSearch { width:100%; padding:9px 30px 9px 32px; border-radius:var(--radius-sm); border:none; background:var(--bg); font-family:'Outfit',sans-serif; font-size:13px; color:var(--text); outline:none; }
-    #drawerSearch::placeholder { color:var(--text-3); }
 
     .section-title { padding:4px 20px 8px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
     .section-label { font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.8px; }
@@ -240,7 +229,7 @@
     </svg>
   </div>
   <div class="splash-name">Terrasses</div>
-  <div class="splash-city">Bordeaux</div>
+  <div class="splash-tagline">Trouvez vos <strong>terrasses au soleil</strong> à Bordeaux, maintenant.</div>
   <div class="splash-progress-wrap">
     <div class="splash-progress-track">
       <div class="splash-progress-bar" id="progressBar"></div>
@@ -261,18 +250,18 @@
     <input type="text" id="searchInput" placeholder="Bar, café, restaurant…">
     <button class="search-clear-btn" id="searchClear">✕</button>
   </div>
-  <button id="btnListe" onclick="openDrawer()" title="Liste des terrasses">
+  <button class="icon-btn" id="btnListe" onclick="openDrawer()" title="Liste">
     <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
       <rect width="18" height="2" rx="1" fill="#1C1C1E"/>
       <rect y="6" width="18" height="2" rx="1" fill="#1C1C1E"/>
       <rect y="12" width="18" height="2" rx="1" fill="#1C1C1E"/>
     </svg>
   </button>
-  <button id="btnGeo" onclick="geolocate()" title="Ma position">
+  <button class="icon-btn" id="btnGeo" onclick="geolocate()" title="Ma position">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
       <circle cx="10" cy="10" r="3.5" fill="#007AFF"/>
-      <circle cx="10" cy="10" r="3.5" fill="#007AFF" opacity="0.3" transform="scale(2.2)" style="transform-origin:10px 10px"/>
-      <path d="M10 2V4M10 16V18M2 10H4M16 10H18" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="10" cy="10" r="6" stroke="#007AFF" stroke-width="1.2" fill="none" opacity="0.35"/>
+      <path d="M10 2V4.5M10 15.5V18M2 10H4.5M15.5 10H18" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
   </button>
 </div>
@@ -327,7 +316,6 @@ let splashDone = false, progress = 0;
 const progressInterval = setInterval(() => {
   if (progress < 85) { progress += Math.random() * 8; progressBar.style.width = Math.min(progress, 85) + '%'; }
 }, 200);
-
 function completeSplash() {
   if (splashDone) return; splashDone = true;
   clearInterval(progressInterval);
@@ -340,10 +328,18 @@ function completeSplash() {
 }
 setTimeout(completeSplash, 5000);
 
-// ══ CESIUM ══
+// ══ CESIUM — fond OSM avec noms de rues ══
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
+// Fond OpenStreetMap avec noms de rues — remplace le satellite
+const osmProvider = new Cesium.UrlTemplateImageryProvider({
+  url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  credit: 'OpenStreetMap',
+  maximumLevel: 19,
+});
+
 const viewer = new Cesium.Viewer('cesiumContainer', {
+  imageryProvider: osmProvider,        // ← fond OSM avec rues et noms
   terrainProvider: Cesium.createWorldTerrain(),
   skyBox: false, skyAtmosphere: false,
   baseLayerPicker: false, homeButton: false,
@@ -364,14 +360,12 @@ viewer.scene.screenSpaceCameraController.enableRotate = true;
 viewer.scene.screenSpaceCameraController.enableTilt = true;
 viewer.scene.screenSpaceCameraController.enableTranslate = true;
 
-// Vue par défaut — Bordeaux centre (fallback si pas de géoloc)
-const DEFAULT_LNG = -0.57918, DEFAULT_LAT = 44.837789;
 viewer.camera.setView({
-  destination: Cesium.Cartesian3.fromDegrees(DEFAULT_LNG, DEFAULT_LAT, 500),
+  destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 500),
   orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 }
 });
 
-// Bâtiments OSM après stabilisation
+// Bâtiments OSM 3D — injectés après stabilisation globe
 let osmAdded = false;
 viewer.scene.postRender.addEventListener(function waitGlobe() {
   if (viewer.scene.globe.tilesLoaded && !osmAdded) {
@@ -383,89 +377,51 @@ viewer.scene.postRender.addEventListener(function waitGlobe() {
   }
 });
 
-// ══ GÉOLOCALISATION ══
-let userPosition = null;
+// ══ GÉOLOC ══
 let userDot = null;
-
+function makeUserDot() {
+  const c = document.createElement('canvas'); c.width = 20; c.height = 20;
+  const ctx = c.getContext('2d');
+  ctx.beginPath(); ctx.arc(10,10,9,0,Math.PI*2); ctx.fillStyle='rgba(0,122,255,0.2)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(10,10,6,0,Math.PI*2); ctx.fillStyle='white'; ctx.fill();
+  ctx.beginPath(); ctx.arc(10,10,4,0,Math.PI*2); ctx.fillStyle='#007AFF'; ctx.fill();
+  return c.toDataURL();
+}
+function placeUserDot(lng, lat) {
+  if (userDot) viewer.entities.remove(userDot);
+  userDot = viewer.entities.add({
+    position: Cesium.Cartesian3.fromDegrees(lng, lat, 3),
+    billboard: { image:makeUserDot(), verticalOrigin:Cesium.VerticalOrigin.CENTER, heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND, width:20, height:20, disableDepthTestDistance:Number.POSITIVE_INFINITY }
+  });
+}
 function geolocate() {
   if (!navigator.geolocation) return;
   const btn = document.getElementById('btnGeo');
   btn.classList.add('locating');
-
   navigator.geolocation.getCurrentPosition(pos => {
     btn.classList.remove('locating');
-    const lng = pos.coords.longitude, lat = pos.coords.latitude;
-    userPosition = { lng, lat };
-
-    // Fly vers la position
-    viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(lng, lat, 400),
-      orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 },
-      duration: 1.8
-    });
-
-    // Dot bleu position utilisateur
-    if (userDot) viewer.entities.remove(userDot);
-    userDot = viewer.entities.add({
-      position: Cesium.Cartesian3.fromDegrees(lng, lat, 3),
-      billboard: {
-        image: makeUserDot(),
-        verticalOrigin: Cesium.VerticalOrigin.CENTER,
-        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-        width: 20, height: 20,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
-      }
-    });
-  }, () => { btn.classList.remove('locating'); }, { enableHighAccuracy: true, timeout: 8000 });
+    const { longitude: lng, latitude: lat } = pos.coords;
+    placeUserDot(lng, lat);
+    viewer.camera.flyTo({ destination:Cesium.Cartesian3.fromDegrees(lng,lat,400), orientation:{heading:0,pitch:Cesium.Math.toRadians(-45),roll:0}, duration:1.8 });
+  }, () => btn.classList.remove('locating'), { enableHighAccuracy:true, timeout:8000 });
 }
-
-function makeUserDot() {
-  const c = document.createElement('canvas'); c.width = 20; c.height = 20;
-  const ctx = c.getContext('2d');
-  // Halo bleu
-  ctx.beginPath(); ctx.arc(10,10,9,0,Math.PI*2);
-  ctx.fillStyle = 'rgba(0,122,255,0.2)'; ctx.fill();
-  // Cercle blanc
-  ctx.beginPath(); ctx.arc(10,10,6,0,Math.PI*2);
-  ctx.fillStyle = 'white'; ctx.fill();
-  // Point bleu
-  ctx.beginPath(); ctx.arc(10,10,4,0,Math.PI*2);
-  ctx.fillStyle = '#007AFF'; ctx.fill();
-  return c.toDataURL();
-}
-
-// Géoloc automatique au démarrage
+// Géoloc auto au démarrage
 window.addEventListener('load', () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(pos => {
-      const lng = pos.coords.longitude, lat = pos.coords.latitude;
-      userPosition = { lng, lat };
-      viewer.camera.setView({
-        destination: Cesium.Cartesian3.fromDegrees(lng, lat, 500),
-        orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 }
-      });
-      if (userDot) viewer.entities.remove(userDot);
-      userDot = viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(lng, lat, 3),
-        billboard: {
-          image: makeUserDot(),
-          verticalOrigin: Cesium.VerticalOrigin.CENTER,
-          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-          width: 20, height: 20,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY
-        }
-      });
-    }, () => {}, { enableHighAccuracy: false, timeout: 5000 });
-  }
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const { longitude: lng, latitude: lat } = pos.coords;
+    placeUserDot(lng, lat);
+    viewer.camera.setView({ destination:Cesium.Cartesian3.fromDegrees(lng,lat,500), orientation:{heading:0,pitch:Cesium.Math.toRadians(-45),roll:0} });
+  }, ()=>{}, { enableHighAccuracy:false, timeout:5000 });
 });
 
 // ══ STATE ══
-let terrasses = [], sunStates = {}, searchQuery = '', currentHeure = 14;
-const markerEntities = {};
+let terrasses=[], sunStates={}, searchQuery='', currentHeure=14;
+const markerEntities={};
 
 // ══ OVERPASS ══
-const BBOX = '44.820,-0.605,44.875,-0.535';
-const QUERY = `[out:json][timeout:30];
+const BBOX='44.820,-0.605,44.875,-0.535';
+const QUERY=`[out:json][timeout:30];
 (
   node["amenity"="bar"]["outdoor_seating"="yes"](${BBOX});
   node["amenity"="cafe"]["outdoor_seating"="yes"](${BBOX});
@@ -477,170 +433,138 @@ const QUERY = `[out:json][timeout:30];
   node["amenity"="restaurant"](${BBOX});
 );
 out body;`;
-
-function typeLabel(a) {
-  return { bar:'Bar', cafe:'Café', restaurant:'Restaurant', pub:'Pub', biergarten:'Brasserie' }[a] || 'Terrasse';
-}
-
-async function fetchTerrasses() {
-  const res = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(QUERY) });
-  if (!res.ok) throw new Error('HTTP '+res.status);
-  const data = await res.json();
-  const seen = new Set();
-  return data.elements
-    .filter(el => el.lat && el.lon && el.tags && el.tags.name && !seen.has(el.tags.name) && seen.add(el.tags.name))
-    .map(el => ({
-      id: el.id, nom: el.tags.name,
-      adresse: el.tags['addr:street'] ? ((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim() : 'Bordeaux',
-      type: typeLabel(el.tags.amenity), lng: el.lon, lat: el.lat,
-    }));
+function typeLabel(a){return{bar:'Bar',cafe:'Café',restaurant:'Restaurant',pub:'Pub',biergarten:'Brasserie'}[a]||'Terrasse';}
+async function fetchTerrasses(){
+  const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(QUERY)});
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  const data=await res.json(); const seen=new Set();
+  return data.elements.filter(el=>el.lat&&el.lon&&el.tags&&el.tags.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
+    .map(el=>({id:el.id,nom:el.tags.name,adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'Bordeaux',type:typeLabel(el.tags.amenity),lng:el.lon,lat:el.lat}));
 }
 
 // ══ RAY CASTING ══
-function getSunDir(jd) {
-  const s = Cesium.Simon1994PlanetaryPositions.computeSunPositionInEarthInertialFrame(jd);
-  const m = Cesium.Transforms.computeIcrfToFixedMatrix(jd);
-  if (!m) return null;
-  const d = new Cesium.Cartesian3();
-  Cesium.Matrix3.multiplyByVector(m, s, d);
-  return Cesium.Cartesian3.normalize(d, d);
+function getSunDir(jd){
+  const s=Cesium.Simon1994PlanetaryPositions.computeSunPositionInEarthInertialFrame(jd);
+  const m=Cesium.Transforms.computeIcrfToFixedMatrix(jd);
+  if(!m)return null;
+  const d=new Cesium.Cartesian3();
+  Cesium.Matrix3.multiplyByVector(m,s,d);
+  return Cesium.Cartesian3.normalize(d,d);
 }
-
-function checkSunny(t, sunDir) {
-  if (!sunDir) return false;
-  const pos = Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 1.5);
-  const up  = Cesium.Cartesian3.normalize(pos, new Cesium.Cartesian3());
-  if (Cesium.Cartesian3.dot(sunDir, up) <= 0.05) return false;
-  return !viewer.scene.pickFromRay(new Cesium.Ray(pos, sunDir), Object.values(markerEntities));
+function checkSunny(t,sunDir){
+  if(!sunDir)return false;
+  const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,1.5);
+  const up=Cesium.Cartesian3.normalize(pos,new Cesium.Cartesian3());
+  if(Cesium.Cartesian3.dot(sunDir,up)<=0.05)return false;
+  return!viewer.scene.pickFromRay(new Cesium.Ray(pos,sunDir),Object.values(markerEntities));
 }
-
-let shadowDebounce = null, computing = false;
-function scheduleShadow() {
+let shadowDebounce=null,computing=false;
+function scheduleShadow(){
   clearTimeout(shadowDebounce);
-  shadowDebounce = setTimeout(() => {
-    const unsub = viewer.scene.postRender.addEventListener(() => { unsub(); if (!computing) runShadow(); });
-  }, 500);
+  shadowDebounce=setTimeout(()=>{const unsub=viewer.scene.postRender.addEventListener(()=>{unsub();if(!computing)runShadow();});},500);
 }
-
-async function runShadow() {
-  computing = true;
-  const jd = viewer.clock.currentTime;
+async function runShadow(){
+  computing=true;
+  const jd=viewer.clock.currentTime;
   viewer.scene.render(jd);
-  const sunDir = getSunDir(jd);
-  for (let i = 0; i < terrasses.length; i += 10) {
+  const sunDir=getSunDir(jd);
+  for(let i=0;i<terrasses.length;i+=10){
     viewer.scene.render(jd);
-    for (const t of terrasses.slice(i, i+10)) sunStates[t.id] = checkSunny(t, sunDir);
-    syncDots(); renderList(currentHeure, searchQuery);
-    await new Promise(r => setTimeout(r, 0));
+    for(const t of terrasses.slice(i,i+10))sunStates[t.id]=checkSunny(t,sunDir);
+    syncDots();renderList(currentHeure,searchQuery);
+    await new Promise(r=>setTimeout(r,0));
   }
-  computing = false;
+  computing=false;
 }
 
 // ══ DOTS ══
-function makeDot(sunny) {
-  const c = document.createElement('canvas'); c.width = 16; c.height = 16;
-  const ctx = c.getContext('2d');
-  ctx.beginPath(); ctx.arc(8,8,7,0,Math.PI*2); ctx.fillStyle = sunny?'rgba(255,149,0,0.2)':'rgba(142,155,173,0.15)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(8,8,4,0,Math.PI*2); ctx.fillStyle = sunny?'#FF9500':'#8E9BAD'; ctx.fill();
-  ctx.beginPath(); ctx.arc(8,8,4,0,Math.PI*2); ctx.strokeStyle='white'; ctx.lineWidth=1.5; ctx.stroke();
+function makeDot(sunny){
+  const c=document.createElement('canvas');c.width=16;c.height=16;
+  const ctx=c.getContext('2d');
+  ctx.beginPath();ctx.arc(8,8,7,0,Math.PI*2);ctx.fillStyle=sunny?'rgba(255,149,0,0.2)':'rgba(142,155,173,0.15)';ctx.fill();
+  ctx.beginPath();ctx.arc(8,8,4,0,Math.PI*2);ctx.fillStyle=sunny?'#FF9500':'#8E9BAD';ctx.fill();
+  ctx.beginPath();ctx.arc(8,8,4,0,Math.PI*2);ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();
   return c.toDataURL();
 }
-const DOT_SUN = makeDot(true), DOT_SHADE = makeDot(false);
-
-function syncDots() {
-  terrasses.forEach(t => {
-    const s = sunStates[t.id]===true;
-    if (!markerEntities[t.id]) {
-      markerEntities[t.id] = viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 2),
-        billboard: { image:s?DOT_SUN:DOT_SHADE, verticalOrigin:Cesium.VerticalOrigin.CENTER, heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND, width:16, height:16, disableDepthTestDistance:Number.POSITIVE_INFINITY },
-        properties: { id: t.id }
-      });
-    } else { markerEntities[t.id].billboard.image = s?DOT_SUN:DOT_SHADE; }
+const DOT_SUN=makeDot(true),DOT_SHADE=makeDot(false);
+function syncDots(){
+  terrasses.forEach(t=>{
+    const s=sunStates[t.id]===true;
+    if(!markerEntities[t.id]){
+      markerEntities[t.id]=viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,2),billboard:{image:s?DOT_SUN:DOT_SHADE,verticalOrigin:Cesium.VerticalOrigin.CENTER,heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND,width:16,height:16,disableDepthTestDistance:Number.POSITIVE_INFINITY},properties:{id:t.id}});
+    }else{markerEntities[t.id].billboard.image=s?DOT_SUN:DOT_SHADE;}
   });
 }
 
 // ══ TOOLTIP ══
-const tooltip = document.getElementById('tooltip');
-let ttTimeout = null;
-function showTooltip(t, x, y) {
-  const s = sunStates[t.id]===true;
-  document.getElementById('ttName').textContent = t.nom;
-  document.getElementById('ttType').textContent = t.type+' · '+t.adresse;
-  const el = document.getElementById('ttSun');
-  el.textContent = s?'☀ Au soleil':'🌥 À l\'ombre';
-  el.className = 'tt-sun '+(s?'sun':'shade');
-  const w = 230;
-  tooltip.style.left = Math.min(Math.max(x-w/2,10), window.innerWidth-w-10)+'px';
-  tooltip.style.top  = Math.max(y-100,10)+'px';
+const tooltip=document.getElementById('tooltip');
+let ttTimeout=null;
+function showTooltip(t,x,y){
+  const s=sunStates[t.id]===true;
+  document.getElementById('ttName').textContent=t.nom;
+  document.getElementById('ttType').textContent=t.type+' · '+t.adresse;
+  const el=document.getElementById('ttSun');
+  el.textContent=s?'☀ Au soleil':'🌥 À l\'ombre';
+  el.className='tt-sun '+(s?'sun':'shade');
+  const w=230;
+  tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
+  tooltip.style.top=Math.max(y-100,10)+'px';
   tooltip.classList.add('visible');
   clearTimeout(ttTimeout);
-  ttTimeout = setTimeout(()=>tooltip.classList.remove('visible'), 3000);
+  ttTimeout=setTimeout(()=>tooltip.classList.remove('visible'),3000);
 }
-function hideTooltip() { clearTimeout(ttTimeout); tooltip.classList.remove('visible'); }
+function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');}
 
 // ══ HELPERS ══
-function normalize(s) { return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
-function highlight(text, q) {
-  if (!q) return text;
-  return text.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'),
-    '<mark style="background:var(--sun-bg);color:var(--sun);border-radius:3px;padding:0 2px">$1</mark>');
+function normalize(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function highlight(text,q){
+  if(!q)return text;
+  return text.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'),'<mark style="background:var(--sun-bg);color:var(--sun);border-radius:3px;padding:0 2px">$1</mark>');
 }
 
 // ══ RENDER LIST ══
-function renderList(h, query) {
-  const list=document.getElementById('terrasseList'), countEl=document.getElementById('sunCount');
+function renderList(h,query){
+  const list=document.getElementById('terrasseList'),countEl=document.getElementById('sunCount');
   const q=normalize(query||'');
   let filtered=terrasses;
-  if (q) filtered=terrasses.filter(t=>normalize(t.nom).includes(q)||normalize(t.type).includes(q)||normalize(t.adresse).includes(q));
+  if(q)filtered=terrasses.filter(t=>normalize(t.nom).includes(q)||normalize(t.type).includes(q)||normalize(t.adresse).includes(q));
   const sorted=[...filtered].sort((a,b)=>(sunStates[b.id]?1:0)-(sunStates[a.id]?1:0));
-  countEl.textContent=q?`${sorted.length} résultat${sorted.length>1?'s':''}`:  `${sorted.filter(t=>sunStates[t.id]===true).length} au soleil`;
+  countEl.textContent=q?`${sorted.length} résultat${sorted.length>1?'s':''}`:`${sorted.filter(t=>sunStates[t.id]===true).length} au soleil`;
   list.innerHTML='';
-  if (!sorted.length) { list.innerHTML=`<div class="no-results">Aucun résultat pour<br><strong>"${query}"</strong></div>`; return; }
+  if(!sorted.length){list.innerHTML=`<div class="no-results">Aucun résultat pour<br><strong>"${query}"</strong></div>`;return;}
   sorted.forEach(t=>{
     const s=sunStates[t.id]===true;
-    const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id;
-    card.innerHTML=`
-      <div class="card-icon ${s?'sun':'shade'}">${s?'☀️':'🌥'}</div>
-      <div class="card-body">
-        <div class="card-name">${highlight(t.nom,query)}</div>
-        <div class="card-sub">${t.type} · ${t.adresse}</div>
-      </div>
-      <div class="card-badge ${s?'sun':'shade'}">${s?'Soleil':'Ombre'}</div>
-    `;
+    const card=document.createElement('div');card.className='card';card.dataset.id=t.id;
+    card.innerHTML=`<div class="card-icon ${s?'sun':'shade'}">${s?'☀️':'🌥'}</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${t.type} · ${t.adresse}</div></div><div class="card-badge ${s?'sun':'shade'}">${s?'Soleil':'Ombre'}</div>`;
     card.addEventListener('click',()=>{
       document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
-      card.classList.add('active'); closeDrawer();
-      viewer.camera.flyTo({ destination:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,220), orientation:{heading:0,pitch:Cesium.Math.toRadians(-38),roll:0}, duration:1.4 });
+      card.classList.add('active');closeDrawer();
+      viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,220),orientation:{heading:0,pitch:Cesium.Math.toRadians(-38),roll:0},duration:1.4});
     });
     list.appendChild(card);
   });
 }
 
 // ══ SEARCH ══
-const searchInput=document.getElementById('searchInput'), searchClear=document.getElementById('searchClear');
-searchInput.addEventListener('input', e => {
-  searchQuery = e.target.value;
-  searchClear.classList.toggle('visible', searchQuery.length > 0);
-  renderList(currentHeure, searchQuery);
-  if (searchQuery.length > 0) openDrawer();
+const searchInput=document.getElementById('searchInput'),searchClear=document.getElementById('searchClear');
+searchInput.addEventListener('input',e=>{
+  searchQuery=e.target.value;
+  searchClear.classList.toggle('visible',searchQuery.length>0);
+  renderList(currentHeure,searchQuery);
+  if(searchQuery.length>0)openDrawer();
 });
-searchClear.addEventListener('click', () => {
-  searchInput.value=''; searchQuery='';
-  searchClear.classList.remove('visible');
-  renderList(currentHeure,'');
-});
+searchClear.addEventListener('click',()=>{searchInput.value='';searchQuery='';searchClear.classList.remove('visible');renderList(currentHeure,'');});
 
 // ══ SLIDER ══
 const slider=document.getElementById('timeSlider');
-slider.addEventListener('input', e => {
-  const val=parseFloat(e.target.value), h=Math.floor(val), m=Math.round((val-h)*60);
+slider.addEventListener('input',e=>{
+  const val=parseFloat(e.target.value),h=Math.floor(val),m=Math.round((val-h)*60);
   document.getElementById('heureAffichee').textContent=h+'h'+(m<10?'0'+m:m);
   slider.style.setProperty('--pct',((val-8)/13)*100+'%');
-  const date=new Date(); date.setHours(h,m,0,0);
+  const date=new Date();date.setHours(h,m,0,0);
   viewer.clock.currentTime=Cesium.JulianDate.fromDate(date);
-  currentHeure=val; hideTooltip();
-  if(terrasses.length>0) scheduleShadow();
+  currentHeure=val;hideTooltip();
+  if(terrasses.length>0)scheduleShadow();
 });
 
 // ══ CLICK DOT ══
@@ -650,20 +574,19 @@ handler.setInputAction(click=>{
   if(Cesium.defined(picked)&&picked.id){
     const id=picked.id.properties?.id?.getValue();
     const t=terrasses.find(x=>String(x.id)===String(id));
-    if(t){ showTooltip(t,click.position.x,click.position.y); return; }
+    if(t){showTooltip(t,click.position.x,click.position.y);return;}
   }
   hideTooltip();
 },Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
 // ══ BOOT ══
-async function init() {
+async function init(){
   const now=new Date();
   const initH=Math.min(21,Math.max(8,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
-  slider.value=initH; slider.dispatchEvent(new Event('input'));
-
+  slider.value=initH;slider.dispatchEvent(new Event('input'));
   let data;
-  try { data=await fetchTerrasses(); }
-  catch(e) {
+  try{data=await fetchTerrasses();}
+  catch(e){
     document.getElementById('loadingState').style.display='none';
     document.getElementById('terrasseList').style.display='block';
     document.getElementById('terrasseList').innerHTML=`<div class="no-results">Erreur de chargement.<br>Vérifiez votre connexion.</div>`;
@@ -671,16 +594,14 @@ async function init() {
   }
   document.getElementById('loadingState').style.display='none';
   document.getElementById('terrasseList').style.display='block';
-  terrasses=data; terrasses.forEach(t=>{ sunStates[t.id]=false; });
+  terrasses=data;terrasses.forEach(t=>{sunStates[t.id]=false;});
   document.getElementById('footerText').textContent=`${terrasses.length} terrasses · OpenStreetMap`;
   renderList(currentHeure,'');
-
   viewer.scene.postRender.addEventListener(function once(){
     viewer.scene.postRender.removeEventListener(once);
     runShadow();
   });
 }
-
 init();
 </script>
 </body>
