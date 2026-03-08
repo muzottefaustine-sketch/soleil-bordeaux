@@ -11,6 +11,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --sun: #FF9500; --sun-bg: #FFF4E0;
+      --yellow: #FFD600; --yellow-bg: #FFFBE0;
       --shade: #8E9BAD; --shade-bg: #EEF1F5;
       --text: #1C1C1E; --text-2: #6C6C70; --text-3: #AEAEB2;
       --divider: #E5E5EA; --panel-w: 320px;
@@ -26,46 +27,21 @@
       background: #fff;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 0;
       transition: opacity 0.5s ease;
     }
     #splash.out { opacity: 0; pointer-events: none; }
 
-    .splash-sun {
-      width: 90px; height: 90px; margin-bottom: 24px;
-      animation: splash-pulse 2.5s ease-in-out infinite;
-    }
+    .splash-sun { width: 90px; height: 90px; margin-bottom: 24px; animation: splash-pulse 2.5s ease-in-out infinite; }
     @keyframes splash-pulse {
       0%,100% { transform: scale(1) rotate(0deg); }
       50%      { transform: scale(1.07) rotate(6deg); }
     }
-
-    .splash-name {
-      font-size: 28px; font-weight: 600;
-      color: var(--text); letter-spacing: -0.5px;
-      margin-bottom: 8px;
-    }
-
-    .splash-tagline {
-      font-size: 14px; font-weight: 400;
-      color: var(--text-2);
-      text-align: center;
-      line-height: 1.5;
-      max-width: 220px;
-      margin-bottom: 0;
-    }
-    .splash-tagline strong {
-      color: var(--sun);
-      font-weight: 600;
-    }
-
-    .splash-progress-wrap {
-      position: absolute; bottom: 52px;
-      left: 50%; transform: translateX(-50%);
-      width: 120px;
-    }
+    .splash-name { font-size: 28px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; margin-bottom: 8px; }
+    .splash-tagline { font-size: 14px; color: var(--text-2); text-align: center; line-height: 1.5; max-width: 220px; }
+    .splash-tagline strong { color: var(--yellow); font-weight: 600; }
+    .splash-progress-wrap { position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%); width: 120px; }
     .splash-progress-track { width: 100%; height: 2px; background: #E5E5EA; border-radius: 2px; overflow: hidden; }
-    .splash-progress-bar { height: 100%; border-radius: 2px; background: #FFD600; width: 0%; transition: width 0.3s ease; }
+    .splash-progress-bar { height: 100%; border-radius: 2px; background: var(--yellow); width: 0%; transition: width 0.3s ease; }
 
     /* ══ MAP ══ */
     #cesiumContainer { position: fixed; inset: 0; width: 100vw; height: 100vh; }
@@ -73,12 +49,28 @@
     .cesium-selection-wrapper, .cesium-infoBox { display: none !important; }
     .cesium-widget-credits { display: none !important; }
 
+    /* ══ BANDEAU MÉTÉO ══ */
+    #meteoBar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 35;
+      background: rgba(50,50,80,0.88);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      color: white; text-align: center;
+      font-size: 13px; font-weight: 500;
+      padding: 10px 20px;
+      display: none;
+      align-items: center; justify-content: center; gap: 8px;
+    }
+    #meteoBar.visible { display: flex; }
+
     /* ══ BARRE HAUT ══ */
     #topBar {
       position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
       z-index: 30; width: calc(100% - 32px); max-width: 480px;
       display: flex; align-items: center; gap: 10px;
+      transition: top 0.2s;
     }
+    #topBar.pushed { top: 56px; }
+
     .search-glass {
       flex: 1; display: flex; align-items: center; gap: 8px;
       background: var(--glass);
@@ -88,16 +80,9 @@
       border: 1px solid rgba(255,255,255,0.5);
     }
     .search-glass svg { flex-shrink: 0; opacity: 0.4; }
-    #searchInput {
-      flex: 1; border: none; background: transparent;
-      font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--text); outline: none;
-    }
+    #searchInput { flex: 1; border: none; background: transparent; font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--text); outline: none; }
     #searchInput::placeholder { color: var(--text-3); }
-    .search-clear-btn {
-      background: none; border: none; cursor: pointer;
-      color: var(--text-3); font-size: 16px; padding: 0;
-      display: none; align-items: center; justify-content: center; width: 20px; height: 20px;
-    }
+    .search-clear-btn { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 16px; padding: 0; display: none; align-items: center; justify-content: center; width: 20px; height: 20px; }
     .search-clear-btn.visible { display: flex; }
 
     .icon-btn {
@@ -122,20 +107,9 @@
       box-shadow: 0 4px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.7);
       text-align: center; z-index: 30; width: 80%; max-width: 400px;
     }
-    .panel-map h3 {
-      margin: 0 0 10px 0; font-size: 16px; font-weight: 600; color: var(--text);
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .panel-map input[type=range] {
-      width: 100%; cursor: pointer; -webkit-appearance: none; height: 3px; border-radius: 2px;
-      background: linear-gradient(to right, var(--sun) var(--pct,46%), rgba(0,0,0,0.12) var(--pct,46%));
-      outline: none;
-    }
-    .panel-map input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
-      background: white; border: 2.5px solid var(--sun);
-      box-shadow: 0 1px 8px rgba(0,0,0,0.15); cursor: pointer;
-    }
+    .panel-map h3 { margin: 0 0 10px 0; font-size: 16px; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .panel-map input[type=range] { width: 100%; cursor: pointer; -webkit-appearance: none; height: 3px; border-radius: 2px; background: linear-gradient(to right, var(--sun) var(--pct,46%), rgba(0,0,0,0.12) var(--pct,46%)); outline: none; }
+    .panel-map input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: white; border: 2.5px solid var(--sun); box-shadow: 0 1px 8px rgba(0,0,0,0.15); cursor: pointer; }
 
     /* ══ TOOLTIP ══ */
     #tooltip {
@@ -144,28 +118,25 @@
       padding: 9px 14px; border-radius: 12px; font-size: 13px; font-weight: 500;
       pointer-events: none; opacity: 0; transform: translateY(5px);
       transition: opacity 0.18s, transform 0.18s;
-      backdrop-filter: blur(10px); max-width: 230px; text-align: center;
+      backdrop-filter: blur(10px); max-width: 240px; text-align: center;
     }
     #tooltip.visible { opacity: 1; transform: translateY(0); }
     #tooltip .tt-type { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 2px; }
     #tooltip .tt-sun  { font-size: 11px; font-weight: 500; margin-top: 4px; }
-    #tooltip .tt-sun.sun   { color: #FFB74D; }
+    #tooltip .tt-sun.sun   { color: #FFD600; }
     #tooltip .tt-sun.shade { color: #90CAF9; }
 
+    /* Barre soleil dans tooltip */
+    .tt-sunbar { margin-top: 7px; }
+    .tt-sunbar-track { height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden; display: flex; }
+    .tt-sunbar-seg { height: 100%; transition: background 0.2s; }
+    .tt-sunbar-labels { display: flex; justify-content: space-between; margin-top: 3px; font-size: 9px; color: rgba(255,255,255,0.3); }
+
     /* ══ DRAWER ══ */
-    #drawer {
-      position: fixed; z-index: 40; background: var(--white);
-      display: flex; flex-direction: column;
-      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
-    }
-    @media (min-width: 641px) {
-      #drawer { top:0; right:0; width:var(--panel-w); height:100vh; border-left:1px solid var(--divider); transform:translateX(110%); }
-      #drawer.open { transform:translateX(0); }
-    }
-    @media (max-width: 640px) {
-      #drawer { left:0; bottom:0; width:100%; height:78vh; border-radius:18px 18px 0 0; border-top:1px solid var(--divider); box-shadow:0 -4px 30px rgba(0,0,0,0.1); transform:translateY(110%); }
-      #drawer.open { transform:translateY(0); }
-    }
+    #drawer { position: fixed; z-index: 40; background: var(--white); display: flex; flex-direction: column; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
+    @media (min-width: 641px) { #drawer { top:0; right:0; width:var(--panel-w); height:100vh; border-left:1px solid var(--divider); transform:translateX(110%); } #drawer.open { transform:translateX(0); } }
+    @media (max-width: 640px) { #drawer { left:0; bottom:0; width:100%; height:78vh; border-radius:18px 18px 0 0; border-top:1px solid var(--divider); box-shadow:0 -4px 30px rgba(0,0,0,0.1); transform:translateY(110%); } #drawer.open { transform:translateY(0); } }
+
     .drawer-handle { display:none; justify-content:center; padding:10px 0 4px; flex-shrink:0; cursor:pointer; }
     .drawer-bar { width:36px; height:4px; background:var(--divider); border-radius:2px; }
     @media (max-width:640px) { .drawer-handle { display:flex; } }
@@ -173,30 +144,45 @@
     .drawer-header { padding:18px 20px 0; flex-shrink:0; }
     .drawer-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
     .drawer-title { font-size:18px; font-weight:600; color:var(--text); letter-spacing:-0.3px; }
-    .drawer-title span { color:var(--sun); }
+    .drawer-title span { color: var(--yellow); }
     #btnClose { background:var(--bg); border:none; border-radius:50%; width:30px; height:30px; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-2); }
 
     .section-title { padding:4px 20px 8px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
     .section-label { font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.8px; }
-    .count-pill { font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; background:var(--sun-bg); color:var(--sun); }
+    .count-pill { font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; background: var(--yellow-bg); color: #9A7E00; }
 
     #loadingState { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--text-3); font-size:13px; }
-    .spinner { width:24px; height:24px; border:2.5px solid var(--divider); border-top-color:var(--sun); border-radius:50%; animation:spin 0.8s linear infinite; }
+    .spinner { width:24px; height:24px; border:2.5px solid var(--divider); border-top-color: var(--yellow); border-radius:50%; animation:spin 0.8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
 
     .list { flex:1; overflow-y:auto; padding:0 12px 24px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
     .list::-webkit-scrollbar { display:none; }
-    .card { display:flex; align-items:center; gap:12px; padding:10px 8px; border-radius:var(--radius-md); cursor:pointer; transition:background 0.15s; border-bottom:1px solid var(--divider); }
+
+    .card { display:flex; align-items:flex-start; gap:12px; padding:12px 8px; border-radius:var(--radius-md); cursor:pointer; transition:background 0.15s; border-bottom:1px solid var(--divider); }
     .card:last-child { border-bottom:none; }
     .card:active, .card.active { background:var(--bg); border-color:transparent; }
-    .card-icon { width:36px; height:36px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
-    .card-icon.sun { background:var(--sun-bg); } .card-icon.shade { background:var(--shade-bg); }
+    .card-icon { width:36px; height:36px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; margin-top:1px; }
+    .card-icon.sun { background: var(--yellow-bg); }
+    .card-icon.shade { background:var(--shade-bg); }
     .card-body { flex:1; min-width:0; }
     .card-name { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
-    .card-sub  { font-size:11px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .card-badge { flex-shrink:0; font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; }
-    .card-badge.sun { background:var(--sun-bg); color:var(--sun); }
+    .card-sub  { font-size:11px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:6px; }
+
+    /* Barre soleil dans la card */
+    .sunbar { width: 100%; }
+    .sunbar-track { height: 4px; background: #EFEFEF; border-radius: 2px; overflow: hidden; display: flex; }
+    .sunbar-seg { height: 100%; }
+    .sunbar-seg.sun   { background: var(--yellow); }
+    .sunbar-seg.shade { background: #E0E0E0; }
+    .sunbar-seg.computing { background: linear-gradient(90deg, #E0E0E0 25%, #F5F5F5 50%, #E0E0E0 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .sunbar-labels { display:flex; justify-content:space-between; margin-top:3px; font-size:9px; color:var(--text-3); }
+
+    .card-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; }
+    .card-badge { font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; }
+    .card-badge.sun { background: var(--yellow-bg); color: #9A7E00; }
     .card-badge.shade { background:var(--shade-bg); color:var(--shade); }
+
     .no-results { padding:30px 20px; text-align:center; color:var(--text-3); font-size:13px; line-height:1.6; }
 
     .drawer-footer { padding:10px 20px; border-top:1px solid var(--divider); display:flex; align-items:center; gap:6px; flex-shrink:0; }
@@ -236,6 +222,9 @@
     </div>
   </div>
 </div>
+
+<!-- ══ BANDEAU MÉTÉO ══ -->
+<div id="meteoBar"></div>
 
 <!-- ══ MAP ══ -->
 <div id="cesiumContainer"></div>
@@ -277,6 +266,10 @@
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
   <div class="tt-sun" id="ttSun"></div>
+  <div class="tt-sunbar" id="ttSunbar" style="display:none">
+    <div class="tt-sunbar-track" id="ttSunbarTrack"></div>
+    <div class="tt-sunbar-labels"><span>8h</span><span>21h</span></div>
+  </div>
 </div>
 
 <!-- ══ DRAWER ══ -->
@@ -328,7 +321,30 @@ function completeSplash() {
 }
 setTimeout(completeSplash, 5000);
 
-// ══ CESIUM — fond OSM avec noms de rues ══
+// ══ MÉTÉO Open-Meteo ══
+async function checkMeteo() {
+  try {
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=44.84&longitude=-0.58&current_weather=true&timezone=Europe/Paris');
+    const data = await res.json();
+    const code = data.current_weather?.weathercode ?? -1;
+    // Codes pluie/neige/orage : 51-99, nuageux : 2-3
+    const isBad = (code >= 51 && code <= 99);
+    const isCloud = (code === 2 || code === 3);
+    const bar = document.getElementById('meteoBar');
+    const topBar = document.getElementById('topBar');
+    if (isBad) {
+      bar.innerHTML = '🌧️ Il pleut à Bordeaux — revenez par beau temps !';
+      bar.classList.add('visible');
+      topBar.classList.add('pushed');
+    } else if (isCloud) {
+      bar.innerHTML = '⛅ Ciel nuageux — les ombres peuvent varier';
+      bar.classList.add('visible');
+      topBar.classList.add('pushed');
+    }
+  } catch(e) { /* silencieux */ }
+}
+
+// ══ CESIUM ══
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -357,7 +373,6 @@ viewer.camera.setView({
   orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 }
 });
 
-// Bâtiments OSM 3D — injectés après stabilisation globe
 let osmAdded = false;
 viewer.scene.postRender.addEventListener(function waitGlobe() {
   if (viewer.scene.globe.tilesLoaded && !osmAdded) {
@@ -388,28 +403,26 @@ function placeUserDot(lng, lat) {
 }
 function geolocate() {
   if (!navigator.geolocation) return;
-  const btn = document.getElementById('btnGeo');
-  btn.classList.add('locating');
+  const btn = document.getElementById('btnGeo'); btn.classList.add('locating');
   navigator.geolocation.getCurrentPosition(pos => {
     btn.classList.remove('locating');
-    const { longitude: lng, latitude: lat } = pos.coords;
-    placeUserDot(lng, lat);
-    viewer.camera.flyTo({ destination:Cesium.Cartesian3.fromDegrees(lng,lat,400), orientation:{heading:0,pitch:Cesium.Math.toRadians(-45),roll:0}, duration:1.8 });
-  }, () => btn.classList.remove('locating'), { enableHighAccuracy:true, timeout:8000 });
+    placeUserDot(pos.coords.longitude, pos.coords.latitude);
+    viewer.camera.flyTo({ destination:Cesium.Cartesian3.fromDegrees(pos.coords.longitude,pos.coords.latitude,400), orientation:{heading:0,pitch:Cesium.Math.toRadians(-45),roll:0}, duration:1.8 });
+  }, ()=>btn.classList.remove('locating'), { enableHighAccuracy:true, timeout:8000 });
 }
-// Géoloc auto au démarrage
 window.addEventListener('load', () => {
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(pos => {
-    const { longitude: lng, latitude: lat } = pos.coords;
-    placeUserDot(lng, lat);
-    viewer.camera.setView({ destination:Cesium.Cartesian3.fromDegrees(lng,lat,500), orientation:{heading:0,pitch:Cesium.Math.toRadians(-45),roll:0} });
+    placeUserDot(pos.coords.longitude, pos.coords.latitude);
+    viewer.camera.setView({ destination:Cesium.Cartesian3.fromDegrees(pos.coords.longitude,pos.coords.latitude,500), orientation:{heading:0,pitch:Cesium.Math.toRadians(-45),roll:0} });
   }, ()=>{}, { enableHighAccuracy:false, timeout:5000 });
 });
 
 // ══ STATE ══
 let terrasses=[], sunStates={}, searchQuery='', currentHeure=14;
 const markerEntities={};
+// Cache barre soleil : id → tableau 13 booleans (8h..20h)
+const sunbarCache = {};
 
 // ══ OVERPASS ══
 const BBOX='44.820,-0.605,44.875,-0.535';
@@ -428,7 +441,7 @@ out body;`;
 function typeLabel(a){return{bar:'Bar',cafe:'Café',restaurant:'Restaurant',pub:'Pub',biergarten:'Brasserie'}[a]||'Terrasse';}
 async function fetchTerrasses(){
   const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(QUERY)});
-  if(!res.ok)throw new Error('HTTP '+res.status);
+  if(!res.ok)throw new Error();
   const data=await res.json(); const seen=new Set();
   return data.elements.filter(el=>el.lat&&el.lon&&el.tags&&el.tags.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
     .map(el=>({id:el.id,nom:el.tags.name,adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'Bordeaux',type:typeLabel(el.tags.amenity),lng:el.lon,lat:el.lat}));
@@ -442,6 +455,17 @@ function getSunDir(jd){
   const d=new Cesium.Cartesian3();
   Cesium.Matrix3.multiplyByVector(m,s,d);
   return Cesium.Cartesian3.normalize(d,d);
+}
+function checkSunnyAt(t, h){
+  const date=new Date(); date.setHours(h,0,0,0);
+  const jd=Cesium.JulianDate.fromDate(date);
+  viewer.scene.render(jd);
+  const sunDir=getSunDir(jd);
+  if(!sunDir)return false;
+  const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,1.5);
+  const up=Cesium.Cartesian3.normalize(pos,new Cesium.Cartesian3());
+  if(Cesium.Cartesian3.dot(sunDir,up)<=0.05)return false;
+  return!viewer.scene.pickFromRay(new Cesium.Ray(pos,sunDir),Object.values(markerEntities));
 }
 function checkSunny(t,sunDir){
   if(!sunDir)return false;
@@ -469,12 +493,40 @@ async function runShadow(){
   computing=false;
 }
 
+// ══ BARRE SOLEIL — calculée à la demande + cache ══
+const HOURS = [8,9,10,11,12,13,14,15,16,17,18,19,20]; // 13 heures
+
+async function computeSunbar(t, onUpdate) {
+  if (sunbarCache[t.id]) { onUpdate(sunbarCache[t.id]); return; }
+  const results = [];
+  for (let i = 0; i < HOURS.length; i++) {
+    results.push(checkSunnyAt(t, HOURS[i]));
+    onUpdate([...results]);
+    await new Promise(r => setTimeout(r, 0));
+  }
+  sunbarCache[t.id] = results;
+  // Remettre l'heure courante
+  const date=new Date(); date.setHours(Math.floor(currentHeure), Math.round((currentHeure%1)*60),0,0);
+  viewer.clock.currentTime=Cesium.JulianDate.fromDate(date);
+  viewer.scene.render(viewer.clock.currentTime);
+}
+
+function renderSunbarHTML(results, total) {
+  const segW = 100 / total;
+  return results.map((s, i) => {
+    const cls = i >= results.length ? 'computing' : (s ? 'sun' : 'shade');
+    return `<div class="sunbar-seg ${cls}" style="width:${segW}%"></div>`;
+  }).join('') + (results.length < total
+    ? `<div class="sunbar-seg computing" style="width:${(total-results.length)*segW}%"></div>`
+    : '');
+}
+
 // ══ DOTS ══
 function makeDot(sunny){
   const c=document.createElement('canvas');c.width=16;c.height=16;
   const ctx=c.getContext('2d');
-  ctx.beginPath();ctx.arc(8,8,7,0,Math.PI*2);ctx.fillStyle=sunny?'rgba(255,149,0,0.2)':'rgba(142,155,173,0.15)';ctx.fill();
-  ctx.beginPath();ctx.arc(8,8,4,0,Math.PI*2);ctx.fillStyle=sunny?'#FF9500':'#8E9BAD';ctx.fill();
+  ctx.beginPath();ctx.arc(8,8,7,0,Math.PI*2);ctx.fillStyle=sunny?'rgba(255,214,0,0.25)':'rgba(142,155,173,0.15)';ctx.fill();
+  ctx.beginPath();ctx.arc(8,8,4,0,Math.PI*2);ctx.fillStyle=sunny?'#FFD600':'#8E9BAD';ctx.fill();
   ctx.beginPath();ctx.arc(8,8,4,0,Math.PI*2);ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();
   return c.toDataURL();
 }
@@ -490,7 +542,7 @@ function syncDots(){
 
 // ══ TOOLTIP ══
 const tooltip=document.getElementById('tooltip');
-let ttTimeout=null;
+let ttTimeout=null, ttComputing=false;
 function showTooltip(t,x,y){
   const s=sunStates[t.id]===true;
   document.getElementById('ttName').textContent=t.nom;
@@ -498,12 +550,27 @@ function showTooltip(t,x,y){
   const el=document.getElementById('ttSun');
   el.textContent=s?'☀ Au soleil':'🌥 À l\'ombre';
   el.className='tt-sun '+(s?'sun':'shade');
-  const w=230;
+
+  // Barre soleil dans tooltip
+  const ttSunbar=document.getElementById('ttSunbar');
+  const ttTrack=document.getElementById('ttSunbarTrack');
+  ttSunbar.style.display='block';
+  ttTrack.innerHTML=renderSunbarHTML(sunbarCache[t.id]||[],HOURS.length).replace(/sunbar-seg/g,'tt-sunbar-seg').replace(/class="tt-sunbar-seg sun"/g,'style="flex:1;background:#FFD600"').replace(/class="tt-sunbar-seg shade"/g,'style="flex:1;background:rgba(255,255,255,0.15)"').replace(/class="tt-sunbar-seg computing"/g,'style="flex:1;background:rgba(255,255,255,0.08)"');
+
+  const w=240;
   tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
-  tooltip.style.top=Math.max(y-100,10)+'px';
+  tooltip.style.top=Math.max(y-120,10)+'px';
   tooltip.classList.add('visible');
-  clearTimeout(ttTimeout);
-  ttTimeout=setTimeout(()=>tooltip.classList.remove('visible'),3000);
+  clearTimeout(ttTimeout); ttTimeout=setTimeout(()=>tooltip.classList.remove('visible'),4000);
+
+  // Calcul barre en arrière-plan si pas en cache
+  if(!sunbarCache[t.id] && !ttComputing){
+    ttComputing=true;
+    computeSunbar(t, results=>{
+      ttTrack.innerHTML=results.map(s=>`<div style="flex:1;height:4px;background:${s?'#FFD600':'rgba(255,255,255,0.15)'}"></div>`).join('')
+        + (results.length<HOURS.length?`<div style="flex:${HOURS.length-results.length};height:4px;background:rgba(255,255,255,0.08)"></div>`:'');
+    }).then(()=>{ ttComputing=false; });
+  }
 }
 function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');}
 
@@ -511,7 +578,7 @@ function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible
 function normalize(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function highlight(text,q){
   if(!q)return text;
-  return text.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'),'<mark style="background:var(--sun-bg);color:var(--sun);border-radius:3px;padding:0 2px">$1</mark>');
+  return text.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'),'<mark style="background:#FFFBE0;color:#9A7E00;border-radius:3px;padding:0 2px">$1</mark>');
 }
 
 // ══ RENDER LIST ══
@@ -526,12 +593,36 @@ function renderList(h,query){
   if(!sorted.length){list.innerHTML=`<div class="no-results">Aucun résultat pour<br><strong>"${query}"</strong></div>`;return;}
   sorted.forEach(t=>{
     const s=sunStates[t.id]===true;
+    const cached=sunbarCache[t.id];
     const card=document.createElement('div');card.className='card';card.dataset.id=t.id;
-    card.innerHTML=`<div class="card-icon ${s?'sun':'shade'}">${s?'☀️':'🌥'}</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${t.type} · ${t.adresse}</div></div><div class="card-badge ${s?'sun':'shade'}">${s?'Soleil':'Ombre'}</div>`;
+    const barHTML = cached
+      ? `<div class="sunbar-track">${cached.map(v=>`<div class="sunbar-seg ${v?'sun':'shade'}"></div>`).join('')}</div><div class="sunbar-labels"><span>8h</span><span>21h</span></div>`
+      : `<div class="sunbar-track"><div class="sunbar-seg computing" style="width:100%"></div></div><div class="sunbar-labels"><span>8h</span><span>21h</span></div>`;
+    card.innerHTML=`
+      <div class="card-icon ${s?'sun':'shade'}">${s?'☀️':'🌥'}</div>
+      <div class="card-body">
+        <div class="card-name">${highlight(t.nom,query)}</div>
+        <div class="card-sub">${t.type} · ${t.adresse}</div>
+        <div class="sunbar">${barHTML}</div>
+      </div>
+      <div class="card-right">
+        <div class="card-badge ${s?'sun':'shade'}">${s?'Soleil':'Ombre'}</div>
+      </div>
+    `;
+    // Calcul barre au clic sur la card
     card.addEventListener('click',()=>{
       document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
-      card.classList.add('active');closeDrawer();
+      card.classList.add('active');
+      closeDrawer();
       viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,220),orientation:{heading:0,pitch:Cesium.Math.toRadians(-38),roll:0},duration:1.4});
+      // Lancer calcul barre si pas en cache
+      if(!sunbarCache[t.id]){
+        computeSunbar(t, results=>{
+          const track=card.querySelector('.sunbar-track');
+          if(track) track.innerHTML=results.map(v=>`<div class="sunbar-seg ${v?'sun':'shade'}"></div>`).join('')
+            +(results.length<HOURS.length?`<div class="sunbar-seg computing" style="flex:${HOURS.length-results.length}"></div>`:'');
+        });
+      }
     });
     list.appendChild(card);
   });
@@ -573,9 +664,13 @@ handler.setInputAction(click=>{
 
 // ══ BOOT ══
 async function init(){
+  // Météo en parallèle — non bloquant
+  checkMeteo();
+
   const now=new Date();
   const initH=Math.min(21,Math.max(8,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
   slider.value=initH;slider.dispatchEvent(new Event('input'));
+
   let data;
   try{data=await fetchTerrasses();}
   catch(e){
