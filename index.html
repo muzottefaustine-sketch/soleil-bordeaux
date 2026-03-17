@@ -156,8 +156,8 @@
     .card-icon { width:36px; height:36px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
     .card-icon.sun { background:var(--yellow-bg); } .card-icon.shade { background:var(--shade-bg); }
     .card-body { flex:1; min-width:0; }
-    .card-name { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
-    .card-sub  { font-size:11px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .card-name { font-size:16px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
+    .card-sub  { font-size:13px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .card-badge { flex-shrink:0; font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; }
     .card-badge.sun { background:var(--yellow-bg); color:#9A7E00; }
     .card-badge.shade { background:var(--shade-bg); color:var(--shade); }
@@ -299,10 +299,10 @@ function completeSplash() {
   }, 300);
 }
 
-// Fallback max 7s
-setTimeout(completeSplash, 7000);
+// Fallback max 5s
+setTimeout(completeSplash, 5000);
 
-// ══ CESIUM — initialisé immédiatement ══
+// ══ CESIUM ══
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -314,81 +314,52 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   animation: false, timeline: false,
   fullscreenButton: false, geocoder: false,
   scene3DOnly: true,
+  requestRenderMode: false,
 });
 
-// Paramètres globe pour chargement rapide et net
-viewer.scene.globe.maximumScreenSpaceError = 1;       // tuiles très nettes
-viewer.scene.globe.tileCacheSize = 300;               // cache plus grand
+// Globe : priorité à la fluidité
+viewer.scene.globe.maximumScreenSpaceError = 2;
+viewer.scene.globe.tileCacheSize = 200;
 viewer.scene.globe.preloadAncestors = true;
-viewer.scene.globe.preloadSiblings = true;            // charge les voisins aussi
+viewer.scene.globe.preloadSiblings = false;
 viewer.scene.globe.enableLighting = true;
 viewer.shadows = true;
-viewer.scene.screenSpaceCameraController.enableZoom = true;
-viewer.scene.screenSpaceCameraController.enableRotate = true;
-viewer.scene.screenSpaceCameraController.enableTilt = true;
-viewer.scene.screenSpaceCameraController.enableTranslate = true;
+viewer.scene.fog.enabled = false;
 
-// Vue initiale sur Bordeaux
 viewer.camera.setView({
   destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 500),
   orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 }
 });
 
-// ══ BÂTIMENTS OSM — ajoutés dès le départ, splash masque le chargement ══
+// ══ BÂTIMENTS OSM — ajoutés APRÈS que le globe soit stable ══
 setProgress(10, 'Carte satellite…');
-const osmBuildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
-osmBuildings.maximumScreenSpaceError = 4; // bâtiments nets
+let osmBuildings = null;
 
-// Suivi progression tuiles globe
 viewer.scene.globe.tileLoadProgressEvent.addEventListener(remaining => {
-  if (remaining === 0) {
-    setProgress(60, 'Bâtiments 3D…');
-  } else {
-    const pct = Math.min(55, 10 + (1 - Math.min(remaining, 50) / 50) * 45);
-    setProgress(pct, `Carte… (${remaining})`);
-  }
+  const pct = Math.min(70, 10 + (1 - Math.min(remaining, 50) / 50) * 60);
+  setProgress(pct, remaining === 0 ? 'Bâtiments 3D…' : `Carte… (${remaining})`);
 });
 
-// Attendre que TOUT soit chargé — globe + bâtiments 3D
-let globeReady = false, buildingsReady = false;
+// Attendre que le globe soit chargé AVANT d'ajouter les bâtiments
+viewer.scene.postRender.addEventListener(function waitGlobe() {
+  if (!viewer.scene.globe.tilesLoaded) return;
+  viewer.scene.postRender.removeEventListener(waitGlobe);
+  setProgress(75, 'Bâtiments 3D…');
 
-function checkAllReady() {
-  if (globeReady && buildingsReady) {
-    setProgress(95, 'Finalisation…');
-    // Un frame de plus pour s'assurer que tout est rendu
-    viewer.scene.postRender.addEventListener(function finalFrame() {
-      viewer.scene.postRender.removeEventListener(finalFrame);
-      completeSplash();
+  // Ajouter les bâtiments seulement maintenant → pas de freeze à l'ouverture
+  osmBuildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
+  osmBuildings.maximumScreenSpaceError = 8;
+
+  osmBuildings.readyPromise.then(() => {
+    setProgress(92, 'Presque prêt…');
+    let frames = 0;
+    viewer.scene.postRender.addEventListener(function waitFrames() {
+      if (++frames >= 10) {
+        viewer.scene.postRender.removeEventListener(waitFrames);
+        completeSplash();
+      }
     });
-  }
-}
-
-// Globe prêt
-viewer.scene.postRender.addEventListener(function watchGlobe() {
-  if (viewer.scene.globe.tilesLoaded && !globeReady) {
-    globeReady = true;
-    setProgress(65, 'Bâtiments 3D…');
-    checkAllReady();
-  }
-});
-
-// Bâtiments prêts — surveiller readyPromise
-osmBuildings.readyPromise.then(() => {
-  setProgress(80, 'Bâtiments 3D…');
-  // Attendre encore un peu que les tuiles bâtiments se chargent visuellement
-  let frames = 0;
-  viewer.scene.postRender.addEventListener(function watchBuildings() {
-    frames++;
-    if (frames >= 30) { // ~30 frames = ~0.5s de rendu
-      viewer.scene.postRender.removeEventListener(watchBuildings);
-      buildingsReady = true;
-      setProgress(90, 'Presque prêt…');
-      checkAllReady();
-    }
-  });
-}).catch(() => {
-  buildingsReady = true;
-  checkAllReady();
+  }).catch(() => completeSplash());
 });
 
 // ══ MÉTÉO ══
@@ -508,23 +479,45 @@ async function runShadow(){
   computing=false;
 }
 
-// ══ DOTS ══
-function makeDot(sunny){
-  const c=document.createElement('canvas'); c.width=16; c.height=16;
+// ══ DOTS SOLEIL ══
+function makeSunIcon(sunny){
+  const c=document.createElement('canvas'); c.width=20; c.height=20;
   const ctx=c.getContext('2d');
-  ctx.beginPath(); ctx.arc(8,8,7,0,Math.PI*2); ctx.fillStyle=sunny?'rgba(255,214,0,0.25)':'rgba(142,155,173,0.15)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(8,8,4,0,Math.PI*2); ctx.fillStyle=sunny?'#FFD600':'#8E9BAD'; ctx.fill();
-  ctx.beginPath(); ctx.arc(8,8,4,0,Math.PI*2); ctx.strokeStyle='white'; ctx.lineWidth=1.5; ctx.stroke();
+  const cx=10, cy=10;
+
+  if(sunny){
+    // Rayons
+    ctx.strokeStyle='#FFD600'; ctx.lineWidth=1.5; ctx.lineCap='round';
+    for(let i=0;i<8;i++){
+      const a=i*Math.PI/4;
+      ctx.beginPath();
+      ctx.moveTo(cx+Math.cos(a)*6.5, cy+Math.sin(a)*6.5);
+      ctx.lineTo(cx+Math.cos(a)*9,   cy+Math.sin(a)*9);
+      ctx.stroke();
+    }
+    // Cercle central
+    ctx.beginPath(); ctx.arc(cx,cy,4.5,0,Math.PI*2);
+    ctx.fillStyle='#FFD600'; ctx.fill();
+    // Bordure blanche
+    ctx.beginPath(); ctx.arc(cx,cy,4.5,0,Math.PI*2);
+    ctx.strokeStyle='white'; ctx.lineWidth=1.5; ctx.stroke();
+  } else {
+    // Nuage gris simple
+    ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2);
+    ctx.fillStyle='#8E9BAD'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2);
+    ctx.strokeStyle='white'; ctx.lineWidth=1.5; ctx.stroke();
+  }
   return c.toDataURL();
 }
-const DOT_SUN=makeDot(true), DOT_SHADE=makeDot(false);
+const DOT_SUN=makeSunIcon(true), DOT_SHADE=makeSunIcon(false);
 function syncDots(){
   terrasses.forEach(t=>{
     const s=sunStates[t.id]===true;
     if(!markerEntities[t.id]){
       markerEntities[t.id]=viewer.entities.add({
         position:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,2),
-        billboard:{image:s?DOT_SUN:DOT_SHADE, verticalOrigin:Cesium.VerticalOrigin.CENTER, heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND, width:16, height:16, disableDepthTestDistance:Number.POSITIVE_INFINITY},
+        billboard:{image:s?DOT_SUN:DOT_SHADE, verticalOrigin:Cesium.VerticalOrigin.CENTER, heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND, width:20, height:20, disableDepthTestDistance:Number.POSITIVE_INFINITY},
         properties:{id:t.id}
       });
     } else { markerEntities[t.id].billboard.image=s?DOT_SUN:DOT_SHADE; }
@@ -580,7 +573,7 @@ function renderList(h,query){
     card.addEventListener('click',()=>{
       document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
       card.classList.add('active'); closeDrawer();
-      viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,220),orientation:{heading:0,pitch:Cesium.Math.toRadians(-38),roll:0},duration:1.4});
+      viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,120),orientation:{heading:0,pitch:Cesium.Math.toRadians(-55),roll:0},duration:1.4});
     });
     list.appendChild(card);
   });
@@ -623,11 +616,9 @@ handler.setInputAction(click=>{
 // ══ BOOT ══
 async function init(){
   checkMeteo();
-
   const now=new Date();
   const initH=Math.min(21,Math.max(8,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
   slider.value=initH; slider.dispatchEvent(new Event('input'));
-
   let data;
   try { data=await fetchTerrasses(); }
   catch(e){
@@ -641,7 +632,6 @@ async function init(){
   terrasses=data; terrasses.forEach(t=>{sunStates[t.id]=false;});
   document.getElementById('footerText').textContent=`${terrasses.length} terrasses · OpenStreetMap`;
   renderList(currentHeure,'');
-
   viewer.scene.postRender.addEventListener(function once(){
     viewer.scene.postRender.removeEventListener(once);
     runShadow();
