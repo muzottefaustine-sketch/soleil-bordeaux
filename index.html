@@ -113,15 +113,15 @@
     /* ══ TOOLTIP ══ */
     #tooltip {
       position: fixed; z-index: 50;
-      background: rgba(28,28,30,0.9); color: white;
-      padding: 9px 14px; border-radius: 12px; font-size: 16px; font-weight: 500;
+      background: rgba(28,28,30,0.92); color: white;
+      padding: 12px 18px; border-radius: 14px; font-size: 16px; font-weight: 600;
       pointer-events: none; opacity: 0; transform: translateY(5px);
       transition: opacity 0.18s, transform 0.18s;
-      backdrop-filter: blur(10px); max-width: 230px; text-align: center;
+      backdrop-filter: blur(10px); max-width: 260px; text-align: center;
     }
     #tooltip.visible { opacity: 1; transform: translateY(0); }
-    #tooltip .tt-type { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 2px; }
-    #tooltip .tt-sun  { font-size: 11px; font-weight: 500; margin-top: 4px; }
+    #tooltip .tt-type { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 3px; }
+    #tooltip .tt-sun  { font-size: 13px; font-weight: 500; margin-top: 5px; }
     #tooltip .tt-sun.sun   { color: var(--yellow); }
     #tooltip .tt-sun.shade { color: #90CAF9; }
 
@@ -629,7 +629,7 @@ slider.addEventListener('input',e=>{
   slider.style.setProperty('--pct',((val-8)/13)*100+'%');
   const date=new Date(); date.setHours(h,m,0,0);
   viewer.clock.currentTime=Cesium.JulianDate.fromDate(date);
-  currentHeure=val; hideTooltip();
+  currentHeure=val;
   if(terrasses.length>0) scheduleShadow();
 });
 
