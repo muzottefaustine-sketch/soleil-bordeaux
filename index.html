@@ -651,6 +651,11 @@ async function init(){
   const now=new Date();
   const initH=Math.min(21,Math.max(8,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
   slider.value=initH; slider.dispatchEvent(new Event('input'));
+  // Overpass lancé en parallèle mais n'affecte pas le splash
+  loadTerrasses();
+}
+
+async function loadTerrasses(){
   let data;
   try { data=await fetchTerrasses(); }
   catch(e){
@@ -664,10 +669,24 @@ async function init(){
   terrasses=data; terrasses.forEach(t=>{sunStates[t.id]=false;});
   document.getElementById('footerText').textContent=`${terrasses.length} terrasses · OpenStreetMap`;
   renderList(currentHeure,'');
-  viewer.scene.postRender.addEventListener(function once(){
-    viewer.scene.postRender.removeEventListener(once);
-    runShadow();
-  });
+  // Lancer les ombres seulement quand la carte est affichée
+  if(splashDone){
+    viewer.scene.postRender.addEventListener(function once(){
+      viewer.scene.postRender.removeEventListener(once);
+      runShadow();
+    });
+  } else {
+    // Attendre la fin du splash pour ne pas surcharger
+    const waitSplash = setInterval(()=>{
+      if(splashDone){
+        clearInterval(waitSplash);
+        viewer.scene.postRender.addEventListener(function once(){
+          viewer.scene.postRender.removeEventListener(once);
+          runShadow();
+        });
+      }
+    }, 200);
+  }
 }
 init();
 </script>
