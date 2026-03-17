@@ -453,11 +453,25 @@ const QUERY=`[out:json][timeout:30];
 out body;`;
 function typeLabel(a){return{bar:'Bar',cafe:'Café',restaurant:'Restaurant',pub:'Pub',biergarten:'Brasserie'}[a]||'Terrasse';}
 async function fetchTerrasses(){
-  const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(QUERY)});
-  if(!res.ok)throw new Error();
-  const data=await res.json(); const seen=new Set();
-  return data.elements.filter(el=>el.lat&&el.lon&&el.tags&&el.tags.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
-    .map(el=>({id:el.id,nom:el.tags.name,adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'Bordeaux',type:typeLabel(el.tags.amenity),lng:el.lon,lat:el.lat}));
+  const endpoints=[
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  ];
+  let lastErr;
+  for(const url of endpoints){
+    try{
+      const ctrl = new AbortController();
+      const timer = setTimeout(()=>ctrl.abort(), 12000);
+      const res=await fetch(url,{method:'POST',body:'data='+encodeURIComponent(QUERY),signal:ctrl.signal});
+      clearTimeout(timer);
+      if(!res.ok)throw new Error();
+      const data=await res.json(); const seen=new Set();
+      return data.elements.filter(el=>el.lat&&el.lon&&el.tags&&el.tags.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
+        .map(el=>({id:el.id,nom:el.tags.name,adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'Bordeaux',type:typeLabel(el.tags.amenity),lng:el.lon,lat:el.lat}));
+    }catch(e){lastErr=e;}
+  }
+  throw lastErr;
 }
 
 // ══ RAY CASTING ══
