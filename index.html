@@ -439,37 +439,40 @@ window.addEventListener('load', () => {
 // ══ STATE ══
 let terrasses=[], sunStates={}, searchQuery='', currentHeure=14;
 const markerEntities={};
+let lastFetchCenter = null;
 
-// Retourne uniquement les terrasses dans le champ de vision actuel
-function getVisibleTerrasses(){
-  const frustum = viewer.scene.camera.frustum;
-  const cullingVolume = viewer.scene.camera.frustum.computeCullingVolume(
-    viewer.scene.camera.position,
-    viewer.scene.camera.direction,
-    viewer.scene.camera.up
+// ══ OVERPASS — zone dynamique autour de la caméra ══
+function typeLabel(a){return{bar:'Bar',cafe:'Café',restaurant:'Restaurant',pub:'Pub',biergarten:'Brasserie'}[a]||'Terrasse';}
+
+function getCameraCenter(){
+  const ray = viewer.camera.getPickRay(
+    new Cesium.Cartesian2(viewer.canvas.clientWidth/2, viewer.canvas.clientHeight/2)
   );
-  return terrasses.filter(t=>{
-    const pos = Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 0);
-    return cullingVolume.computeVisibility(new Cesium.BoundingSphere(pos, 1)) !== Cesium.Intersect.OUTSIDE;
-  });
+  const pos = viewer.scene.globe.pick(ray, viewer.scene);
+  if(!pos) return { lat:44.8378, lng:-0.5792 };
+  const carto = Cesium.Cartographic.fromCartesian(pos);
+  return { lat: Cesium.Math.toDegrees(carto.latitude), lng: Cesium.Math.toDegrees(carto.longitude) };
 }
 
-// ══ OVERPASS ══
-const BBOX='44.820,-0.605,44.875,-0.535';
-const QUERY=`[out:json][timeout:30];
+function buildQuery(lat, lng){
+  const delta = 0.008; // ~900m rayon
+  const bbox = `${lat-delta},${lng-delta},${lat+delta},${lng+delta}`;
+  return `[out:json][timeout:20];
 (
-  node["amenity"="bar"]["outdoor_seating"="yes"](${BBOX});
-  node["amenity"="cafe"]["outdoor_seating"="yes"](${BBOX});
-  node["amenity"="restaurant"]["outdoor_seating"="yes"](${BBOX});
-  node["amenity"="pub"]["outdoor_seating"="yes"](${BBOX});
-  node["amenity"="biergarten"](${BBOX});
-  node["amenity"="bar"](${BBOX});
-  node["amenity"="cafe"](${BBOX});
-  node["amenity"="restaurant"](${BBOX});
+  node["amenity"="bar"]["outdoor_seating"="yes"](${bbox});
+  node["amenity"="cafe"]["outdoor_seating"="yes"](${bbox});
+  node["amenity"="restaurant"]["outdoor_seating"="yes"](${bbox});
+  node["amenity"="pub"]["outdoor_seating"="yes"](${bbox});
+  node["amenity"="biergarten"](${bbox});
+  node["amenity"="bar"](${bbox});
+  node["amenity"="cafe"](${bbox});
+  node["amenity"="restaurant"](${bbox});
 );
 out body;`;
-function typeLabel(a){return{bar:'Bar',cafe:'Café',restaurant:'Restaurant',pub:'Pub',biergarten:'Brasserie'}[a]||'Terrasse';}
-async function fetchTerrasses(){
+}
+
+async function fetchTerrasses(lat, lng){
+  const query = buildQuery(lat, lng);
   const endpoints=[
     'https://overpass-api.de/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
@@ -480,16 +483,37 @@ async function fetchTerrasses(){
     try{
       const ctrl = new AbortController();
       const timer = setTimeout(()=>ctrl.abort(), 12000);
-      const res=await fetch(url,{method:'POST',body:'data='+encodeURIComponent(QUERY),signal:ctrl.signal});
+      const res=await fetch(url,{method:'POST',body:'data='+encodeURIComponent(query),signal:ctrl.signal});
       clearTimeout(timer);
       if(!res.ok)throw new Error();
       const data=await res.json(); const seen=new Set();
-      return data.elements.filter(el=>el.lat&&el.lon&&el.tags&&el.tags.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
+      return data.elements
+        .filter(el=>el.lat&&el.lon&&el.tags&&el.tags.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
         .map(el=>({id:el.id,nom:el.tags.name,adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'Bordeaux',type:typeLabel(el.tags.amenity),lng:el.lon,lat:el.lat}));
     }catch(e){lastErr=e;}
   }
   throw lastErr;
 }
+
+// Recharge les terrasses si on s'est déplacé de plus de 500m
+async function refreshIfMoved(){
+  const center = getCameraCenter();
+  if(lastFetchCenter){
+    const dlat = center.lat - lastFetchCenter.lat;
+    const dlng = center.lng - lastFetchCenter.lng;
+    const dist = Math.sqrt(dlat*dlat + dlng*dlng);
+    if(dist < 0.004) return; // moins de ~450m → pas besoin
+  }
+  lastFetchCenter = center;
+  await loadTerrasses(center.lat, center.lng);
+}
+
+// Écoute les déplacements de caméra
+let moveDebounce=null;
+viewer.camera.moveEnd.addEventListener(()=>{
+  clearTimeout(moveDebounce);
+  moveDebounce=setTimeout(refreshIfMoved, 800);
+});
 
 // ══ RAY CASTING ══
 function getSunDir(jd){
@@ -523,31 +547,13 @@ async function runShadow(){
   const jd=viewer.clock.currentTime;
   viewer.scene.render(jd);
   const sunDir=getSunDir(jd);
-
-  // Visibles en premier → mise à jour immédiate visible
-  const cullingVolume = viewer.scene.camera.frustum.computeCullingVolume(
-    viewer.scene.camera.position, viewer.scene.camera.direction, viewer.scene.camera.up
-  );
-  const visible=[], reste=[];
-  terrasses.forEach(t=>{
-    const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,0);
-    if(cullingVolume.computeVisibility(new Cesium.BoundingSphere(pos,1))!==Cesium.Intersect.OUTSIDE) visible.push(t);
-    else reste.push(t);
-  });
-
-  for(const t of visible){
+  for(let i=0;i<terrasses.length;i+=10){
     if(version!==shadowVersion){ computing=false; return; }
-    sunStates[t.id]=checkSunny(t,sunDir);
-  }
-  syncDots(); renderList(currentHeure,searchQuery);
-
-  // Reste en arrière-plan
-  for(let i=0;i<reste.length;i+=30){
-    if(version!==shadowVersion){ computing=false; return; }
-    for(const t of reste.slice(i,i+30)) sunStates[t.id]=checkSunny(t,sunDir);
+    viewer.scene.render(jd);
+    for(const t of terrasses.slice(i,i+10)) sunStates[t.id]=checkSunny(t,sunDir);
+    syncDots(); renderList(currentHeure,searchQuery);
     await new Promise(r=>setTimeout(r,0));
   }
-  syncDots(); renderList(currentHeure,searchQuery);
   computing=false;
 }
 
@@ -667,6 +673,7 @@ searchClear.addEventListener('click',()=>{searchInput.value='';searchQuery='';se
 
 // ══ SLIDER ══
 const slider=document.getElementById('timeSlider');
+// Pendant le drag : juste l'heure et les ombres visuelles Cesium, pas de ray casting
 slider.addEventListener('input',e=>{
   const val=parseFloat(e.target.value), h=Math.floor(val), m=Math.round((val-h)*60);
   document.getElementById('heureAffichee').textContent=h+'h'+(m<10?'0'+m:m);
@@ -674,6 +681,13 @@ slider.addEventListener('input',e=>{
   const date=new Date(); date.setHours(h,m,0,0);
   viewer.clock.currentTime=Cesium.JulianDate.fromDate(date);
   currentHeure=val;
+});
+// Au relâchement seulement : ray casting 3D
+slider.addEventListener('change',e=>{
+  if(terrasses.length>0) scheduleShadow();
+});
+// Sur mobile le 'change' peut ne pas se déclencher — fallback pointer up
+slider.addEventListener('pointerup',e=>{
   if(terrasses.length>0) scheduleShadow();
 });
 
@@ -695,13 +709,20 @@ async function init(){
   const now=new Date();
   const initH=Math.min(21,Math.max(8,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
   slider.value=initH; slider.dispatchEvent(new Event('input'));
-  // Overpass lancé en parallèle mais n'affecte pas le splash
-  loadTerrasses();
+  // Charger les terrasses autour du centre initial
+  loadTerrasses(44.8378, -0.5792);
 }
 
-async function loadTerrasses(){
+async function loadTerrasses(lat, lng){
+  // Supprimer les anciens markers
+  Object.values(markerEntities).forEach(e=>viewer.entities.remove(e));
+  Object.keys(markerEntities).forEach(k=>delete markerEntities[k]);
+
+  document.getElementById('loadingState').style.display='flex';
+  document.getElementById('terrasseList').style.display='none';
+
   let data;
-  try { data=await fetchTerrasses(); }
+  try { data=await fetchTerrasses(lat, lng); }
   catch(e){
     document.getElementById('loadingState').style.display='none';
     document.getElementById('terrasseList').style.display='block';
