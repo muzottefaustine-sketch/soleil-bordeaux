@@ -439,9 +439,20 @@ window.addEventListener('load', () => {
 // ══ STATE ══
 let terrasses=[], sunStates={}, searchQuery='', currentHeure=14;
 const markerEntities={};
-// Cache précalculé : sunCache[id][heure] = true/false
-const sunCache = {};
-const HEURES = [8,8.5,9,9.5,10,10.5,11,11.5,12,12.5,13,13.5,14,14.5,15,15.5,16,16.5,17,17.5,18,18.5,19,19.5,20,20.5,21];
+
+// Retourne uniquement les terrasses dans le champ de vision actuel
+function getVisibleTerrasses(){
+  const frustum = viewer.scene.camera.frustum;
+  const cullingVolume = viewer.scene.camera.frustum.computeCullingVolume(
+    viewer.scene.camera.position,
+    viewer.scene.camera.direction,
+    viewer.scene.camera.up
+  );
+  return terrasses.filter(t=>{
+    const pos = Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 0);
+    return cullingVolume.computeVisibility(new Cesium.BoundingSphere(pos, 1)) !== Cesium.Intersect.OUTSIDE;
+  });
+}
 
 // ══ OVERPASS ══
 const BBOX='44.820,-0.605,44.875,-0.535';
@@ -496,74 +507,48 @@ function checkSunny(t,sunDir){
   if(Cesium.Cartesian3.dot(sunDir,up)<=0.05)return false;
   return!viewer.scene.pickFromRay(new Cesium.Ray(pos,sunDir),Object.values(markerEntities));
 }
-let computing=false;
+let shadowDebounce=null, computing=false, shadowVersion=0;
 
-// Précalcule toutes les heures en arrière-plan
-async function precalcAllHours(){
-  if(computing) return;
-  computing=true;
-  const today = new Date();
-
-  for(const h of HEURES){
-    const date = new Date(today);
-    const hh = Math.floor(h), mm = Math.round((h-hh)*60);
-    date.setHours(hh, mm, 0, 0);
-    const jd = Cesium.JulianDate.fromDate(date);
-    // Un seul render par heure, pas par batch
-    viewer.scene.render(jd);
-    const sunDir = getSunDir(jd);
-
-    for(let i=0;i<terrasses.length;i+=30){
-      for(const t of terrasses.slice(i,i+30)){
-        if(!sunCache[t.id]) sunCache[t.id]={};
-        sunCache[t.id][h] = checkSunny(t, sunDir);
-      }
-      applyCache(currentHeure);
-      await new Promise(r=>setTimeout(r,0));
-    }
-  }
-  computing=false;
-}
-
-// Applique le cache pour une heure donnée — instantané
-function applyCache(h){
-  // Trouver l'heure la plus proche dans le cache
-  const closest = HEURES.reduce((a,b)=>Math.abs(b-h)<Math.abs(a-h)?b:a);
-  terrasses.forEach(t=>{
-    if(sunCache[t.id] && sunCache[t.id][closest]!==undefined){
-      sunStates[t.id] = sunCache[t.id][closest];
-    }
-  });
-  syncDots();
-  renderList(currentHeure, searchQuery);
-}
-
-let shadowDebounce=null, shadowVersion=0;
 function scheduleShadow(){
   clearTimeout(shadowDebounce);
   shadowDebounce=setTimeout(()=>{
-    const closest = HEURES.reduce((a,b)=>Math.abs(b-currentHeure)<Math.abs(a-currentHeure)?b:a);
-    const hasCacheForHour = terrasses.length>0 && sunCache[terrasses[0]?.id]?.[closest]!==undefined;
-    if(hasCacheForHour){
-      applyCache(currentHeure);
-    } else {
-      const unsub=viewer.scene.postRender.addEventListener(()=>{unsub();runShadowNow();});
-    }
-  },50);
+    const unsub=viewer.scene.postRender.addEventListener(()=>{ unsub(); runShadow(); });
+  }, 100);
 }
 
-async function runShadowNow(){
+async function runShadow(){
+  if(computing) return;
+  computing=true;
   const version=++shadowVersion;
   const jd=viewer.clock.currentTime;
   viewer.scene.render(jd);
   const sunDir=getSunDir(jd);
-  for(let i=0;i<terrasses.length;i+=20){
-    if(version!==shadowVersion) return;
-    viewer.scene.render(jd);
-    for(const t of terrasses.slice(i,i+20)) sunStates[t.id]=checkSunny(t,sunDir);
-    syncDots(); renderList(currentHeure,searchQuery);
+
+  // Visibles en premier → mise à jour immédiate visible
+  const cullingVolume = viewer.scene.camera.frustum.computeCullingVolume(
+    viewer.scene.camera.position, viewer.scene.camera.direction, viewer.scene.camera.up
+  );
+  const visible=[], reste=[];
+  terrasses.forEach(t=>{
+    const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,0);
+    if(cullingVolume.computeVisibility(new Cesium.BoundingSphere(pos,1))!==Cesium.Intersect.OUTSIDE) visible.push(t);
+    else reste.push(t);
+  });
+
+  for(const t of visible){
+    if(version!==shadowVersion){ computing=false; return; }
+    sunStates[t.id]=checkSunny(t,sunDir);
+  }
+  syncDots(); renderList(currentHeure,searchQuery);
+
+  // Reste en arrière-plan
+  for(let i=0;i<reste.length;i+=30){
+    if(version!==shadowVersion){ computing=false; return; }
+    for(const t of reste.slice(i,i+30)) sunStates[t.id]=checkSunny(t,sunDir);
     await new Promise(r=>setTimeout(r,0));
   }
+  syncDots(); renderList(currentHeure,searchQuery);
+  computing=false;
 }
 
 // ══ DOTS SOLEIL ══
@@ -732,7 +717,7 @@ async function loadTerrasses(){
   if(splashDone){
     viewer.scene.postRender.addEventListener(function once(){
       viewer.scene.postRender.removeEventListener(once);
-      precalcAllHours();
+      runShadow();
     });
   } else {
     const waitSplash = setInterval(()=>{
@@ -740,7 +725,7 @@ async function loadTerrasses(){
         clearInterval(waitSplash);
         viewer.scene.postRender.addEventListener(function once(){
           viewer.scene.postRender.removeEventListener(once);
-          precalcAllHours();
+          runShadow();
         });
       }
     }, 200);
