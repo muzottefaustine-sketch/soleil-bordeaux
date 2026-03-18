@@ -493,21 +493,26 @@ function checkSunny(t,sunDir){
   if(Cesium.Cartesian3.dot(sunDir,up)<=0.05)return false;
   return!viewer.scene.pickFromRay(new Cesium.Ray(pos,sunDir),Object.values(markerEntities));
 }
-let shadowDebounce=null, computing=false;
+let shadowDebounce=null, computing=false, shadowVersion=0;
 function scheduleShadow(){
   clearTimeout(shadowDebounce);
   shadowDebounce=setTimeout(()=>{
-    const unsub=viewer.scene.postRender.addEventListener(()=>{unsub();if(!computing)runShadow();});
-  },500);
+    const unsub=viewer.scene.postRender.addEventListener(()=>{unsub();runShadow();});
+  },150);
 }
 async function runShadow(){
+  if(computing) return;
   computing=true;
+  const version=++shadowVersion;
   const jd=viewer.clock.currentTime;
   viewer.scene.render(jd);
   const sunDir=getSunDir(jd);
-  for(let i=0;i<terrasses.length;i+=10){
+  // Batches de 20 pour aller plus vite
+  for(let i=0;i<terrasses.length;i+=20){
+    // Si un nouveau calcul est demandé on arrête celui-ci
+    if(version!==shadowVersion){ computing=false; return; }
     viewer.scene.render(jd);
-    for(const t of terrasses.slice(i,i+10)) sunStates[t.id]=checkSunny(t,sunDir);
+    for(const t of terrasses.slice(i,i+20)) sunStates[t.id]=checkSunny(t,sunDir);
     syncDots(); renderList(currentHeure,searchQuery);
     await new Promise(r=>setTimeout(r,0));
   }
