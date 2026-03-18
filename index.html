@@ -509,16 +509,15 @@ async function precalcAllHours(){
     const hh = Math.floor(h), mm = Math.round((h-hh)*60);
     date.setHours(hh, mm, 0, 0);
     const jd = Cesium.JulianDate.fromDate(date);
+    // Un seul render par heure, pas par batch
     viewer.scene.render(jd);
     const sunDir = getSunDir(jd);
 
-    for(let i=0;i<terrasses.length;i+=20){
-      viewer.scene.render(jd);
-      for(const t of terrasses.slice(i,i+20)){
+    for(let i=0;i<terrasses.length;i+=30){
+      for(const t of terrasses.slice(i,i+30)){
         if(!sunCache[t.id]) sunCache[t.id]={};
         sunCache[t.id][h] = checkSunny(t, sunDir);
       }
-      // Mettre à jour l'heure courante en temps réel pendant le calcul
       applyCache(currentHeure);
       await new Promise(r=>setTimeout(r,0));
     }
@@ -539,21 +538,18 @@ function applyCache(h){
   renderList(currentHeure, searchQuery);
 }
 
-// Compatibilité — scheduleShadow lit le cache si dispo, sinon recalcule l'heure courante
 let shadowDebounce=null, shadowVersion=0;
 function scheduleShadow(){
   clearTimeout(shadowDebounce);
   shadowDebounce=setTimeout(()=>{
-    // Si le cache est dispo pour cette heure → instantané
-    const hasCacheForHour = terrasses.length>0 && sunCache[terrasses[0].id] &&
-      sunCache[terrasses[0].id][HEURES.reduce((a,b)=>Math.abs(b-currentHeure)<Math.abs(a-currentHeure)?b:a)]!==undefined;
+    const closest = HEURES.reduce((a,b)=>Math.abs(b-currentHeure)<Math.abs(a-currentHeure)?b:a);
+    const hasCacheForHour = terrasses.length>0 && sunCache[terrasses[0]?.id]?.[closest]!==undefined;
     if(hasCacheForHour){
       applyCache(currentHeure);
     } else {
-      // Fallback : calcul live pour l'heure courante
       const unsub=viewer.scene.postRender.addEventListener(()=>{unsub();runShadowNow();});
     }
-  },80);
+  },50);
 }
 
 async function runShadowNow(){
