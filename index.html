@@ -6,7 +6,7 @@
   <title>Soleilenterrasse · Bordeaux</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,700&family=Be+Vietnam+Pro:wght@700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -36,9 +36,9 @@
       0%,100% { transform: scale(1) rotate(0deg); }
       50%      { transform: scale(1.07) rotate(6deg); }
     }
-    .splash-name { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; margin-bottom: 8px; }
-    .splash-name em { font-style: italic; }
-    .splash-name span { font-style: normal; }
+    .splash-name { font-size: 32px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; margin-bottom: 8px; }
+    .splash-name em { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; }
+    .splash-name span { font-family: 'Be Vietnam Pro', sans-serif; font-style: normal; font-weight: 700; }
     .splash-tagline { font-size: 14px; color: var(--text-2); text-align: center; line-height: 1.5; max-width: 220px; }
     .splash-tagline strong { color: var(--yellow); font-weight: 600; }
 
@@ -138,9 +138,9 @@
 
     .drawer-header { padding:18px 20px 0; flex-shrink:0; }
     .drawer-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-    .drawer-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--text); letter-spacing:-0.3px; }
-    .drawer-title em { font-style: italic; }
-    .drawer-title span { font-style: normal; color: var(--yellow); }
+    .drawer-title { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing:-0.3px; }
+    .drawer-title em { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; }
+    .drawer-title span { font-family: 'Be Vietnam Pro', sans-serif; font-style: normal; color: var(--yellow); font-weight: 700; }
     #btnClose { background:var(--bg); border:none; border-radius:50%; width:30px; height:30px; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-2); }
 
     .section-title { padding:4px 20px 8px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
@@ -609,8 +609,8 @@ function renderList(h,query){
       document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
       card.classList.add('active'); closeDrawer();
       const target = Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 0);
-      viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(target, 80), {
-        offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-60), 150),
+      viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(target, 120), {
+        offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-65), 220),
         duration: 1.4
       });
     });
