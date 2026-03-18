@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Terrasses · Bordeaux</title>
+  <title>Soleilenterrasse · Bordeaux</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -36,7 +36,9 @@
       0%,100% { transform: scale(1) rotate(0deg); }
       50%      { transform: scale(1.07) rotate(6deg); }
     }
-    .splash-name { font-size: 28px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; margin-bottom: 8px; }
+    .splash-name { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; margin-bottom: 8px; }
+    .splash-name em { font-style: italic; }
+    .splash-name span { font-style: normal; }
     .splash-tagline { font-size: 14px; color: var(--text-2); text-align: center; line-height: 1.5; max-width: 220px; }
     .splash-tagline strong { color: var(--yellow); font-weight: 600; }
 
@@ -136,8 +138,9 @@
 
     .drawer-header { padding:18px 20px 0; flex-shrink:0; }
     .drawer-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-    .drawer-title { font-size:18px; font-weight:600; color:var(--text); letter-spacing:-0.3px; }
-    .drawer-title span { color: var(--yellow); }
+    .drawer-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--text); letter-spacing:-0.3px; }
+    .drawer-title em { font-style: italic; }
+    .drawer-title span { font-style: normal; color: var(--yellow); }
     #btnClose { background:var(--bg); border:none; border-radius:50%; width:30px; height:30px; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-2); }
 
     .section-title { padding:4px 20px 8px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
@@ -192,7 +195,7 @@
       <circle cx="52" cy="52" r="14" fill="#FFC400" opacity="0.25"/>
     </svg>
   </div>
-  <div class="splash-name">Terrasses</div>
+  <div class="splash-name"><em>Soleil</em><span>enterrasse</span></div>
   <div class="splash-tagline">Trouvez vos <strong>terrasses au soleil</strong><br>à Bordeaux, maintenant.</div>
   <div class="splash-progress-wrap">
     <div class="splash-progress-track">
@@ -252,7 +255,7 @@
   <div class="drawer-handle" id="drawerHandle"><div class="drawer-bar"></div></div>
   <div class="drawer-header">
     <div class="drawer-top">
-      <div class="drawer-title">Terrasses<span>.</span></div>
+      <div class="drawer-title"><em>Soleil</em><span>enterrasse</span></div>
       <button id="btnClose" onclick="closeDrawer()">✕</button>
     </div>
   </div>
@@ -605,7 +608,11 @@ function renderList(h,query){
     card.addEventListener('click',()=>{
       document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
       card.classList.add('active'); closeDrawer();
-      viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,120),orientation:{heading:0,pitch:Cesium.Math.toRadians(-55),roll:0},duration:1.4});
+      const target = Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 0);
+      viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(target, 80), {
+        offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-60), 150),
+        duration: 1.4
+      });
     });
     list.appendChild(card);
   });
