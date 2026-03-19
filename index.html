@@ -97,19 +97,22 @@
     .icon-btn:active { background: rgba(255,255,255,0.95); }
     #cityPicker {
       flex-shrink: 0;
+      max-width: 110px;
       background: var(--glass);
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255,255,255,0.5); border-radius: 14px;
       box-shadow: 0 2px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
-      padding: 0 12px; height: 48px;
-      font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500;
+      padding: 0 24px 0 10px; height: 48px;
+      font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 500;
       color: var(--text); cursor: pointer; outline: none;
       appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%231C1C1E' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 10px center;
-      padding-right: 28px;
+      background-position: right 8px center;
       background-color: var(--glass);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     /* ══ CURSEUR BAS ══ */
@@ -243,7 +246,7 @@
     </svg>
   </button>
   <select id="cityPicker" onchange="changeCity(this.value)" title="Changer de ville">
-    <option value="44.8378,-0.5792">📍 Bordeaux</option>
+    <option value="44.8378,-0.5792">Bordeaux</option>
     <option value="48.8566,2.3522">Paris</option>
     <option value="43.2965,5.3698">Marseille</option>
     <option value="45.7640,4.8357">Lyon</option>
