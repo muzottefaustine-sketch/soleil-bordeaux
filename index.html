@@ -332,7 +332,7 @@ viewer.resolutionScale = window.devicePixelRatio || 1;
 
 // Vue resserrée sur le centre de Bordeaux → moins de tuiles à charger
 viewer.camera.setView({
-  destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 450),
+  destination: Cesium.Cartesian3.fromDegrees(6.1432, 46.2044, 450),
   orientation: { heading: 0, pitch: Cesium.Math.toRadians(-50), roll: 0 }
 });
 
@@ -529,7 +529,16 @@ function checkSunny(t,sunDir){
   const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,1.5);
   const up=Cesium.Cartesian3.normalize(pos,new Cesium.Cartesian3());
   if(Cesium.Cartesian3.dot(sunDir,up)<=0.05)return false;
-  return!viewer.scene.pickFromRay(new Cesium.Ray(pos,sunDir),Object.values(markerEntities));
+  // Tester le point central + 4 points autour (8m dans chaque direction)
+  const offsets=[
+    [0,0],[0.00007,0],[-0.00007,0],[0,0.00007],[0,-0.00007]
+  ];
+  for(const [dlng,dlat] of offsets){
+    const p=Cesium.Cartesian3.fromDegrees(t.lng+dlng,t.lat+dlat,1.5);
+    const hit=viewer.scene.pickFromRay(new Cesium.Ray(p,sunDir),Object.values(markerEntities));
+    if(hit) return false; // au moins un point est à l'ombre → terrasse à l'ombre
+  }
+  return true;
 }
 let shadowDebounce=null, computing=false, shadowVersion=0;
 
@@ -710,7 +719,7 @@ async function init(){
   const initH=Math.min(21,Math.max(8,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
   slider.value=initH; slider.dispatchEvent(new Event('input'));
   // Charger les terrasses autour du centre initial
-  loadTerrasses(44.8378, -0.5792);
+  loadTerrasses(46.2044, 6.1432); // Genève
 }
 
 async function loadTerrasses(lat, lng){
