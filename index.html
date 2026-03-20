@@ -300,14 +300,14 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   scene3DOnly: true,
 });
 
-viewer.scene.globe.maximumScreenSpaceError = 2;
-viewer.scene.globe.tileCacheSize = 300;
+viewer.scene.globe.maximumScreenSpaceError = 1;
+viewer.scene.globe.tileCacheSize = 500;
 viewer.scene.globe.preloadAncestors = true;
-viewer.scene.globe.preloadSiblings = false;
+viewer.scene.globe.preloadSiblings = true;
 viewer.scene.globe.enableLighting = true;
 viewer.scene.fog.enabled = false;
 viewer.shadows = true;
-viewer.resolutionScale = 1;
+viewer.resolutionScale = window.devicePixelRatio || 1;
 
 viewer.camera.setView({
   destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 450),
@@ -406,9 +406,9 @@ let lastFetchLat=null, lastFetchLng=null;
 function typeLabel(a){return{bar:'Bar',cafe:'Café',restaurant:'Restaurant',pub:'Pub',biergarten:'Brasserie'}[a]||'Terrasse';}
 
 function buildQuery(lat, lng){
-  const d = 0.009;
+  const d = 0.012;
   const bbox = `${lat-d},${lng-d},${lat+d},${lng+d}`;
-  return `[out:json][timeout:15];(node["amenity"~"bar|cafe|restaurant|pub"]["outdoor_seating"="yes"](${bbox}););out 50;`;
+  return `[out:json][timeout:25];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](${bbox}););out body;`;
 }
 
 async function fetchTerrasses(lat, lng){
@@ -473,7 +473,12 @@ function checkSunny(t, sunDir){
   const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,1.5);
   const up=Cesium.Cartesian3.normalize(pos,new Cesium.Cartesian3());
   if(Cesium.Cartesian3.dot(sunDir,up)<=0.05) return false;
-  return !viewer.scene.pickFromRay(new Cesium.Ray(pos,sunDir),Object.values(markerEntities));
+  const offsets=[[0,0],[0.00007,0],[-0.00007,0],[0,0.00007],[0,-0.00007]];
+  for(const [dlng,dlat] of offsets){
+    const p=Cesium.Cartesian3.fromDegrees(t.lng+dlng,t.lat+dlat,1.5);
+    if(viewer.scene.pickFromRay(new Cesium.Ray(p,sunDir),Object.values(markerEntities))) return false;
+  }
+  return true;
 }
 
 let shadowDebounce=null, computing=false, shadowVersion=0;
