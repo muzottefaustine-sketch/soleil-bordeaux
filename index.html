@@ -285,6 +285,7 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   animation: false, timeline: false,
   fullscreenButton: false, geocoder: false,
   scene3DOnly: true,
+  useBrowserRecommendedResolution: false,
 });
 
 viewer.scene.globe.maximumScreenSpaceError = 1;
@@ -294,7 +295,14 @@ viewer.scene.globe.preloadSiblings = false;
 viewer.scene.globe.enableLighting = true;
 viewer.scene.fog.enabled = false;
 viewer.shadows = true;
-viewer.resolutionScale = window.devicePixelRatio || 1;
+// Résolution adaptée à l'écran sans surcharger
+viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 1.5);
+// Limiter à 60fps — évite de surcharger le GPU inutilement
+viewer.targetFrameRate = 60;
+// Optimisations de rendu
+viewer.scene.globe.showWaterEffect = false;
+viewer.scene.globe.atmosphereEnabled = false;
+viewer.scene.postProcessStages.fxaa.enabled = false;
 
 viewer.camera.setView({
   destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 450),
