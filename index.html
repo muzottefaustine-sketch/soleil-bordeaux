@@ -371,8 +371,26 @@ const markerEntities={};
 let lastFetchLat=null, lastFetchLng=null;
 function typeLabel(a){return{bar:'Bar',cafe:'Café',restaurant:'Restaurant',pub:'Pub',biergarten:'Brasserie'}[a]||'Terrasse';}
 
-// BBOX fixe Bordeaux complète — tous les restos d'un coup
-const BORDEAUX_QUERY=`[out:json][timeout:30];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](44.800,-0.630,44.900,-0.520););out body;`;
+// Bordeaux découpée en 4 zones pour dépasser la limite Overpass
+const ZONES = [
+  '44.820,-0.630,44.870,-0.570', // nord-ouest
+  '44.820,-0.570,44.870,-0.510', // nord-est
+  '44.770,-0.630,44.820,-0.570', // sud-ouest
+  '44.770,-0.570,44.820,-0.510', // sud-est
+];
+
+function buildZoneQuery(bbox){
+  return `[out:json][timeout:25];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](${bbox}););out body;`;
+}
+
+async function fetchZone(url, bbox){
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), 12000);
+  const res = await fetch(url,{method:'POST',body:'data='+encodeURIComponent(buildZoneQuery(bbox)),signal:ctrl.signal});
+  clearTimeout(timer);
+  if(!res.ok) throw new Error();
+  return res.json();
+}
 
 async function fetchTerrasses(){
   const endpoints=[
@@ -380,19 +398,28 @@ async function fetchTerrasses(){
     'https://overpass.kumi.systems/api/interpreter',
     'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   ];
-  const promises = endpoints.map(url => {
-    const ctrl = new AbortController();
-    const timer = setTimeout(()=>ctrl.abort(), 15000);
-    return fetch(url,{method:'POST',body:'data='+encodeURIComponent(BORDEAUX_QUERY),signal:ctrl.signal})
-      .then(res=>{ clearTimeout(timer); if(!res.ok) throw new Error(); return res.json(); })
-      .then(data=>{
-        const seen=new Set();
-        return data.elements
-          .filter(el=>el.lat&&el.lon&&el.tags?.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
-          .map(el=>({id:el.id,nom:el.tags.name,adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'',type:typeLabel(el.tags.amenity),lng:el.lon,lat:el.lat}));
-      });
+
+  // Pour chaque zone, essaie les 3 serveurs en parallèle
+  const zonePromises = ZONES.map(bbox => {
+    const promises = endpoints.map(url => fetchZone(url, bbox).catch(()=>null));
+    return Promise.any(promises).catch(()=>({elements:[]}));
   });
-  return Promise.any(promises);
+
+  const results = await Promise.all(zonePromises);
+
+  // Fusionner et dédupliquer
+  const seen = new Set();
+  return results
+    .flatMap(r => r?.elements || [])
+    .filter(el=>el.lat&&el.lon&&el.tags?.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
+    .map(el=>({
+      id:el.id,
+      nom:el.tags.name,
+      adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'',
+      type:typeLabel(el.tags.amenity),
+      lng:el.lon,
+      lat:el.lat
+    }));
 }
 
 // Recharge si déplacé de >450m
