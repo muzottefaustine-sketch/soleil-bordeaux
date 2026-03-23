@@ -384,28 +384,20 @@ async function fetchTerrasses(lat, lng){
     'https://overpass.kumi.systems/api/interpreter',
     'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   ];
-  for(const url of endpoints){
-    try{
-      const ctrl = new AbortController();
-      const timer = setTimeout(()=>ctrl.abort(), 8000);
-      const res=await fetch(url,{method:'POST',body:'data='+encodeURIComponent(query),signal:ctrl.signal});
-      clearTimeout(timer);
-      if(!res.ok) throw new Error();
-      const data=await res.json();
-      const seen=new Set();
-      return data.elements
-        .filter(el=>el.lat&&el.lon&&el.tags?.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
-        .map(el=>({
-          id:el.id,
-          nom:el.tags.name,
-          adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'',
-          type:typeLabel(el.tags.amenity),
-          lng:el.lon,
-          lat:el.lat
-        }));
-    }catch(e){ /* essaie le suivant */ }
-  }
-  throw new Error('Tous les serveurs ont échoué');
+  // Lance les 3 en parallèle — le plus rapide gagne
+  const promises = endpoints.map(url => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 10000);
+    return fetch(url,{method:'POST',body:'data='+encodeURIComponent(query),signal:ctrl.signal})
+      .then(res=>{ clearTimeout(timer); if(!res.ok) throw new Error(); return res.json(); })
+      .then(data=>{
+        const seen=new Set();
+        return data.elements
+          .filter(el=>el.lat&&el.lon&&el.tags?.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
+          .map(el=>({id:el.id,nom:el.tags.name,adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'',type:typeLabel(el.tags.amenity),lng:el.lon,lat:el.lat}));
+      });
+  });
+  return Promise.any(promises);
 }
 
 // Recharge si déplacé de >450m
@@ -561,13 +553,19 @@ searchClear.addEventListener('click',()=>{searchInput.value='';searchQuery='';se
 
 // ══ SLIDER ══
 const slider=document.getElementById('timeSlider');
-slider.addEventListener('input',e=>{
-  const val=parseFloat(e.target.value), h=Math.floor(val), m=Math.round((val-h)*60);
+function updateSliderDisplay(val){
+  const h=Math.floor(val), m=Math.round((val-h)*60);
   document.getElementById('heureAffichee').textContent=h+'h'+(m<10?'0'+m:m);
   slider.style.setProperty('--pct',((val-8)/13)*100+'%');
   const date=new Date(); date.setHours(h,m,0,0);
   viewer.clock.currentTime=Cesium.JulianDate.fromDate(date);
   currentHeure=val;
+}
+// Pendant le glissement → juste l'affichage, fluide
+slider.addEventListener('input',e=>{ updateSliderDisplay(parseFloat(e.target.value)); });
+// Au lâcher → calcul des ombres
+slider.addEventListener('change',e=>{
+  updateSliderDisplay(parseFloat(e.target.value));
   if(terrasses.length>0) scheduleShadow();
 });
 
