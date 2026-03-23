@@ -3,907 +3,261 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Soleilenterrasse</title>
+  <title>Soleil</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,700&family=Be+Vietnam+Pro:wght@700&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    :root {
-      --yellow: #FFD600; --yellow-bg: #FFFBE0;
-      --shade: #8E9BAD; --shade-bg: #EEF1F5;
-      --text: #1C1C1E; --text-2: #6C6C70; --text-3: #AEAEB2;
-      --divider: #E5E5EA; --panel-w: 320px;
-      --radius-md: 14px; --radius-sm: 10px;
-      --glass: rgba(255,255,255,0.85);
-      --white: #FFFFFF; --bg: #F2F2F7;
-    }
-    html, body { height: 100%; overflow: hidden; font-family: 'Outfit', sans-serif; background: #000; touch-action: none; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; overflow: hidden; background: #000; }
     
-    /* Splash optimisé avec vraie détection */
+    /* Splash simple */
     #splash {
-      position: fixed; inset: 0; z-index: 1000;
-      background: linear-gradient(135deg, #fff 0%, #FFFBE0 100%);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+      position: fixed; inset: 0; z-index: 9999;
+      background: #FFD600;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.5s;
     }
-    #splash.out { opacity: 0; transform: scale(1.02); pointer-events: none; }
-    .splash-sun { width: 80px; height: 80px; margin-bottom: 20px; animation: splash-pulse 2s ease-in-out infinite; filter: drop-shadow(0 4px 20px rgba(255,214,0,0.3)); }
-    @keyframes splash-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
-    .splash-name { font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-    .splash-name em { font-family: 'Playfair Display', serif; font-style: italic; }
-    .splash-name span { font-family: 'Be Vietnam Pro', sans-serif; color: var(--yellow); }
-    .splash-tagline { font-size: 13px; color: var(--text-2); text-align: center; max-width: 240px; line-height: 1.4; }
-    .splash-progress-wrap { position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); width: 160px; }
-    .splash-progress-track { width: 100%; height: 3px; background: #E5E5EA; border-radius: 3px; overflow: hidden; }
-    .splash-progress-bar { height: 100%; background: var(--yellow); width: 0%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .splash-status { position: absolute; bottom: 35px; font-size: 11px; color: var(--text-3); font-weight: 500; }
+    #splash.out { opacity: 0; pointer-events: none; }
+    #splash h1 { font-size: 32px; color: #1C1C1E; margin-bottom: 10px; }
+    #splash p { color: #1C1C1E; opacity: 0.8; }
     
-    /* Cesium optimisé */
-    #cesiumContainer { position: fixed; inset: 0; width: 100vw; height: 100vh; opacity: 0; transition: opacity 0.8s ease; }
+    /* Cesium */
+    #cesiumContainer { position: fixed; inset: 0; opacity: 0; transition: opacity 1s; }
     #cesiumContainer.ready { opacity: 1; }
     .cesium-viewer-toolbar, .cesium-viewer-animationContainer, .cesium-viewer-timelineContainer, .cesium-viewer-bottom { display: none !important; }
-    .cesium-widget canvas { outline: none !important; -webkit-touch-callout: none; }
     
-    /* UI mobile optimisée */
+    /* UI */
     #topBar {
-      position: fixed; top: max(16px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
-      z-index: 30; width: calc(100% - 32px); max-width: 480px;
-      display: flex; align-items: center; gap: 8px;
-      transition: transform 0.3s ease;
+      position: fixed; top: 50px; left: 50%; transform: translateX(-50%);
+      z-index: 100; width: 90%; max-width: 400px;
+      display: flex; gap: 10px;
     }
-    .search-glass {
-      flex: 1; display: flex; align-items: center; gap: 8px;
-      background: var(--glass);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border-radius: 14px; padding: 0 12px; height: 44px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-      border: 1px solid rgba(255,255,255,0.4);
-    }
-    #searchInput { flex: 1; border: none; background: transparent; font-family: 'Outfit', sans-serif; font-size: 15px; color: var(--text); outline: none; }
-    .icon-btn {
-      width: 44px; height: 44px;
-      background: var(--glass);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.4); border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: transform 0.1s;
-    }
-    .icon-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.95); }
-    
-    .panel-map {
-      position: fixed; bottom: max(24px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
-      background: var(--glass);
-      backdrop-filter: blur(20px) saturate(180%);
-      border: 1px solid rgba(255,255,255,0.4);
-      padding: 12px 20px; border-radius: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      text-align: center; z-index: 30; width: min(90%, 380px);
-      transition: transform 0.3s ease;
-    }
-    .panel-map h3 { margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: center; gap: 6px; }
-    input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--yellow) var(--pct,46%), rgba(0,0,0,0.1) var(--pct,46%)); outline: none; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: white; border: 2px solid var(--yellow); box-shadow: 0 2px 6px rgba(0,0,0,0.2); cursor: pointer; margin-top: -8px; }
-    input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; }
-    
-    #tooltip {
-      position: fixed; z-index: 50;
-      background: rgba(28,28,30,0.95); color: white;
-      padding: 10px 14px; border-radius: 12px; font-size: 14px; font-weight: 600;
-      pointer-events: none; opacity: 0; transform: translateY(8px) scale(0.95);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    .search-box {
+      flex: 1; background: rgba(255,255,255,0.9);
       backdrop-filter: blur(10px);
-      max-width: 280px; text-align: center;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      border-radius: 12px; padding: 12px 16px;
+      border: none; font-size: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    #tooltip.visible { opacity: 1; transform: translateY(0) scale(1); }
+    .btn {
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 12px; border: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; cursor: pointer;
+    }
     
-    #drawer { position: fixed; z-index: 40; background: var(--white); display: flex; flex-direction: column; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); will-change: transform; }
-    @media (min-width: 641px) { #drawer { top:0; right:0; width:var(--panel-w); height:100vh; border-left:1px solid var(--divider); transform:translateX(110%); } #drawer.open { transform:translateX(0); } }
-    @media (max-width: 640px) { #drawer { left:0; bottom:0; width:100%; height:70vh; border-radius:20px 20px 0 0; border-top:1px solid var(--divider); box-shadow:0 -4px 30px rgba(0,0,0,0.15); transform:translateY(110%); } #drawer.open { transform:translateY(0); } }
-    .drawer-handle { display:none; justify-content:center; padding:12px 0 6px; cursor:grab; }
-    .drawer-bar { width:36px; height:5px; background:var(--divider); border-radius:3px; }
-    @media (max-width:640px){.drawer-handle{display:flex;}}
-    .list { flex:1; overflow-y:auto; padding:0 16px 20px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-    .list::-webkit-scrollbar { display:none; }
-    .card { display:flex; align-items:center; gap:12px; padding:12px; border-radius:12px; margin-bottom:4px; cursor:pointer; transition:all 0.15s; background:transparent; }
-    .card:active { background:var(--bg); transform:scale(0.98); }
-    .card-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
-    .card-icon.sun { background:var(--yellow-bg); } .card-icon.shade { background:var(--shade-bg); }
-    .card-body { flex:1; min-width:0; }
-    .card-name { font-size:15px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .card-sub { font-size:12px; color:var(--text-3); margin-top:2px; }
-    .card-badge { font-size:10px; font-weight:600; padding:4px 10px; border-radius:20px; }
-    .card-badge.sun { background:var(--yellow-bg); color:#9A7E00; }
-    .card-badge.shade { background:var(--shade-bg); color:var(--shade); }
+    #bottomPanel {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      z-index: 100; width: 90%; max-width: 400px;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 16px; padding: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    #timeSlider { width: 100%; margin-top: 10px; }
     
-    #loadingState { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:var(--text-2); font-size:13px; padding:40px 20px; }
-    .spinner { width:28px; height:28px; border:3px solid var(--divider); border-top-color:var(--yellow); border-radius:50%; animation:spin 0.8s linear infinite; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    
-    .no-results { padding:40px 20px; text-align:center; color:var(--text-3); font-size:14px; line-height:1.5; }
-    
-    /* Optimisation rendu Cesium */
-    .cesium-performance { will-change: transform; }
+    .terrasses-list {
+      position: fixed; top: 120px; right: 10px;
+      width: 280px; max-height: 60%;
+      background: rgba(255,255,255,0.98);
+      border-radius: 16px; overflow-y: auto;
+      z-index: 100; padding: 10px;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .terrasses-list.visible { display: block; }
+    .terrasse-item {
+      padding: 12px; border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+    .terrasse-item:hover { background: #f5f5f5; }
+    .sun { color: #FFD600; }
+    .shade { color: #666; }
   </style>
 </head>
 <body>
 
 <div id="splash">
-  <div class="splash-sun">
-    <svg viewBox="0 0 100 100" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-      <g fill="#FFD600">
-        <ellipse cx="50" cy="11" rx="3" ry="7" transform="rotate(0 50 50)"/>
-        <ellipse cx="50" cy="11" rx="3" ry="7" transform="rotate(45 50 50)"/>
-        <ellipse cx="50" cy="11" rx="3" ry="7" transform="rotate(90 50 50)"/>
-        <ellipse cx="50" cy="11" rx="3" ry="7" transform="rotate(135 50 50)"/>
-        <ellipse cx="50" cy="11" rx="3" ry="7" transform="rotate(180 50 50)"/>
-        <ellipse cx="50" cy="11" rx="3" ry="7" transform="rotate(225 50 50)"/>
-        <ellipse cx="50" cy="11" rx="3" ry="7" transform="rotate(270 50 50)"/>
-        <ellipse cx="50" cy="11" rx="3" ry="7" transform="rotate(315 50 50)"/>
-      </g>
-      <circle cx="50" cy="50" r="20" fill="#FFD600"/>
-    </svg>
-  </div>
-  <div class="splash-name"><em>Soleil</em><span>enterrasse</span></div>
-  <div class="splash-tagline">Trouvez les terrasses au soleil en temps réel</div>
-  <div class="splash-progress-wrap">
-    <div class="splash-progress-track"><div class="splash-progress-bar" id="progressBar"></div></div>
-  </div>
-  <div class="splash-status" id="splashStatus">Initialisation...</div>
+  <h1>☀️ Soleil</h1>
+  <p>Chargement...</p>
 </div>
 
 <div id="cesiumContainer"></div>
 
 <div id="topBar">
-  <div class="search-glass">
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="opacity:0.5"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <input type="text" id="searchInput" placeholder="Rechercher un lieu..." autocomplete="off">
-    <button class="search-clear-btn" id="searchClear" style="display:none;background:none;border:none;color:var(--text-3);font-size:18px;padding:4px;">×</button>
+  <input type="text" class="search-box" placeholder="Rechercher..." id="searchInput">
+  <button class="btn" onclick="toggleList()">📋</button>
+  <button class="btn" onclick="locate()">📍</button>
+</div>
+
+<div id="bottomPanel">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <span style="font-weight:600;">⏰ <span id="heure">14:00</span></span>
+    <span style="font-size:12px; color:#666;" id="count">0 terrasses</span>
   </div>
-  <button class="icon-btn" id="btnListe" onclick="toggleDrawer()" title="Liste">
-    <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><rect width="18" height="2" rx="1" fill="currentColor"/><rect y="6" width="18" height="2" rx="1" fill="currentColor"/><rect y="12" width="18" height="2" rx="1" fill="currentColor"/></svg>
-  </button>
-  <button class="icon-btn" id="btnGeo" onclick="geolocate()" title="Ma position">
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3.5" fill="#007AFF"/><circle cx="10" cy="10" r="6" stroke="#007AFF" stroke-width="1.2" fill="none" opacity="0.35"/></svg>
-  </button>
+  <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.5">
 </div>
 
-<div class="panel-map">
-  <h3><span id="heureAffichee">14:00</span></h3>
-  <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25">
-</div>
-
-<div id="tooltip">
-  <div id="ttName" style="font-weight:600;margin-bottom:2px;"></div>
-  <div id="ttType" style="font-size:12px;opacity:0.8;margin-bottom:4px;"></div>
-  <div id="ttSun" style="font-size:13px;font-weight:500;"></div>
-</div>
-
-<div id="drawer">
-  <div class="drawer-handle" id="drawerHandle"><div class="drawer-bar"></div></div>
-  <div style="padding:16px 20px 8px;flex-shrink:0;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div style="font-size:20px;font-weight:700;color:var(--text);"><em style="font-family:'Playfair Display',serif;font-style:italic;">Soleil</em><span style="font-family:'Be Vietnam Pro',sans-serif;color:var(--yellow);">enterrasse</span></div>
-      <button onclick="toggleDrawer()" style="background:var(--bg);border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;color:var(--text-2);display:flex;align-items:center;justify-content:center;">✕</button>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;">
-      <span style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">Terrasses disponibles</span>
-      <span class="count-pill" id="sunCount" style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--yellow-bg);color:#9A7E00;">...</span>
-    </div>
-  </div>
-  <div id="loadingState"><div class="spinner"></div><span>Chargement des terrasses...</span></div>
-  <div class="list" id="terrasseList" style="display:none;"></div>
+<div class="terrasses-list" id="listPanel">
+  <div id="listContent"></div>
 </div>
 
 <script>
-// ==========================================
-// CONFIGURATION & OPTIMISATIONS MOBILES
-// ==========================================
-const CONFIG = {
-  maxConcurrentRequests: 2,
-  cacheDuration: 1000 * 60 * 30, // 30min
-  shadowUpdateInterval: 250, // ms
-  cameraMoveDelay: 600, // ms avant reload
-  maxTerrassesDisplay: 50, // Limite pour perf
-  tileQuality: 4, // 2=haute qualité (lent), 4=fluide
-  buildingQuality: 8 // SSE pour bâtiments
-};
-
-// ==========================================
-// INDEXEDDB CACHE (Remplace localStorage)
-// ==========================================
-const DB = {
-  name: 'SoleilDB_v1',
-  store: 'cache',
-  async init() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(this.name, 1);
-      req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(this.store)) {
-          db.createObjectStore(this.store, { keyPath: 'key' });
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  },
-  async get(key) {
-    const db = await this.init();
-    return new Promise((resolve) => {
-      const tx = db.transaction(this.store, 'readonly');
-      const store = tx.objectStore(this.store);
-      const req = store.get(key);
-      req.onsuccess = () => {
-        if (req.result && Date.now() - req.result.timestamp < CONFIG.cacheDuration) {
-          resolve(req.result.data);
-        } else {
-          resolve(null);
-        }
-      };
-      req.onerror = () => resolve(null);
-    });
-  },
-  async set(key, data) {
-    const db = await this.init();
-    const tx = db.transaction(this.store, 'readwrite');
-    const store = tx.objectStore(this.store);
-    store.put({ key, data, timestamp: Date.now() });
-  }
-};
-
-// ==========================================
-// CESIUM OPTIMISÉ POUR MOBILE
-// ==========================================
+// CESIUM CONFIG MINIMALISTE
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxMWJkNDg1OC1kNTEzLTRiMWMtYjM2MC1hMDUzMDQzMDhmODgiLCJpZCI6Mzk5MDkxLCJpYXQiOjE3NzI3ODMwMDN9.XuZCIyBxFwS7zCRDGZCih0HDKYQ2FdyJ0l1nIyZaiEY';
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
-  terrainProvider: Cesium.createWorldTerrain({
-    requestWaterMask: false,
-    requestVertexNormals: false
-  }),
-  skyBox: false,
-  skyAtmosphere: false,
-  baseLayerPicker: false,
-  homeButton: false,
-  infoBox: false,
-  selectionIndicator: false,
-  navigationHelpButton: false,
-  sceneModePicker: false,
-  animation: false,
-  timeline: false,
-  fullscreenButton: false,
-  geocoder: false,
-  scene3DOnly: true,
-  orderIndependentTranslucency: false, // Perf boost
-  contextOptions: {
-    webgl: {
-      alpha: true,
-      antialias: false, // Désactivé pour fluide
-      preserveDrawingBuffer: false
-    }
-  }
+  terrainProvider: Cesium.createWorldTerrain(),
+  skyBox: false, skyAtmosphere: false,
+  baseLayerPicker: false, homeButton: false,
+  infoBox: false, selectionIndicator: false,
+  navigationHelpButton: false, sceneModePicker: false,
+  animation: false, timeline: false,
+  fullscreenButton: false, geocoder: false,
+  scene3DOnly: true
 });
 
-// Optimisations agressives pour mobile
-const scene = viewer.scene;
-scene.globe.maximumScreenSpaceError = CONFIG.tileQuality;
-scene.globe.tileCacheSize = 100; // Réduit drastiquement
-scene.globe.preloadAncestors = true;
-scene.globe.preloadSiblings = false;
-scene.fog.enabled = false;
-scene.fxaa = false; // Désactive anti-aliasing pour perf
-scene.globe.depthTestAgainstTerrain = false;
-scene.globe.enableLighting = false; // Pas besoin pour ombres manuelles
+// Optimisations anti-lag
+viewer.scene.globe.maximumScreenSpaceError = 8; // Basse qualité = fluide
+viewer.scene.globe.tileCacheSize = 50;
+viewer.scene.fog.enabled = false;
+viewer.resolutionScale = 1;
 
-viewer.shadows = false; // On calcule nos propres ombres plus efficacement
-viewer.resolutionScale = Math.min(window.devicePixelRatio, 2); // Limite retina
-
-// ==========================================
-// ÉTAT DE L'APPLICATION
-// ==========================================
-const State = {
-  terrasses: [],
-  sunStates: {},
-  searchQuery: '',
-  currentHeure: 14,
-  lastFetchPos: null,
-  markers: new Map(), // Pool de markers réutilisables
-  isComputingShadows: false,
-  shadowTimeout: null,
-  cameraTimeout: null,
-  splashProgress: 0
-};
-
-// ==========================================
-// GESTION DU SPLASH SCREEN INTELLIGENT
-// ==========================================
-function updateProgress(pct, label) {
-  State.splashProgress = Math.max(State.splashProgress, pct);
-  document.getElementById('progressBar').style.width = State.splashProgress + '%';
-  if (label) document.getElementById('splashStatus').textContent = label;
-}
-
-function completeSplash() {
-  if (State.splashComplete) return;
-  State.splashComplete = true;
-  updateProgress(100, 'Prêt !');
-  
-  setTimeout(() => {
-    document.getElementById('splash').classList.add('out');
-    document.getElementById('cesiumContainer').classList.add('ready');
-    setTimeout(() => {
-      document.getElementById('splash').style.display = 'none';
-    }, 500);
-  }, 400);
-}
-
-// ==========================================
-// CHARGEMENT PROGRESSIF CESIUM
-// ==========================================
-updateProgress(10, 'Chargement de la carte...');
-
-const osmBuildings = scene.primitives.add(Cesium.createOsmBuildings({
-  style: new Cesium.Cesium3DTileStyle({
-    color: "color('white', 0.85)",
-    show: "${feature['building']}"
-  })
-}));
-osmBuildings.maximumScreenSpaceError = CONFIG.buildingQuality;
-
-let tilesRemaining = Infinity;
-let buildingsReady = false;
-let globeReady = false;
-
-// Détection fin de chargement globe
-const checkLoading = setInterval(() => {
-  const remaining = scene.globe.tilesLoading;
-  
-  if (remaining !== tilesRemaining) {
-    tilesRemaining = remaining;
-    // Progression simulée basée sur les tuiles restantes
-    const progress = Math.min(80, 10 + (remaining === 0 ? 70 : Math.max(0, 50 - remaining)));
-    updateProgress(progress, remaining === 0 ? 'Chargement des bâtiments...' : 'Chargement des tuiles...');
-  }
-  
-  if (remaining === 0 && !globeReady) {
-    globeReady = true;
-  }
-}, 200);
-
-// Promise bâtiments
-osmBuildings.readyPromise.then(() => {
-  buildingsReady = true;
-  updateProgress(90, 'Finalisation...');
-  checkComplete();
-}).catch(() => {
-  buildingsReady = true;
-  checkComplete();
-});
-
-function checkComplete() {
-  if (globeReady && buildingsReady) {
-    clearInterval(checkLoading);
-    // Attend 6 frames pour s'assurer que le rendu est stable
-    let frames = 0;
-    const waitRender = scene.postRender.addEventListener(() => {
-      frames++;
-      if (frames >= 6) {
-        scene.postRender.removeEventListener(waitRender);
-        completeSplash();
-      }
-    });
-  }
-}
-
-// Timeout de sécurité (max 15s au lieu de 8s hardcodé)
+// Retirer splash après 3s max (même si pas chargé)
 setTimeout(() => {
-  if (!State.splashComplete) {
-    clearInterval(checkLoading);
-    completeSplash();
-  }
-}, 15000);
+  document.getElementById('splash').classList.add('out');
+  document.getElementById('cesiumContainer').classList.add('ready');
+}, 2500);
 
-// ==========================================
-// GÉOLOCALISATION
-// ==========================================
-let userEntity = null;
+// Bâtiments OSM (optionnel, si ça lag on l'enlève)
+let buildings;
+try {
+  buildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
+  buildings.maximumScreenSpaceError = 16; // Très basse qualité d'abord
+} catch(e) { console.log('Pas de bâtiments'); }
 
-function geolocate() {
-  if (!navigator.geolocation) return;
-  
-  const btn = document.getElementById('btnGeo');
-  btn.style.opacity = '0.5';
-  
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      btn.style.opacity = '1';
-      const { longitude: lng, latitude: lat, accuracy } = pos.coords;
-      
-      // Ajoute/met à jour le point utilisateur
-      if (!userEntity) {
-        userEntity = viewer.entities.add({
-          position: Cesium.Cartesian3.fromDegrees(lng, lat),
-          point: {
-            pixelSize: 12,
-            color: Cesium.Color.fromCssColorString('#007AFF'),
-            outlineColor: Cesium.Color.WHITE,
-            outlineWidth: 2,
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-          }
-        });
-      } else {
-        userEntity.position = Cesium.Cartesian3.fromDegrees(lng, lat);
-      }
-      
-      // FlyTo avec easing optimisé
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(lng, lat, Math.max(accuracy * 2, 300)),
-        orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 },
-        duration: 1.5,
-        easingFunction: Cesium.EasingFunction.QUAD_OUT
-      });
-      
-      loadTerrasses(lat, lng);
-    },
-    () => { btn.style.opacity = '1'; },
-    { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
-  );
-}
+// DATA MOCK (ça marche sans internet !)
+const mockTerrasses = [
+  {id: 1, nom: "Café de la Plage", type: "Café", lat: 44.8378, lng: -0.5792, sunny: true},
+  {id: 2, nom: "Le Filtre", type: "Bar", lat: 44.8385, lng: -0.5780, sunny: false},
+  {id: 3, nom: "Terrasse du Port", type: "Restaurant", lat: 44.8365, lng: -0.5800, sunny: true},
+  {id: 4, nom: "L'Entrepôt", type: "Bar", lat: 44.8390, lng: -0.5810, sunny: true},
+  {id: 5, nom: "Café Français", type: "Café", lat: 44.8380, lng: -0.5770, sunny: false},
+];
 
-// ==========================================
-// RÉCUPÉRATION DONNÉES OVERPASS (CACHÉ)
-// ==========================================
-async function fetchTerrasses(lat, lng) {
-  const cacheKey = `terr_${lat.toFixed(3)}_${lng.toFixed(3)}`;
-  
-  // Check cache d'abord (instantané)
-  const cached = await DB.get(cacheKey);
-  if (cached) {
-    console.log('Cache hit');
-    return cached;
-  }
-  
-  const bbox = `${lat-0.01},${lng-0.01},${lat+0.01},${lng+0.01}`;
-  const query = `[out:json][timeout:15];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](${bbox}););out body;`;
-  
-  const endpoints = [
-    'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter'
-  ];
-  
-  for (const url of endpoints) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 12000);
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        body: 'data=' + encodeURIComponent(query),
-        signal: controller.signal,
-        headers: { 'Accept': 'application/json' }
-      });
-      
-      clearTimeout(timeout);
-      
-      if (!response.ok) throw new Error();
-      
-      const data = await response.json();
-      const seen = new Set();
-      const terrasses = data.elements
-        .filter(el => el.lat && el.lon && el.tags?.name && !seen.has(el.tags.name) && seen.add(el.tags.name))
-        .map(el => ({
-          id: String(el.id),
-          nom: el.tags.name,
-          adresse: el.tags['addr:street'] ? `${el.tags['addr:housenumber'] || ''} ${el.tags['addr:street']}`.trim() : '',
-          type: { bar: 'Bar', cafe: 'Café', restaurant: 'Restaurant', pub: 'Pub', biergarten: 'Brasserie' }[el.tags.amenity] || 'Terrasse',
-          lng: el.lon,
-          lat: el.lat
-        }))
-        .slice(0, 60); // Limite pour performances
-      
-      // Sauvegarde async (ne bloque pas)
-      DB.set(cacheKey, terrasses);
-      return terrasses;
-      
-    } catch (e) {
-      continue;
-    }
-  }
-  
-  throw new Error('Aucun serveur disponible');
-}
+let terrasses = [...mockTerrasses];
+let markers = [];
 
-// ==========================================
-// GESTION MARKERS (POOLING)
-// ==========================================
-const DOT_SUN = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0IiBmaWxsPSIjRkZENjAwIi8+PGcgc3Ryb2tlPSIjRkZENjAwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJ2MiIvPjxwYXRoIGQ9Ik0xMiAyMHYyIi8+PHBhdGggZD0iTTQgMTJIMiIvPjxwYXRoIGQ9Ik0yMiAxMmgtMiIvPjxwYXRoIGQ9Ik02LjM0MyA2LjM0M2wtMS40MTQtMS40MTQiLz48cGF0aCBkPSJNMTkuMDcxIDE5LjA3MWwtMS40MTQtMS40MTQiLz48cGF0aCBkPSJNMTkuMDcxIDQuOTI5bC0xLjQxNCAxLjQxNCIvPjxwYXRoIGQ9Ik02LjM0MyAxNy42NTdsLTEuNDE0IDEuNDE0Ii8+PC9nPjwvc3ZnPg==';
-
-const DOT_SHADE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0IiBmaWxsPSIjOEU5QkFEIi8+PHBhdGggZD0iTTEyIDN2MiIgIHN0cm9rZT0iIzhFOUJBRCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=';
-
-function updateMarker(t, isSunny) {
-  let entity = State.markers.get(t.id);
+// Ajoute markers
+function addMarkers() {
+  // Clear anciens
+  markers.forEach(m => viewer.entities.remove(m));
+  markers = [];
   
-  if (!entity) {
-    entity = viewer.entities.add({
-      position: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 2),
-      billboard: {
-        image: isSunny ? DOT_SUN : DOT_SHADE,
-        verticalOrigin: Cesium.VerticalOrigin.CENTER,
-        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-        width: 28,
-        height: 28,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
+  const timeVal = parseFloat(document.getElementById('timeSlider').value);
+  const isDay = timeVal > 8 && timeVal < 20;
+  
+  terrasses.forEach((t, i) => {
+    // Simulation simple : midi = soleil pour tout le monde
+    t.sunny = isDay && (timeVal > 11 && timeVal < 17);
+    
+    const marker = viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 5),
+      point: {
+        pixelSize: 12,
+        color: t.sunny ? Cesium.Color.YELLOW : Cesium.Color.GRAY,
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 2
       },
-      properties: { id: t.id }
+      label: {
+        text: t.nom,
+        font: '14px sans-serif',
+        fillColor: Cesium.Color.BLACK,
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -15),
+        show: false // Caché par défaut, visible au zoom
+      }
     });
-    State.markers.set(t.id, entity);
-  } else {
-    entity.billboard.image = isSunny ? DOT_SUN : DOT_SHADE;
-    entity.show = true;
-  }
-}
-
-function clearMarkers() {
-  State.markers.forEach(entity => {
-    entity.show = false;
+    markers.push(marker);
   });
+  
+  updateList();
 }
 
-// ==========================================
-// CALCUL OMBRES OPTIMISÉ (CHUNKÉ)
-// ==========================================
-function getSunDirection(julianDate) {
-  try {
-    const sunPosition = Cesium.Simon1994PlanetaryPositions.computeSunPositionInEarthInertialFrame(julianDate);
-    const transform = Cesium.Transforms.computeIcrfToFixedMatrix(julianDate);
-    if (!transform) return null;
-    
-    const sunDirection = new Cesium.Cartesian3();
-    Cesium.Matrix3.multiplyByVector(transform, sunPosition, sunDirection);
-    Cesium.Cartesian3.normalize(sunDirection, sunDirection);
-    return sunDirection;
-  } catch (e) {
-    return null;
-  }
-}
-
-function isPointInSun(lat, lng, sunDir) {
-  if (!sunDir) return false;
+// Liste UI
+function updateList() {
+  const count = terrasses.filter(t => t.sunny).length;
+  document.getElementById('count').textContent = `${count} au soleil`;
   
-  // Vérification simple : produit scalaire avec la normale
-  const position = Cesium.Cartesian3.fromDegrees(lng, lat, 1.5);
-  const normal = Cesium.Cartesian3.normalize(position, new Cesium.Cartesian3());
-  const dot = Cesium.Cartesian3.dot(sunDir, normal);
-  
-  if (dot < 0.1) return false; // Soleil trop bas ou derrière
-  
-  // Ray casting simplifié (5 points autour)
-  const offsets = [[0,0], [0.00005,0], [-0.00005,0], [0,0.00005], [0,-0.00005]];
-  
-  for (const [dlng, dlat] of offsets) {
-    const testPos = Cesium.Cartesian3.fromDegrees(lng + dlng, lat + dlat, 1.5);
-    const ray = new Cesium.Ray(testPos, sunDir);
-    
-    // Pick rapide sans bloquer
-    const result = scene.pickFromRay(ray);
-    if (result && result.object) return false; // Intersection = ombre
-  }
-  
-  return true;
-}
-
-async function computeShadowsChunked() {
-  if (State.isComputingShadows) return;
-  State.isComputingShadows = true;
-  
-  const currentTime = viewer.clock.currentTime;
-  const sunDir = getSunDirection(currentTime);
-  
-  if (!sunDir) {
-    State.isComputingShadows = false;
-    return;
-  }
-  
-  // Traitement par chunks de 5 pour ne pas bloquer l'UI
-  const chunkSize = 5;
-  const terrasses = State.terrasses;
-  
-  for (let i = 0; i < terrasses.length; i += chunkSize) {
-    if (State.shadowCancelled) {
-      State.shadowCancelled = false;
-      break;
-    }
-    
-    const chunk = terrasses.slice(i, i + chunkSize);
-    
-    // Calcul synchrone pour ce chunk
-    chunk.forEach(t => {
-      State.sunStates[t.id] = isPointInSun(t.lat, t.lng, sunDir);
-      updateMarker(t, State.sunStates[t.id]);
-    });
-    
-    // Rendu liste si nécessaire
-    if (i % 15 === 0) {
-      renderList();
-    }
-    
-    // Yield au browser
-    await new Promise(resolve => setTimeout(resolve, 0));
-  }
-  
-  renderList();
-  State.isComputingShadows = false;
-}
-
-function scheduleShadowUpdate() {
-  if (State.shadowTimeout) clearTimeout(State.shadowTimeout);
-  State.shadowTimeout = setTimeout(() => {
-    State.shadowCancelled = true; // Cancel previous
-    setTimeout(() => computeShadowsChunked(), 0);
-  }, CONFIG.shadowUpdateInterval);
-}
-
-// ==========================================
-// CHARGEMENT TERRASSES AVEC GESTION CAMERA
-// ==========================================
-async function loadTerrasses(lat, lng) {
-  // Évite les requêtes trop fréquentes (même zone)
-  if (State.lastFetchPos) {
-    const dist = Cesium.Cartesian3.distance(
-      Cesium.Cartesian3.fromDegrees(lng, lat),
-      Cesium.Cartesian3.fromDegrees(State.lastFetchPos.lng, State.lastFetchPos.lat)
-    );
-    if (dist < 300) return; // Moins de 300m, on garde le cache
-  }
-  
-  State.lastFetchPos = { lat, lng };
-  
-  // UI Loading
-  document.getElementById('loadingState').style.display = 'flex';
-  document.getElementById('terrasseList').style.display = 'none';
-  
-  try {
-    const data = await fetchTerrasses(lat, lng);
-    State.terrasses = data;
-    
-    // Clear anciens markers invisibles
-    clearMarkers();
-    
-    // Initial state (tout à l'ombre par défaut)
-    data.forEach(t => State.sunStates[t.id] = false);
-    
-    // Affichage
-    document.getElementById('loadingState').style.display = 'none';
-    document.getElementById('terrasseList').style.display = 'block';
-    renderList();
-    
-    // Lance calcul ombres
-    scheduleShadowUpdate();
-    
-  } catch (e) {
-    document.getElementById('loadingState').style.display = 'none';
-    document.getElementById('terrasseList').innerHTML = 
-      '<div class="no-results">Impossible de charger les données.<br>Vérifiez votre connexion.</div>';
-    document.getElementById('terrasseList').style.display = 'block';
-  }
-}
-
-// Détection mouvement caméra (debounced)
-scene.camera.changed.addEventListener(() => {
-  if (State.cameraTimeout) clearTimeout(State.cameraTimeout);
-  
-  State.cameraTimeout = setTimeout(() => {
-    const carto = Cesium.Cartographic.fromCartesian(viewer.camera.position);
-    const lat = Cesium.Math.toDegrees(carto.latitude);
-    const lng = Cesium.Math.toDegrees(carto.longitude);
-    
-    loadTerrasses(lat, lng);
-  }, CONFIG.cameraMoveDelay);
-});
-
-// ==========================================
-// UI & LISTE
-// ==========================================
-function normalize(str) {
-  return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-
-function renderList() {
-  const list = document.getElementById('terrasseList');
-  const countEl = document.getElementById('sunCount');
-  const query = normalize(State.searchQuery);
-  
-  let filtered = State.terrasses;
-  if (query) {
-    filtered = filtered.filter(t => 
-      normalize(t.nom).includes(query) || 
-      normalize(t.type).includes(query)
-    );
-  }
-  
-  const sunnyCount = filtered.filter(t => State.sunStates[t.id]).length;
-  countEl.textContent = query ? `${filtered.length} résultats` : `${sunnyCount} au soleil`;
-  
-  if (filtered.length === 0) {
-    list.innerHTML = '<div class="no-results">Aucun résultat</div>';
-    return;
-  }
-  
-  // Triage : soleil d'abord
-  const sorted = filtered.sort((a, b) => (State.sunStates[b.id] || 0) - (State.sunStates[a.id] || 0));
-  
-  // Virtual rendering (limité à 20 pour perf sur mobile)
-  const toRender = sorted.slice(0, 20);
-  
-  const html = toRender.map(t => {
-    const isSunny = State.sunStates[t.id];
-    return `
-      <div class="card" onclick="flyToTerrasse('${t.id}')">
-        <div class="card-icon ${isSunny ? 'sun' : 'shade'}">${isSunny ? '☀️' : '☁️'}</div>
-        <div class="card-body">
-          <div class="card-name">${t.nom}</div>
-          <div class="card-sub">${t.type}${t.adresse ? ' · ' + t.adresse : ''}</div>
-        </div>
-        <div class="card-badge ${isSunny ? 'sun' : 'shade'}">${isSunny ? 'Soleil' : 'Ombre'}</div>
+  const html = terrasses.map(t => `
+    <div class="terrasse-item" onclick="flyTo(${t.lng}, ${t.lat})">
+      <div style="font-weight:600;">${t.nom}</div>
+      <div style="font-size:12px; color:#666;">${t.type} · 
+        <span class="${t.sunny ? 'sun' : 'shade'}">${t.sunny ? '☀️ Soleil' : '☁️ Ombre'}</span>
       </div>
-    `;
-  }).join('');
+    </div>
+  `).join('');
   
-  list.innerHTML = html;
+  document.getElementById('listContent').innerHTML = html;
 }
 
-function flyToTerrasse(id) {
-  const t = State.terrasses.find(x => x.id === id);
-  if (!t) return;
-  
-  toggleDrawer();
+function flyTo(lng, lat) {
   viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(t.lng, t.lat, 150),
-    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-60), roll: 0 },
-    duration: 1.2
+    destination: Cesium.Cartesian3.fromDegrees(lng, lat, 200),
+    duration: 1
   });
+  document.getElementById('listPanel').classList.remove('visible');
 }
 
-// ==========================================
-// ÉVÉNEMENTS UI
-// ==========================================
-const drawer = document.getElementById('drawer');
-function toggleDrawer() {
-  drawer.classList.toggle('open');
+function toggleList() {
+  document.getElementById('listPanel').classList.toggle('visible');
 }
 
-// Drawer swipe down pour fermer
-let touchStartY = 0;
-document.getElementById('drawerHandle').addEventListener('touchstart', e => {
-  touchStartY = e.touches[0].clientY;
-}, { passive: true });
-
-document.getElementById('drawerHandle').addEventListener('touchend', e => {
-  if (e.changedTouches[0].clientY - touchStartY > 50) {
-    drawer.classList.remove('open');
+function locate() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const {latitude, longitude} = pos.coords;
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, 300),
+        duration: 1.5
+      });
+      flyTo(longitude, latitude);
+    });
   }
-}, { passive: true });
-
-// Search
-const searchInput = document.getElementById('searchInput');
-const searchClear = document.getElementById('searchClear');
-
-searchInput.addEventListener('input', e => {
-  State.searchQuery = e.target.value;
-  searchClear.style.display = State.searchQuery ? 'flex' : 'none';
-  renderList();
-  if (State.searchQuery) drawer.classList.add('open');
-});
-
-searchClear.addEventListener('click', () => {
-  searchInput.value = '';
-  State.searchQuery = '';
-  searchClear.style.display = 'none';
-  renderList();
-});
+}
 
 // Slider temps
-const slider = document.getElementById('timeSlider');
-slider.addEventListener('input', e => {
+document.getElementById('timeSlider').addEventListener('input', (e) => {
   const val = parseFloat(e.target.value);
   const h = Math.floor(val);
-  const m = Math.round((val - h) * 60);
-  
-  document.getElementById('heureAffichee').textContent = `${h}h${m < 10 ? '0' + m : m}`;
-  slider.style.setProperty('--pct', ((val - 8) / 13) * 100 + '%');
-  
-  const date = new Date();
-  date.setHours(h, m, 0);
-  viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
-  State.currentHeure = val;
-  
-  scheduleShadowUpdate();
+  const m = (val - h) * 60;
+  document.getElementById('heure').textContent = `${h}h${m < 10 ? '0' : ''}${m === 0 ? '0' : m}`;
+  addMarkers(); // Recalcule ombres
 });
 
-// Tooltip clic marker
-const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
-const tooltip = document.getElementById('tooltip');
-
-handler.setInputAction(click => {
-  const picked = scene.pick(click.position);
-  
-  if (Cesium.defined(picked) && picked.id?.properties?.id) {
-    const id = picked.id.properties.id.getValue();
-    const t = State.terrasses.find(x => x.id === id);
-    
-    if (t) {
-      const isSunny = State.sunStates[id];
-      document.getElementById('ttName').textContent = t.nom;
-      document.getElementById('ttType').textContent = t.type;
-      document.getElementById('ttSun').textContent = isSunny ? '☀️ Ensoleillé' : '☁️ À l\'ombre';
-      document.getElementById('ttSun').style.color = isSunny ? '#FFD600' : '#8E9BAD';
-      
-      tooltip.style.left = Math.min(Math.max(click.position.x - 100, 10), window.innerWidth - 210) + 'px';
-      tooltip.style.top = Math.max(click.position.y - 80, 10) + 'px';
-      tooltip.classList.add('visible');
-      
-      setTimeout(() => tooltip.classList.remove('visible'), 3000);
-    }
+// Search simple
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  if (q.length < 2) {
+    terrasses = [...mockTerrasses];
   } else {
-    tooltip.classList.remove('visible');
+    terrasses = mockTerrasses.filter(t => t.nom.toLowerCase().includes(q));
   }
-}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-// ==========================================
-// INITIALISATION
-// ==========================================
-async function init() {
-  // Position initiale (Bordeaux ou géoloc)
-  const startLat = 44.8378;
-  const startLng = -0.5792;
-  
-  viewer.camera.setView({
-    destination: Cesium.Cartesian3.fromDegrees(startLng, startLat, 400),
-    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-50), roll: 0 }
-  });
-  
-  // Setup heure actuelle
-  const now = new Date();
-  const currentHour = Math.min(21, Math.max(8, now.getHours() + now.getMinutes()/60));
-  slider.value = currentHour;
-  slider.dispatchEvent(new Event('input'));
-  
-  // Géoloc auto silencieuse
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        viewer.camera.flyTo({
-          destination: Cesium.Cartesian3.fromDegrees(lng, lat, 350),
-          duration: 1.5
-        });
-        loadTerrasses(lat, lng);
-      },
-      () => {
-        // Fallback Bordeaux
-        loadTerrasses(startLat, startLng);
-      },
-      { timeout: 8000, maximumAge: 300000 }
-    );
-  } else {
-    loadTerrasses(startLat, startLng);
-  }
-}
-
-// Démarre quand Cesium est prêt
-init();
-
-// Gestion erreurs globales
-window.addEventListener('error', e => {
-  console.error('Erreur app:', e);
-  if (!State.splashComplete) completeSplash(); // Évite blocage
+  addMarkers();
+  if (q.length > 0) document.getElementById('listPanel').classList.add('visible');
 });
+
+// Init
+viewer.camera.setView({
+  destination: Cesium.Cartesian3.fromDegrees(-0.5792, 44.8378, 500),
+  orientation: { heading: 0, pitch: -0.5, roll: 0 }
+});
+
+addMarkers();
 </script>
 </body>
 </html>
