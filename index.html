@@ -371,24 +371,19 @@ const markerEntities={};
 let lastFetchLat=null, lastFetchLng=null;
 function typeLabel(a){return{bar:'Bar',cafe:'Café',restaurant:'Restaurant',pub:'Pub',biergarten:'Brasserie'}[a]||'Terrasse';}
 
-function buildQuery(lat, lng){
-  const d = 0.012;
-  const bbox = `${lat-d},${lng-d},${lat+d},${lng+d}`;
-  return `[out:json][timeout:25];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](${bbox}););out body;`;
-}
+// BBOX fixe Bordeaux complète — tous les restos d'un coup
+const BORDEAUX_QUERY=`[out:json][timeout:30];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](44.800,-0.630,44.900,-0.520););out body;`;
 
-async function fetchTerrasses(lat, lng){
-  const query = buildQuery(lat, lng);
+async function fetchTerrasses(){
   const endpoints=[
     'https://overpass-api.de/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
     'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   ];
-  // Lance les 3 en parallèle — le plus rapide gagne
   const promises = endpoints.map(url => {
     const ctrl = new AbortController();
-    const timer = setTimeout(()=>ctrl.abort(), 10000);
-    return fetch(url,{method:'POST',body:'data='+encodeURIComponent(query),signal:ctrl.signal})
+    const timer = setTimeout(()=>ctrl.abort(), 15000);
+    return fetch(url,{method:'POST',body:'data='+encodeURIComponent(BORDEAUX_QUERY),signal:ctrl.signal})
       .then(res=>{ clearTimeout(timer); if(!res.ok) throw new Error(); return res.json(); })
       .then(data=>{
         const seen=new Set();
@@ -582,15 +577,14 @@ handler.setInputAction(click=>{
 },Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
 // ══ LOAD TERRASSES ══
-async function loadTerrasses(lat, lng){
-  lastFetchLat=lat; lastFetchLng=lng;
+async function loadTerrasses(){
   Object.values(markerEntities).forEach(e=>viewer.entities.remove(e));
   Object.keys(markerEntities).forEach(k=>delete markerEntities[k]);
   terrasses=[];
   document.getElementById('loadingState').style.display='flex';
   document.getElementById('terrasseList').style.display='none';
   try {
-    const data=await fetchTerrasses(lat,lng);
+    const data=await fetchTerrasses();
     onTerrassesLoaded(data);
   } catch(e){ onTerrassesError(); }
 }
@@ -611,29 +605,23 @@ async function init(){
       const {longitude:lng, latitude:lat}=pos.coords;
       placeUserDot(lng,lat);
       viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(lng,lat,450),orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0}});
-      fetchTerrasses(lat,lng).then(data=>onTerrassesLoaded(data)).catch(()=>{
-        // Retry une fois si échec
-        setTimeout(()=>fetchTerrasses(lat,lng).then(data=>onTerrassesLoaded(data)).catch(()=>onTerrassesError()), 2000);
-      });
-    },()=>{
-      // Fallback Bordeaux si pas de géoloc
-      fetchTerrasses(44.8378,-0.5792).then(data=>onTerrassesLoaded(data)).catch(()=>{
-        setTimeout(()=>fetchTerrasses(44.8378,-0.5792).then(data=>onTerrassesLoaded(data)).catch(()=>onTerrassesError()), 2000);
-      });
-    },{enableHighAccuracy:false, timeout:8000, maximumAge:60000});
-  } else {
-    fetchTerrasses(44.8378,-0.5792).then(data=>onTerrassesLoaded(data)).catch(()=>onTerrassesError());
+    },()=>{},{enableHighAccuracy:false, timeout:8000, maximumAge:60000});
   }
+  // Charge tous les restos Bordeaux immédiatement
+  fetchTerrasses().then(data=>onTerrassesLoaded(data)).catch(()=>{
+    setTimeout(()=>fetchTerrasses().then(data=>onTerrassesLoaded(data)).catch(()=>onTerrassesError()), 3000);
+  });
 }
 
 function onTerrassesLoaded(data){
-  lastFetchLat=lastFetchLat||44.8378; lastFetchLng=lastFetchLng||-0.5792;
   document.getElementById('loadingState').style.display='none';
   document.getElementById('terrasseList').style.display='block';
-  terrasses=data; terrasses.forEach(t=>{sunStates[t.id]=false;});
+  terrasses=data;
+  terrasses.forEach(t=>{sunStates[t.id]=false;});
   document.getElementById('footerText').textContent=`${terrasses.length} terrasses · OpenStreetMap`;
+  // Liste disponible immédiatement pour la recherche
   renderList(currentHeure,'');
-  // Lancer les ombres dès que le splash est fini
+  // Dots et ombres après le splash
   const launchShadow=()=>{
     viewer.scene.postRender.addEventListener(function once(){
       viewer.scene.postRender.removeEventListener(once); runShadow();
