@@ -18,26 +18,8 @@
       --divider: #E5E5EA; --panel-w: 320px;
       --radius-md: 14px; --radius-sm: 10px;
       --white: #FFFFFF; --bg: #F2F2F7;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --safe-top: env(safe-area-inset-top, 0px);
-
-      /*
-        PERF FIX 1 — on remplace le blur par une couleur semi-opaque.
-        Sur Safari iOS, backdrop-filter:blur() sur 3 éléments superposés
-        (topBar + panel-map + drawer) = composite layer storm → 20fps.
-        Une couleur à 94% d'opacité est visuellement quasi-identique
-        et coûte 0 en GPU.
-      */
-      --glass: rgba(255,255,255,0.94);
     }
-
-    html, body {
-      height: 100%; overflow: hidden;
-      /* PERF FIX 2 — stoppe le bounce scroll iOS qui force des repaints */
-      overscroll-behavior: none;
-      font-family: 'Outfit', sans-serif; background: #000;
-      -webkit-tap-highlight-color: transparent;
-    }
+    html, body { height: 100%; overflow: hidden; font-family: 'Outfit', sans-serif; background: #000; }
 
     /* ══ SPLASH ══ */
     #splash {
@@ -46,9 +28,6 @@
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       transition: opacity 0.6s ease;
-      /* PERF FIX 3 — couche GPU dédiée, évite de repeindre la map dessous */
-      will-change: opacity;
-      transform: translateZ(0);
     }
     #splash.out { opacity: 0; pointer-events: none; }
     .splash-sun { width: 90px; height: 90px; margin-bottom: 24px; animation: splash-pulse 2.5s ease-in-out infinite; }
@@ -58,37 +37,30 @@
     .splash-name span { font-family: 'Be Vietnam Pro', sans-serif; font-style: normal; font-weight: 700; }
     .splash-tagline { font-size: 14px; color: var(--text-2); text-align: center; line-height: 1.5; max-width: 220px; }
     .splash-tagline strong { color: var(--yellow); font-weight: 600; }
-    .splash-progress-wrap { position: absolute; bottom: calc(52px + var(--safe-bottom)); left: 50%; transform: translateX(-50%); width: 140px; }
+    .splash-progress-wrap { position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%); width: 140px; }
     .splash-progress-track { width: 100%; height: 2px; background: #E5E5EA; border-radius: 2px; overflow: hidden; }
     .splash-progress-bar { height: 100%; border-radius: 2px; background: var(--yellow); width: 0%; transition: width 0.25s ease; }
-    .splash-status { position: absolute; bottom: calc(32px + var(--safe-bottom)); left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .splash-status { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--text-3); white-space: nowrap; }
 
     /* ══ MAP ══ */
-    #cesiumContainer {
-      position: fixed; inset: 0; width: 100vw; height: 100vh;
-      /* PERF FIX 4 — empêche Safari de propager les touch events du canvas
-         vers le document, ce qui causait des repaints parasites */
-      touch-action: none;
-    }
-    .cesium-widget canvas { outline: none !important; touch-action: none !important; }
+    #cesiumContainer { position: fixed; inset: 0; width: 100vw; height: 100vh; }
+    .cesium-widget canvas { outline: none !important; }
     .cesium-selection-wrapper, .cesium-infoBox { display: none !important; }
     .cesium-widget-credits { display: none !important; }
 
     /* ══ BARRE HAUT ══ */
     #topBar {
-      position: fixed; top: calc(16px + var(--safe-top)); left: 50%; transform: translateX(-50%);
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
       z-index: 30; width: calc(100% - 32px); max-width: 480px;
       display: flex; align-items: center; gap: 10px;
-      /* PERF FIX 5 — couche GPU isolée, empêche le repaint lors du scroll de la map */
-      will-change: transform;
-      transform: translateX(-50%) translateZ(0);
+      transition: top 0.2s;
     }
+    #topBar.pushed { top: 50px; }
     .search-glass {
       flex: 1; display: flex; align-items: center; gap: 8px;
-      background: var(--glass);
-      /* PERF FIX 6 — blur supprimé, remplacé par saturate seul qui est hardware-accelerated */
-      -webkit-backdrop-filter: saturate(180%);
-      backdrop-filter: saturate(180%);
+      /* FIX PERF — blur supprimé, cause principale du lag sur iPhone Safari.
+         La couleur à 0.94 d'opacité est visuellement identique, coût GPU = 0. */
+      background: rgba(255,255,255,0.94);
       border-radius: 16px; padding: 0 14px; height: 48px;
       box-shadow: 0 2px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
       border: 1px solid rgba(255,255,255,0.5);
@@ -96,9 +68,8 @@
     .search-glass svg { flex-shrink: 0; opacity: 0.4; }
     #searchInput {
       flex: 1; border: none; background: transparent;
-      font-family: 'Outfit', sans-serif; color: var(--text); outline: none;
-      /* PERF FIX 7 — 16px minimum évite le zoom automatique Safari au focus
-         (le zoom force un relayout complet de la page = freeze) */
+      font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--text); outline: none;
+      /* FIX iOS — 16px minimum évite le zoom automatique Safari au tap */
       font-size: 16px;
     }
     #searchInput::placeholder { color: var(--text-3); font-size: 14px; }
@@ -106,36 +77,29 @@
     .search-clear-btn.visible { display: flex; }
     .icon-btn {
       flex-shrink: 0; width: 48px; height: 48px;
-      background: var(--glass);
-      -webkit-backdrop-filter: saturate(180%);
-      backdrop-filter: saturate(180%);
+      /* FIX PERF — blur supprimé ici aussi */
+      background: rgba(255,255,255,0.94);
       border: 1px solid rgba(255,255,255,0.5); border-radius: 14px;
       box-shadow: 0 2px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
       cursor: pointer; display: flex; align-items: center; justify-content: center;
-      /* PERF FIX 8 — couche GPU pour chaque bouton fixe */
-      transform: translateZ(0);
     }
-    .icon-btn:active { background: rgba(255,255,255,0.95); }
+    .icon-btn:active { background: rgba(255,255,255,0.98); }
     #btnGeo.locating { animation: geo-pulse 1s ease-in-out infinite; }
     @keyframes geo-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
     /* ══ CURSEUR BAS ══ */
     .panel-map {
-      position: fixed; bottom: calc(28px + var(--safe-bottom)); left: 50%; transform: translateX(-50%);
-      background: var(--glass);
-      -webkit-backdrop-filter: saturate(180%);
-      backdrop-filter: saturate(180%);
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      /* FIX PERF — blur supprimé */
+      background: rgba(255,255,255,0.94);
       border: 1px solid rgba(255,255,255,0.5);
       padding: 14px 22px; border-radius: 22px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.7);
       text-align: center; z-index: 30; width: 80%; max-width: 400px;
-      /* PERF FIX 9 — couche GPU isolée */
-      will-change: transform;
-      transform: translateX(-50%) translateZ(0);
     }
     .panel-map h3 { margin: 0 0 10px 0; font-size: 16px; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: center; gap: 8px; }
     .panel-map input[type=range] { width: 100%; cursor: pointer; -webkit-appearance: none; height: 3px; border-radius: 2px; background: linear-gradient(to right, var(--yellow) var(--pct,46%), rgba(0,0,0,0.12) var(--pct,46%)); outline: none; }
-    .panel-map input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: white; border: 2.5px solid var(--yellow); box-shadow: 0 1px 8px rgba(0,0,0,0.15); cursor: pointer; }
+    .panel-map input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: white; border: 2.5px solid var(--yellow); box-shadow: 0 1px 8px rgba(0,0,0,0.15); cursor: pointer; }
 
     /* ══ TOOLTIP ══ */
     #tooltip {
@@ -145,38 +109,17 @@
       pointer-events: none; opacity: 0; transform: translateY(5px);
       transition: opacity 0.18s, transform 0.18s;
       max-width: 260px; text-align: center;
-      /* Pas de backdrop-filter ici non plus */
-      transform: translateZ(0);
     }
-    #tooltip.visible { opacity: 1; transform: translateY(0) translateZ(0); }
+    #tooltip.visible { opacity: 1; transform: translateY(0); }
     #tooltip .tt-type { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 3px; }
     #tooltip .tt-sun { font-size: 13px; font-weight: 500; margin-top: 5px; }
     #tooltip .tt-sun.sun { color: var(--yellow); }
     #tooltip .tt-sun.shade { color: #90CAF9; }
 
     /* ══ DRAWER ══ */
-    #drawer {
-      position: fixed; z-index: 40; background: var(--white);
-      display: flex; flex-direction: column;
-      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
-      /* PERF FIX 10 — le drawer a sa propre couche, son animation
-         ne force pas de repaint sur la map ni les éléments fixes */
-      will-change: transform;
-    }
-    @media (min-width: 641px) {
-      #drawer { top:0; right:0; width:var(--panel-w); height:100vh; border-left:1px solid var(--divider); transform:translateX(110%); }
-      #drawer.open { transform:translateX(0); }
-    }
-    @media (max-width: 640px) {
-      #drawer {
-        left:0; bottom:0; width:100%;
-        /* PERF FIX 11 — hauteur tenant compte de la home bar iPhone */
-        height: calc(78vh + env(safe-area-inset-bottom, 0px));
-        border-radius:18px 18px 0 0; border-top:1px solid var(--divider);
-        box-shadow:0 -4px 30px rgba(0,0,0,0.1); transform:translateY(110%);
-      }
-      #drawer.open { transform:translateY(0); }
-    }
+    #drawer { position: fixed; z-index: 40; background: var(--white); display: flex; flex-direction: column; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
+    @media (min-width: 641px) { #drawer { top:0; right:0; width:var(--panel-w); height:100vh; border-left:1px solid var(--divider); transform:translateX(110%); } #drawer.open { transform:translateX(0); } }
+    @media (max-width: 640px) { #drawer { left:0; bottom:0; width:100%; height:78vh; border-radius:18px 18px 0 0; border-top:1px solid var(--divider); box-shadow:0 -4px 30px rgba(0,0,0,0.1); transform:translateY(110%); } #drawer.open { transform:translateY(0); } }
     .drawer-handle { display:none; justify-content:center; padding:10px 0 4px; flex-shrink:0; cursor:pointer; }
     .drawer-bar { width:36px; height:4px; background:var(--divider); border-radius:2px; }
     @media (max-width:640px) { .drawer-handle { display:flex; } }
@@ -192,14 +135,7 @@
     #loadingState { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--text-3); font-size:13px; }
     .spinner { width:24px; height:24px; border:2.5px solid var(--divider); border-top-color:var(--yellow); border-radius:50%; animation:spin 0.8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
-    .list {
-      flex:1; overflow-y:auto; padding:0 12px;
-      padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-      /* PERF FIX 12 — scroll momentum natif iOS, sans repaints */
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior: contain;
-      scrollbar-width:none;
-    }
+    .list { flex:1; overflow-y:auto; padding:0 12px 24px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
     .list::-webkit-scrollbar { display:none; }
     .card { display:flex; align-items:center; gap:12px; padding:10px 8px; border-radius:var(--radius-md); cursor:pointer; transition:background 0.15s; border-bottom:1px solid var(--divider); }
     .card:last-child { border-bottom:none; }
@@ -213,11 +149,7 @@
     .card-badge.sun { background:var(--yellow-bg); color:#9A7E00; }
     .card-badge.shade { background:var(--shade-bg); color:var(--shade); }
     .no-results { padding:30px 20px; text-align:center; color:var(--text-3); font-size:13px; line-height:1.6; }
-    .drawer-footer {
-      padding: 10px 20px;
-      padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
-      border-top:1px solid var(--divider); display:flex; align-items:center; gap:6px; flex-shrink:0;
-    }
+    .drawer-footer { padding:10px 20px; border-top:1px solid var(--divider); display:flex; align-items:center; gap:6px; flex-shrink:0; }
     .footer-text { font-size:10px; color:var(--text-3); }
     .live-dot { width:6px; height:6px; border-radius:50%; background:#30D158; animation:blink 2s ease-in-out infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
@@ -266,18 +198,18 @@
       <circle cx="6.5" cy="6.5" r="5" stroke="#1C1C1E" stroke-width="1.5"/>
       <path d="M10.5 10.5L14 14" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
-    <input type="text" id="searchInput" placeholder="Cherche ta terrasse au soleil…"
+    <input type="text" id="searchInput" placeholder="Bar, café, restaurant…"
            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <button class="search-clear-btn" id="searchClear">✕</button>
   </div>
-  <button class="icon-btn" id="btnListe" title="Liste">
+  <button class="icon-btn" id="btnListe" onclick="openDrawer()" title="Liste">
     <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
       <rect width="18" height="2" rx="1" fill="#1C1C1E"/>
       <rect y="6" width="18" height="2" rx="1" fill="#1C1C1E"/>
       <rect y="12" width="18" height="2" rx="1" fill="#1C1C1E"/>
     </svg>
   </button>
-  <button class="icon-btn" id="btnGeo" title="Ma position">
+  <button class="icon-btn" id="btnGeo" onclick="geolocate()" title="Ma position">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
       <circle cx="10" cy="10" r="3.5" fill="#007AFF"/>
       <circle cx="10" cy="10" r="6" stroke="#007AFF" stroke-width="1.2" fill="none" opacity="0.35"/>
@@ -326,9 +258,6 @@
 const drawer = document.getElementById('drawer');
 function openDrawer()  { drawer.classList.add('open'); }
 function closeDrawer() { drawer.classList.remove('open'); }
-
-document.getElementById('btnListe').addEventListener('click', openDrawer);
-
 const dhandle = document.getElementById('drawerHandle');
 let ty0 = 0;
 dhandle.addEventListener('touchstart', e => { ty0 = e.touches[0].clientY; }, { passive:true });
@@ -368,10 +297,6 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   useBrowserRecommendedResolution: false,
 });
 
-// PERF — résolution plafonnée, pas de surcharge GPU iPhone
-viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 1.5);
-viewer.targetFrameRate = 60;
-
 viewer.scene.globe.maximumScreenSpaceError = 1;
 viewer.scene.globe.tileCacheSize = 500;
 viewer.scene.globe.preloadAncestors = true;
@@ -382,6 +307,8 @@ viewer.scene.globe.atmosphereEnabled = false;
 viewer.scene.fog.enabled = false;
 viewer.scene.postProcessStages.fxaa.enabled = false;
 viewer.shadows = true;
+viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 1.5);
+viewer.targetFrameRate = 60;
 
 viewer.camera.setView({
   destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 450),
@@ -447,10 +374,9 @@ function geolocate() {
     const { longitude:lng, latitude:lat } = pos.coords;
     placeUserDot(lng, lat);
     viewer.camera.flyTo({ destination:Cesium.Cartesian3.fromDegrees(lng,lat,400), orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0}, duration:1.8 });
-    loadTerrasses();
+    loadTerrasses(lat, lng);
   }, ()=>btn.classList.remove('locating'), { enableHighAccuracy:true, timeout:8000 });
 }
-document.getElementById('btnGeo').addEventListener('click', geolocate);
 
 // ══ STATE ══
 let terrasses=[], sunStates={}, searchQuery='', currentHeure=14;
@@ -459,6 +385,7 @@ let lastFetchLat=null, lastFetchLng=null;
 
 function typeLabel(a){ return{bar:'Bar',cafe:'Café',restaurant:'Restaurant',pub:'Pub',biergarten:'Brasserie'}[a]||'Terrasse'; }
 
+// ══ OVERPASS — 4 zones en parallèle pour tout charger ══
 const ZONES = [
   '44.820,-0.630,44.870,-0.570',
   '44.820,-0.570,44.870,-0.510',
@@ -471,37 +398,58 @@ const ENDPOINTS = [
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ];
 
-function buildZoneQuery(bbox){
+function buildQuery(lat, lng) {
+  const d = 0.012;
+  const bbox = `${lat-d},${lng-d},${lat+d},${lng+d}`;
+  return `[out:json][timeout:25];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](${bbox}););out body;`;
+}
+function buildZoneQuery(bbox) {
   return `[out:json][timeout:25];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](${bbox}););out body;`;
 }
 
-async function fetchZone(bbox){
-  for(const url of ENDPOINTS){
-    try{
-      const ctrl=new AbortController(), timer=setTimeout(()=>ctrl.abort(),12000);
-      const res=await fetch(url,{method:'POST',body:'data='+encodeURIComponent(buildZoneQuery(bbox)),signal:ctrl.signal});
+async function fetchZone(bbox) {
+  for (const url of ENDPOINTS) {
+    try {
+      const ctrl = new AbortController(), timer = setTimeout(()=>ctrl.abort(), 12000);
+      const res = await fetch(url, { method:'POST', body:'data='+encodeURIComponent(buildZoneQuery(bbox)), signal:ctrl.signal });
       clearTimeout(timer);
-      if(!res.ok) throw new Error();
+      if (!res.ok) throw new Error();
       return await res.json();
-    } catch(e){}
+    } catch(e) {}
   }
   return null;
 }
 
-async function fetchTerrasses(){
-  // PERF — Promise.all : les 4 zones chargent en parallèle
+async function fetchTerrasses(lat, lng) {
+  // Si on a des coords précises → requête centrée sur la position
+  // Sinon → 4 zones fixes Bordeaux en parallèle
+  if (lat !== undefined && lng !== undefined) {
+    const query = buildQuery(lat, lng);
+    for (const url of ENDPOINTS) {
+      try {
+        const ctrl = new AbortController(), timer = setTimeout(()=>ctrl.abort(), 8000);
+        const res = await fetch(url, { method:'POST', body:'data='+encodeURIComponent(query), signal:ctrl.signal });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const seen = new Set();
+        return data.elements
+          .filter(el=>el.lat&&el.lon&&el.tags?.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
+          .map(el=>({ id:el.id, nom:el.tags.name, adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'', type:typeLabel(el.tags.amenity), lng:el.lon, lat:el.lat }));
+      } catch(e) {}
+    }
+    throw new Error('Échec');
+  }
+
+  // FIX PERF — Promise.all : les 4 zones chargent en parallèle
   const results = await Promise.all(ZONES.map(bbox => fetchZone(bbox)));
   const valid = results.filter(Boolean);
-  if(!valid.length) throw new Error('Aucune zone chargée');
-  const seen=new Set();
+  if (!valid.length) throw new Error('Aucune zone chargée');
+  const seen = new Set();
   return valid
-    .flatMap(r=>r?.elements||[])
+    .flatMap(r => r?.elements || [])
     .filter(el=>el.lat&&el.lon&&el.tags?.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
-    .map(el=>({
-      id:el.id, nom:el.tags.name,
-      adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'',
-      type:typeLabel(el.tags.amenity), lng:el.lon, lat:el.lat
-    }));
+    .map(el=>({ id:el.id, nom:el.tags.name, adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'', type:typeLabel(el.tags.amenity), lng:el.lon, lat:el.lat }));
 }
 
 // ══ RAY CASTING ══
@@ -514,23 +462,22 @@ function getSunDir(jd){
   return Cesium.Cartesian3.normalize(d,d);
 }
 
-// PERF — cache du tableau des entités : évite Object.values() à chaque ray cast
-let _cachedMarkerArray=[], _markerDirty=true;
-function getMarkerArray(){
-  if(_markerDirty){ _cachedMarkerArray=Object.values(markerEntities); _markerDirty=false; }
-  return _cachedMarkerArray;
+// FIX PERF — cache du tableau markers, évite Object.values() à chaque ray
+let _cachedMarkers = [], _markersDirty = true;
+function getMarkers() {
+  if (_markersDirty) { _cachedMarkers = Object.values(markerEntities); _markersDirty = false; }
+  return _cachedMarkers;
 }
 
-function checkSunny(t,sunDir){
+function checkSunny(t, sunDir){
   if(!sunDir) return false;
   const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,1.5);
   const up=Cesium.Cartesian3.normalize(pos,new Cesium.Cartesian3());
   if(Cesium.Cartesian3.dot(sunDir,up)<=0.05) return false;
   const offsets=[[0,0],[0.00007,0],[-0.00007,0],[0,0.00007],[0,-0.00007]];
-  const arr=getMarkerArray();
   for(const [dlng,dlat] of offsets){
     const p=Cesium.Cartesian3.fromDegrees(t.lng+dlng,t.lat+dlat,1.5);
-    if(viewer.scene.pickFromRay(new Cesium.Ray(p,sunDir),arr)) return false;
+    if(viewer.scene.pickFromRay(new Cesium.Ray(p,sunDir),getMarkers())) return false;
   }
   return true;
 }
@@ -540,18 +487,19 @@ function scheduleShadow(){
   clearTimeout(shadowDebounce);
   shadowDebounce=setTimeout(()=>{
     const unsub=viewer.scene.postRender.addEventListener(()=>{ unsub(); runShadow(); });
-  }, 300);
+  }, 200);
 }
 async function runShadow(){
   if(computing) return;
   computing=true;
   const version=++shadowVersion;
   const jd=viewer.clock.currentTime;
+  viewer.scene.render(jd);
   const sunDir=getSunDir(jd);
   for(let i=0;i<terrasses.length;i+=10){
     if(version!==shadowVersion){ computing=false; return; }
     for(const t of terrasses.slice(i,i+10)) sunStates[t.id]=checkSunny(t,sunDir);
-    syncDots(); renderList(searchQuery);
+    syncDots(); renderList(currentHeure,searchQuery);
     await new Promise(r=>setTimeout(r,0));
   }
   computing=false;
@@ -582,7 +530,7 @@ function makeSunIcon(sunny){
 const DOT_SUN=makeSunIcon(true), DOT_SHADE=makeSunIcon(false);
 
 function syncDots(){
-  _markerDirty=true;
+  _markersDirty = true;
   terrasses.forEach(t=>{
     const s=sunStates[t.id]===true;
     if(s){
@@ -629,15 +577,15 @@ function highlight(text,q){
 }
 
 // ══ LISTE — DocumentFragment : 1 seul repaint au lieu de N ══
-function renderList(query){
-  const listEl=document.getElementById('terrasseList'), countEl=document.getElementById('sunCount');
+function renderList(h, query){
+  const list=document.getElementById('terrasseList'), countEl=document.getElementById('sunCount');
   const q=normalize(query||'');
   let filtered=terrasses;
   if(q) filtered=terrasses.filter(t=>normalize(t.nom).includes(q)||normalize(t.type).includes(q)||normalize(t.adresse).includes(q));
   const sorted=[...filtered].sort((a,b)=>(sunStates[b.id]?1:0)-(sunStates[a.id]?1:0));
   countEl.textContent=q?`${sorted.length} résultat${sorted.length>1?'s':''}`:`${sorted.filter(t=>sunStates[t.id]===true).length} au soleil`;
 
-  const frag=document.createDocumentFragment();
+  const frag = document.createDocumentFragment();
   if(!sorted.length){
     const d=document.createElement('div'); d.className='no-results';
     d.innerHTML=`Aucun résultat pour<br><strong>"${query}"</strong>`;
@@ -656,37 +604,34 @@ function renderList(query){
       frag.appendChild(card);
     });
   }
-  listEl.innerHTML='';
-  listEl.appendChild(frag);
+  list.innerHTML = '';
+  list.appendChild(frag);
 }
 
-// ══ SEARCH — debounce 80ms : imperceptible visuellement, évite les lags ══
+// ══ SEARCH ══
 const searchInput=document.getElementById('searchInput'), searchClear=document.getElementById('searchClear');
 let searchDebounce=null;
 searchInput.addEventListener('input',e=>{
   searchQuery=e.target.value;
   searchClear.classList.toggle('visible',searchQuery.length>0);
+  // FIX PERF — debounce 80ms : évite de rebuilder la liste à chaque touche
   clearTimeout(searchDebounce);
   searchDebounce=setTimeout(()=>{
-    renderList(searchQuery);
+    renderList(currentHeure,searchQuery);
     if(searchQuery.length>0) openDrawer();
   }, 80);
 });
-searchClear.addEventListener('click',()=>{ searchInput.value=''; searchQuery=''; searchClear.classList.remove('visible'); renderList(''); });
+searchClear.addEventListener('click',()=>{ searchInput.value=''; searchQuery=''; searchClear.classList.remove('visible'); renderList(currentHeure,''); });
 
 // ══ SLIDER ══
 const slider=document.getElementById('timeSlider');
-function updateSliderDisplay(val){
-  const h=Math.floor(val), m=Math.round((val-h)*60);
+slider.addEventListener('input',e=>{
+  const val=parseFloat(e.target.value), h=Math.floor(val), m=Math.round((val-h)*60);
   document.getElementById('heureAffichee').textContent=h+'h'+(m<10?'0'+m:m);
   slider.style.setProperty('--pct',((val-8)/13)*100+'%');
   const date=new Date(); date.setHours(h,m,0,0);
   viewer.clock.currentTime=Cesium.JulianDate.fromDate(date);
   currentHeure=val;
-}
-slider.addEventListener('input', e=>updateSliderDisplay(parseFloat(e.target.value)));
-slider.addEventListener('change',e=>{
-  updateSliderDisplay(parseFloat(e.target.value));
   if(terrasses.length>0) scheduleShadow();
 });
 
@@ -703,36 +648,40 @@ handler.setInputAction(click=>{
 },Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
 // ══ LOAD TERRASSES ══
-async function loadTerrasses(){
+async function loadTerrasses(lat, lng){
+  lastFetchLat=lat; lastFetchLng=lng;
   Object.values(markerEntities).forEach(e=>viewer.entities.remove(e));
   Object.keys(markerEntities).forEach(k=>delete markerEntities[k]);
-  _markerDirty=true;
+  _markersDirty = true;
   terrasses=[];
   document.getElementById('loadingState').style.display='flex';
   document.getElementById('terrasseList').style.display='none';
-  try { const data=await fetchTerrasses(); onTerrassesLoaded(data); }
-  catch(e){ onTerrassesError(); }
-}
-
-function onTerrassesLoaded(data){
+  let data;
+  try { data=await fetchTerrasses(lat,lng); }
+  catch(e){
+    document.getElementById('loadingState').style.display='none';
+    document.getElementById('terrasseList').style.display='block';
+    document.getElementById('terrasseList').innerHTML='<div class="no-results">Erreur de chargement.<br>Vérifiez votre connexion.</div>';
+    return;
+  }
   document.getElementById('loadingState').style.display='none';
   document.getElementById('terrasseList').style.display='block';
   terrasses=data; terrasses.forEach(t=>{ sunStates[t.id]=false; });
   document.getElementById('footerText').textContent=`${terrasses.length} terrasses · OpenStreetMap`;
-  renderList('');
-  const launchShadow=()=>{
+  renderList(currentHeure,'');
+  if(splashDone){
     viewer.scene.postRender.addEventListener(function once(){
       viewer.scene.postRender.removeEventListener(once); runShadow();
     });
-  };
-  if(splashDone) launchShadow();
-  else { const w=setInterval(()=>{ if(splashDone){ clearInterval(w); launchShadow(); } },100); }
-}
-
-function onTerrassesError(){
-  document.getElementById('loadingState').style.display='none';
-  document.getElementById('terrasseList').style.display='block';
-  document.getElementById('terrasseList').innerHTML='<div class="no-results">Erreur de chargement.<br>Vérifiez votre connexion.</div>';
+  } else {
+    const wait=setInterval(()=>{
+      if(splashDone){ clearInterval(wait);
+        viewer.scene.postRender.addEventListener(function once(){
+          viewer.scene.postRender.removeEventListener(once); runShadow();
+        });
+      }
+    },200);
+  }
 }
 
 // ══ BOOT ══
@@ -743,19 +692,17 @@ async function init(){
 
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(pos=>{
-      const {longitude:lng,latitude:lat}=pos.coords;
+      const {longitude:lng, latitude:lat}=pos.coords;
       placeUserDot(lng,lat);
       viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(lng,lat,450),orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0}});
-    },()=>{},{enableHighAccuracy:false,timeout:8000,maximumAge:60000});
+      loadTerrasses(lat,lng);
+    },()=>{
+      loadTerrasses();
+    },{enableHighAccuracy:false,timeout:6000});
+  } else {
+    loadTerrasses();
   }
-
-  fetchTerrasses()
-    .then(data=>onTerrassesLoaded(data))
-    .catch(()=>{
-      setTimeout(()=>fetchTerrasses().then(data=>onTerrassesLoaded(data)).catch(()=>onTerrassesError()),3000);
-    });
 }
-
 init();
 </script>
 </body>
