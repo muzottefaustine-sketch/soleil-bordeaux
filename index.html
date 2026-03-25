@@ -503,20 +503,22 @@ function checkSunny(t, sunDir){
   const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,1.5);
   const up=Cesium.Cartesian3.normalize(pos,new Cesium.Cartesian3());
   if(Cesium.Cartesian3.dot(sunDir,up)<=0.05) return false;
-  const offsets=[[0,0],[0.00007,0],[-0.00007,0],[0,0.00007],[0,-0.00007]];
-  for(const [dlng,dlat] of offsets){
-    const p=Cesium.Cartesian3.fromDegrees(t.lng+dlng,t.lat+dlat,1.5);
-    if(viewer.scene.pickFromRay(new Cesium.Ray(p,sunDir),Object.values(markerEntities))) return false;
-  }
-  return true;
+  // 1 seul point central — plus rapide, suffisamment précis
+  return !viewer.scene.pickFromRay(new Cesium.Ray(pos,sunDir),Object.values(markerEntities));
 }
+
+// Détecte si la caméra est en train de bouger
+let cameraMoving = false;
+viewer.camera.moveStart.addEventListener(()=>{ cameraMoving=true; });
+viewer.camera.moveEnd.addEventListener(()=>{ cameraMoving=false; });
 
 let shadowDebounce=null, computing=false, shadowVersion=0;
 function scheduleShadow(){
   clearTimeout(shadowDebounce);
+  // Délai plus long pour laisser la caméra se stabiliser
   shadowDebounce=setTimeout(()=>{
     const unsub=viewer.scene.postRender.addEventListener(()=>{ unsub(); runShadow(); });
-  }, 300);
+  }, 800);
 }
 async function runShadow(){
   if(computing) return;
@@ -524,11 +526,18 @@ async function runShadow(){
   const version=++shadowVersion;
   const jd=viewer.clock.currentTime;
   const sunDir=getSunDir(jd);
-  for(let i=0;i<terrasses.length;i+=15){
+  for(let i=0;i<terrasses.length;i+=8){
     if(version!==shadowVersion){ computing=false; return; }
-    for(const t of terrasses.slice(i,i+15)) sunStates[t.id]=checkSunny(t,sunDir);
+    // Pause si la caméra bouge — ne jamais bloquer le rendu
+    if(cameraMoving){
+      computing=false;
+      scheduleShadow(); // replanifie après
+      return;
+    }
+    for(const t of terrasses.slice(i,i+8)) sunStates[t.id]=checkSunny(t,sunDir);
     syncDots(); renderList(currentHeure,searchQuery);
-    await new Promise(r=>setTimeout(r,0));
+    // Yield au thread principal toutes les 8 terrasses
+    await new Promise(r=>setTimeout(r,16)); // ~1 frame
   }
   computing=false;
 }
