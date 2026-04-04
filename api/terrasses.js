@@ -8,25 +8,20 @@ const ZONES = [
 ];
 
 function buildQuery(bbox) {
-return `[out:json][timeout:60];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](${bbox}););out body;`;
+return `[out:json][timeout:25];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](${bbox}););out body;`;
 }
 
 async function fetchZone(bbox) {
-const endpoints = [
-‘https://overpass-api.de/api/interpreter’,
-‘https://overpass.kumi.systems/api/interpreter’,
-];
-for (const url of endpoints) {
 try {
-const res = await fetch(url, {
+const res = await fetch(‘https://overpass-api.de/api/interpreter’, {
 method: ‘POST’,
 body: ‘data=’ + encodeURIComponent(buildQuery(bbox)),
 });
 if (!res.ok) throw new Error();
 return await res.json();
-} catch (e) {}
-}
+} catch (e) {
 return { elements: [] };
+}
 }
 
 module.exports = async function handler(req, res) {
@@ -34,10 +29,18 @@ res.setHeader(‘Access-Control-Allow-Origin’, ‘*’);
 res.setHeader(‘Cache-Control’, ‘public, s-maxage=21600, stale-while-revalidate=86400’);
 res.setHeader(‘Content-Type’, ‘application/json’);
 
-const results = await Promise.all(ZONES.map(bbox => fetchZone(bbox)));
+// Une seule zone large au lieu de 4
+const SINGLE_QUERY = `[out:json][timeout:25];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](44.770,-0.630,44.870,-0.510););out body;`;
+
+try {
+const res2 = await fetch(‘https://overpass-api.de/api/interpreter’, {
+method: ‘POST’,
+body: ‘data=’ + encodeURIComponent(SINGLE_QUERY),
+});
+if (!res2.ok) throw new Error();
+const data = await res2.json();
 const seen = new Set();
-const terrasses = results
-.flatMap(r => r?.elements || [])
+const terrasses = (data.elements || [])
 .filter(el => {
 if (!el.lat || !el.lon || !el.tags?.name) return false;
 if (seen.has(el.tags.name)) return false;
@@ -54,6 +57,8 @@ type: { bar: ‘Bar’, cafe: ‘Café’, restaurant: ‘Restaurant’, pub: �
 lng: el.lon,
 lat: el.lat,
 }));
-
 res.json(terrasses);
+} catch(e) {
+res.status(500).json({ error: ‘Overpass unavailable’ });
+}
 };
