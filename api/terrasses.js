@@ -1,3 +1,5 @@
+module.exports.maxDuration = 60;
+
 const ZONES = [
 ‘44.820,-0.630,44.870,-0.570’,
 ‘44.820,-0.570,44.870,-0.510’,
@@ -6,7 +8,7 @@ const ZONES = [
 ];
 
 function buildQuery(bbox) {
-return `[out:json][timeout:25];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](${bbox}););out body;`;
+return `[out:json][timeout:60];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](${bbox}););out body;`;
 }
 
 async function fetchZone(bbox) {
@@ -29,7 +31,7 @@ return { elements: [] };
 
 module.exports = async function handler(req, res) {
 res.setHeader(‘Access-Control-Allow-Origin’, ‘*’);
-res.setHeader(‘Cache-Control’, ‘public, s-maxage=21600, stale-while-revalidate=43200’);
+res.setHeader(‘Cache-Control’, ‘public, s-maxage=21600, stale-while-revalidate=86400’);
 res.setHeader(‘Content-Type’, ‘application/json’);
 
 const results = await Promise.all(ZONES.map(bbox => fetchZone(bbox)));
