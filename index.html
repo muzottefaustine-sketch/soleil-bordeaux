@@ -27,23 +27,9 @@
 
 ```
 /* Safe area iPhone encoche/Dynamic Island */
-#topBar { padding-top: calc(env(safe-area-inset-top, 0px) + 8px); }
+#topBar { padding-top: 0; }
 .panel-map { margin-bottom: env(safe-area-inset-bottom, 0px); }
 
-/* ══ HEADER TITRE ══ */
-#appHeader {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 29;
-  padding-top: env(safe-area-inset-top, 0px);
-  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 100%);
-  pointer-events: none;
-}
-#appHeader .header-inner {
-  padding: 12px 20px 0;
-  display: flex; align-items: center; gap: 8px;
-}
-#appHeader .header-sun { font-size: 18px; }
-#appHeader .header-title { font-size: 13px; font-weight: 600; color: var(--text-2); letter-spacing: 0.2px; }
-#appHeader .header-title em { font-family: 'Playfair Display', serif; font-style: italic; color: var(--text); }
 
 /* ══ SPLASH ══ */
 #splash {
@@ -276,24 +262,17 @@
 
 <div id="cesiumContainer"></div>
 
-<!-- ══ HEADER TITRE ══ -->
-
-<div id="appHeader">
-  <div class="header-inner">
-    <span class="header-sun">☀️</span>
-    <span class="header-title"><em>Soleil</em>enterrasse · Bordeaux</span>
-  </div>
-</div>
-
 <!-- ══ BARRE HAUT ══ -->
 
-<div id="topBar">
+<div id="topBarWrap">
+  <div class="topbar-label">Cherche ta terrasse au soleil</div>
+  <div id="topBar">
   <div class="search-glass">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
       <circle cx="6.5" cy="6.5" r="5" stroke="#1C1C1E" stroke-width="1.5"/>
       <path d="M10.5 10.5L14 14" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
-    <input type="text" id="searchInput" placeholder="Cherche ta terrasse au soleil…">
+    <input type="text" id="searchInput" placeholder="Ta terrasse au soleil ☀️">
     <button class="search-clear-btn" id="searchClear">✕</button>
   </div>
   <button class="icon-btn" id="btnListe" onclick="openDrawer()" title="Liste">
@@ -310,6 +289,7 @@
       <path d="M10 2V4.5M10 15.5V18M2 10H4.5M15.5 10H18" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
   </button>
+</div>
 </div>
 
 <!-- ══ CURSEUR BAS ══ -->
