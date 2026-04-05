@@ -302,6 +302,7 @@
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
   <div class="tt-sun" id="ttSun"></div>
+  <button id="ttMaps" style="margin-top:8px;background:rgba(255,255,255,0.15);border:none;color:white;padding:6px 14px;border-radius:10px;font-size:12px;cursor:pointer;width:100%;">🗺 Ouvrir dans Plans</button>
 </div>
 
 <!-- ══ DRAWER ══ -->
@@ -491,19 +492,6 @@ async function fetchZone(bbox){
 }
 
 async function fetchTerrasses(){
-  // D'abord essaie l'API Vercel en cache (instantané)
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(()=>ctrl.abort(), 8000);
-    const res = await fetch('/api/terrasses', {signal: ctrl.signal});
-    clearTimeout(timer);
-    if(res.ok){
-      const data = await res.json();
-      if(data && data.length > 0) return data;
-    }
-  } catch(e) {}
-  
-  // Fallback sur Overpass direct si l'API Vercel échoue
   const results = await Promise.all(ZONES.map(bbox => fetchZone(bbox)));
   const seen = new Set();
   return results
@@ -616,6 +604,11 @@ function showTooltip(t,x,y){
   tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
   tooltip.style.top=Math.max(y-110,10)+'px';
   tooltip.classList.add('visible');
+  if(navigator.vibrate) navigator.vibrate(10);
+  const mapsBtn=document.getElementById('ttMaps');
+  if(mapsBtn) mapsBtn.onclick=()=>{
+    window.open(`maps://maps.apple.com/?q=${encodeURIComponent(t.nom+', Bordeaux')}&ll=${t.lat},${t.lng}`,'_blank');
+  };
   clearTimeout(ttTimeout);
   ttTimeout=setTimeout(()=>tooltip.classList.remove('visible'),6000);
 }
@@ -724,7 +717,7 @@ async function loadTerrasses(){
   } catch(e){
     document.getElementById('loadingState').style.display='none';
     document.getElementById('terrasseList').style.display='block';
-    document.getElementById('terrasseList').innerHTML=`<div class="no-results">Erreur de chargement.<br>Vérifiez votre connexion.</div>`;
+    document.getElementById('terrasseList').innerHTML=`<div class="no-results">Impossible de charger les terrasses.<br>Vérifiez votre connexion.<br><br><button onclick="loadTerrasses()" style="margin-top:8px;background:#FFD600;border:none;padding:10px 20px;border-radius:12px;font-weight:600;cursor:pointer;font-size:14px;">🔄 Réessayer</button></div>`;
   }
 }
 
