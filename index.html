@@ -28,7 +28,7 @@
 html, body {
   height: 100%; width: 100%;
   overflow: hidden;
-  font-family: 'Outfit', sans-serif;
+  font-family: Arial, sans-serif;
   background: #000;
   position: fixed;
   inset: 0;
@@ -88,7 +88,7 @@ html, body {
   border: 1px solid rgba(255,255,255,0.6);
 }
 .search-glass svg { flex-shrink: 0; opacity: 0.35; }
-#searchInput { flex: 1; border: none; background: transparent; font-family: 'Outfit', sans-serif; font-size: 15px; color: var(--text); outline: none; }
+#searchInput { flex: 1; border: none; background: transparent; font-family: Arial, sans-serif; font-size: 15px; color: var(--text); outline: none; }
 #searchInput::placeholder { color: var(--text-3); }
 .search-clear-btn { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 16px; padding: 0; display: none; align-items: center; justify-content: center; width: 20px; height: 20px; }
 .search-clear-btn.visible { display: flex; }
@@ -320,7 +320,7 @@ html, body {
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
   <div class="tt-sun" id="ttSun"></div>
-  <button id="ttMaps" style="margin-top:8px;background:rgba(255,255,255,0.15);border:none;color:white;padding:6px 14px;border-radius:10px;font-size:12px;cursor:pointer;width:100%;">🗺 Ouvrir dans Plans</button>
+  <a id="ttMaps" href="#" target="_blank" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;width:100%;box-sizing:border-box;">🗺 Ouvrir dans Plans</a>
 </div>
 
 <!-- DRAWER -->
@@ -614,10 +614,8 @@ function showTooltip(t,x,y){
   tooltip.style.top=Math.max(y-130,10)+'px';
   tooltip.classList.add('visible');
   if(navigator.vibrate) navigator.vibrate(10);
-  const mapsBtn=document.getElementById('ttMaps');
-  if(mapsBtn) mapsBtn.onclick=()=>{
-    window.open(`https://maps.apple.com/?q=${encodeURIComponent(t.nom+', Bordeaux')}&ll=${t.lat},${t.lng}&dirflg=d`,'_blank');
-  };
+  const mapsLink=document.getElementById('ttMaps');
+  if(mapsLink) mapsLink.href=`https://maps.apple.com/?q=${encodeURIComponent(t.nom+', Bordeaux')}&ll=${t.lat},${t.lng}`;
   clearTimeout(ttTimeout);
   ttTimeout=setTimeout(()=>tooltip.classList.remove('visible'),6000);
 }
