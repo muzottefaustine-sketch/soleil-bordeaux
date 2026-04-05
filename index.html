@@ -456,6 +456,14 @@ function placeUserDot(lng, lat) {
   });
 }
 
+// Override géoloc WebView pour éviter double demande
+const _origGetCurrentPosition = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+let _cachedPosition = null;
+navigator.geolocation.getCurrentPosition = function(success, error, options) {
+  if (_cachedPosition) { success(_cachedPosition); return; }
+  _origGetCurrentPosition(pos => { _cachedPosition = pos; success(pos); }, error, options);
+};
+
 function geolocate() {
   if (!navigator.geolocation) return;
   const btn = document.getElementById('btnGeo'); btn.classList.add('locating');
