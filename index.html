@@ -376,7 +376,10 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   fullscreenButton: false, geocoder: false,
   scene3DOnly: true,
 });
-
+viewer.container.style.width = '100%';
+viewer.container.style.height = '100%';
+viewer.canvas.style.width = '100%';
+viewer.canvas.style.height = '100%';
 viewer.scene.globe.maximumScreenSpaceError = 1;
 viewer.scene.globe.tileCacheSize = 500;
 viewer.scene.globe.preloadAncestors = true;
