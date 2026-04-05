@@ -353,6 +353,16 @@ html, body {
 </div>
 
 <script>
+// Intercepter géoloc pour éviter double demande iOS WebView
+(function() {
+  const _orig = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+  let _pos = null;
+  navigator.geolocation.getCurrentPosition = function(ok, err, opt) {
+    if (_pos) { ok(_pos); return; }
+    _orig(p => { _pos = p; ok(p); }, err, { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 });
+  };
+})();
+
 const drawer = document.getElementById('drawer');
 function openDrawer()  { drawer.classList.add('open'); }
 function closeDrawer() { drawer.classList.remove('open'); }
