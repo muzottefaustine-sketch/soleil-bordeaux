@@ -11,7 +11,6 @@
   <title>Soleilenterrasse</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,700&family=Be+Vietnam+Pro:wght@700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -46,8 +45,8 @@ html, body {
 .splash-sun { width: 90px; height: 90px; margin-bottom: 24px; animation: splash-pulse 2.5s ease-in-out infinite; }
 @keyframes splash-pulse { 0%,100%{transform:scale(1) rotate(0deg);} 50%{transform:scale(1.07) rotate(6deg);} }
 .splash-name { font-size: 32px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; margin-bottom: 8px; }
-.splash-name em { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; }
-.splash-name span { font-family: 'Be Vietnam Pro', sans-serif; font-style: normal; font-weight: 700; }
+.splash-name em { font-family: Arial, sans-serif; font-style: italic; font-weight: 700; }
+.splash-name span { font-family: Arial, sans-serif; font-style: normal; font-weight: 700; }
 .splash-tagline { font-size: 14px; color: var(--text-2); text-align: center; line-height: 1.5; max-width: 220px; font-family: Arial, sans-serif; }
 .splash-tagline strong { color: var(--yellow); font-weight: 600; }
 .splash-progress-wrap { position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%); width: 140px; }
@@ -176,8 +175,8 @@ html, body {
 .drawer-header { padding:20px 20px 0; flex-shrink:0; }
 .drawer-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
 .drawer-title { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing:-0.3px; }
-.drawer-title em { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; }
-.drawer-title span { font-family: 'Be Vietnam Pro', sans-serif; font-style: normal; color: var(--yellow); font-weight: 700; }
+.drawer-title em { font-family: Arial, sans-serif; font-style: italic; font-weight: 700; }
+.drawer-title span { font-family: Arial, sans-serif; font-style: normal; color: var(--yellow); font-weight: 700; }
 #btnClose {
   background: var(--bg); border: none; border-radius: 50%;
   width: 32px; height: 32px; font-size: 14px; cursor: pointer;
@@ -192,7 +191,7 @@ html, body {
   margin-bottom: 12px;
 }
 .drawer-search svg { flex-shrink: 0; opacity: 0.3; }
-#drawerSearch { flex: 1; border: none; background: transparent; font-family: 'Outfit', sans-serif; font-size: 15px; color: var(--text); outline: none; }
+#drawerSearch { flex: 1; border: none; background: transparent; font-family: Arial, sans-serif; font-size: 15px; color: var(--text); outline: none; }
 #drawerSearch::placeholder { color: var(--text-3); }
 
 .section-title { padding:4px 20px 8px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
