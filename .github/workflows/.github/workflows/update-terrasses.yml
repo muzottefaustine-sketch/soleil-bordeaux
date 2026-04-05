@@ -1,1 +1,23 @@
+name: Update Terrasses Data
 
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Fetch terrasses from Overpass
+        run: |
+          curl -s -X POST "https://overpass-api.de/api/interpreter" \
+            --data-urlencode 'data=[out:json][timeout:60];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](44.770,-0.630,44.870,-0.510););out body;' \
+            -o raw.json
+
+      - name: Process data
+        run: |
+          node -e "
+          const fs = require('fs');
