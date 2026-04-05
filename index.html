@@ -27,8 +27,23 @@
 
 ```
 /* Safe area iPhone encoche/Dynamic Island */
-#topBar { padding-top: env(safe-area-inset-top, 0px); }
+#topBar { padding-top: calc(env(safe-area-inset-top, 0px) + 8px); }
 .panel-map { margin-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* ══ HEADER TITRE ══ */
+#appHeader {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 29;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+}
+#appHeader .header-inner {
+  padding: 12px 20px 0;
+  display: flex; align-items: center; gap: 8px;
+}
+#appHeader .header-sun { font-size: 18px; }
+#appHeader .header-title { font-size: 13px; font-weight: 600; color: var(--text-2); letter-spacing: 0.2px; }
+#appHeader .header-title em { font-family: 'Playfair Display', serif; font-style: italic; color: var(--text); }
 
 /* ══ SPLASH ══ */
 #splash {
@@ -261,6 +276,15 @@
 
 <div id="cesiumContainer"></div>
 
+<!-- ══ HEADER TITRE ══ -->
+
+<div id="appHeader">
+  <div class="header-inner">
+    <span class="header-sun">☀️</span>
+    <span class="header-title"><em>Soleil</em>enterrasse · Bordeaux</span>
+  </div>
+</div>
+
 <!-- ══ BARRE HAUT ══ -->
 
 <div id="topBar">
@@ -442,9 +466,29 @@ function placeUserDot(lng, lat) {
     billboard: { image:makeUserDot(), verticalOrigin:Cesium.VerticalOrigin.CENTER, heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND, width:20, height:20, disableDepthTestDistance:Number.POSITIVE_INFINITY }
   });
 }
+// Position passée depuis Swift (évite double demande)
+let nativePosition = null;
+window.addEventListener('message', e => {
+  try {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'location') {
+      nativePosition = { lat: msg.lat, lng: msg.lng };
+      placeUserDot(msg.lng, msg.lat);
+    }
+  } catch(e) {}
+});
+
 function geolocate() {
   if (!navigator.geolocation) return;
   const btn = document.getElementById('btnGeo'); btn.classList.add('locating');
+  // Utilise la position native si disponible
+  if (nativePosition) {
+    btn.classList.remove('locating');
+    const { lng, lat } = nativePosition;
+    placeUserDot(lng, lat);
+    viewer.camera.flyTo({ destination:Cesium.Cartesian3.fromDegrees(lng,lat,400), orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0}, duration:1.8 });
+    return;
+  }
   navigator.geolocation.getCurrentPosition(pos => {
     btn.classList.remove('locating');
     const { longitude:lng, latitude:lat } = pos.coords;
@@ -729,7 +773,11 @@ async function init(){
   const initH=Math.min(21,Math.max(8,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
   slider.value=initH; slider.dispatchEvent(new Event('input'));
 
-  if(navigator.geolocation){
+  // Si position native disponible, l'utiliser directement
+  if (nativePosition) {
+    placeUserDot(nativePosition.lng, nativePosition.lat);
+    viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(nativePosition.lng, nativePosition.lat, 450), orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0}});
+  } else if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(pos=>{
       const {longitude:lng, latitude:lat}=pos.coords;
       placeUserDot(lng,lat);
