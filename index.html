@@ -589,7 +589,7 @@ const s=sunStates[t.id]===true;
 document.getElementById(‘ttName’).textContent=t.nom;
 document.getElementById(‘ttType’).textContent=t.type+(t.adresse?’ · ‘+t.adresse:’’);
 const el=document.getElementById(‘ttSun’);
-el.textContent=s?‘☀ Au soleil’:‘🌥 À l'ombre’;
+el.textContent=s?'\u2600 Au soleil':'\uD83C\uDF25 \u00C0 l\'ombre';
 el.className=’tt-sun ’+(s?‘sun’:‘shade’);
 const w=260;
 tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+‘px’;
