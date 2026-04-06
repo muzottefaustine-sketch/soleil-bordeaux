@@ -494,18 +494,15 @@ async function fetchZone(bbox){
 }
 
 async function fetchTerrasses(){
-  const res = await fetch('/donn%C3%A9es/exporter.geojson');
-  const data = await res.json();
+  const results = await Promise.all(ZONES.map(bbox => fetchZone(bbox)));
   const seen = new Set();
-  return data.features
-    .filter(f=>f.properties?.name&&!seen.has(f.properties.name)&&seen.add(f.properties.name))
-    .map(f=>({
-      id:f.properties.id||Math.random(),
-      nom:f.properties.name,
-      adresse:f.properties['addr:street']?((f.properties['addr:housenumber']||'')+' '+f.properties['addr:street']).trim():'',
-      type:typeLabel(f.properties.amenity),
-      lng:f.geometry.coordinates[0],
-      lat:f.geometry.coordinates[1]
+  return results
+    .flatMap(r => r?.elements || [])
+    .filter(el=>el.lat&&el.lon&&el.tags?.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
+    .map(el=>({
+      id:el.id, nom:el.tags.name,
+      adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'',
+      type:typeLabel(el.tags.amenity), lng:el.lon, lat:el.lat
     }));
 }
 
