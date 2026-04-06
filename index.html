@@ -493,7 +493,26 @@ async function fetchZone(bbox){
   return {elements:[]};
 }
 
-async function fetchTerrasses(){
+async function fetchTerrasses(lat, lng){
+  const r = 0.008;
+  const bbox = (lat-r)+','+(lng-r)+','+(lat+r)+','+(lng+r);
+  const query = '[out:json][timeout:20];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"]('+bbox+'););out body;';
+  for(const url of ENDPOINTS){
+    try{
+      const ctrl = new AbortController();
+      const timer = setTimeout(()=>ctrl.abort(), 10000);
+      const res = await fetch(url,{method:'POST',body:'data='+encodeURIComponent(query),signal:ctrl.signal});
+      clearTimeout(timer);
+      if(!res.ok) throw new Error();
+      const data = await res.json();
+      const seen = new Set();
+      return data.elements
+        .filter(el=>el.lat&&el.lon&&el.tags?.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name))
+        .map(el=>({id:el.id,nom:el.tags.name,adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'',type:typeLabel(el.tags.amenity),lng:el.lon,lat:el.lat}));
+    }catch(e){}
+  }
+  return [];
+}
   const results = await Promise.all(ZONES.map(bbox => fetchZone(bbox)));
   const seen = new Set();
   return results
