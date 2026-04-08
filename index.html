@@ -589,8 +589,7 @@ function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible
 function normalize(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function highlight(text,q){
   if(!q) return text;
-  return text.replace(new RegExp(`(${
-    q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi')
+  return text.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi')
 }
 
 function renderList(h,query){
