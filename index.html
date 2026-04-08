@@ -589,7 +589,7 @@ function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible
 function normalize(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function highlight(text,q){
   if(!q) return text;
-  return text.replace(new RegExp(`(${q.replace(/\[.\*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'),'<mark style="background:#FFFBE0;color:#9A7E00;border-radius:3px;padding:0 2px">$1</mark>');
+  return text.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi')
 }
 
 function renderList(h,query){
