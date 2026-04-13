@@ -504,6 +504,26 @@ let cameraMoving = false;
 viewer.camera.moveStart.addEventListener(()=>{ cameraMoving=true; });
 viewer.camera.moveEnd.addEventListener(()=>{ cameraMoving=false; });
 
+  clearTimeout(shadowDebounce);
+  shadowDebounce=setTimeout(()=>{
+    if(cameraMoving) return;
+    const unsub=viewer.scene.postRender.addEventListener(()=>{ unsub(); runShadow(); });
+  }, 500);
+}
+  if(computing) return;
+  computing=true;
+  const version=++shadowVersion;
+  const jd=viewer.clock.currentTime;
+  const sunDir=getSunDir(jd);
+  for(let i=0;i<terrasses.length;i+=10){
+    if(version!==shadowVersion || cameraMoving){ computing=false; return; }
+    for(const t of terrasses.slice(i,i+10)) sunStates[t.id]=checkSunny(t,sunDir);
+    syncDots(); renderList(currentHeure,searchQuery);
+    await new Promise(r=>setTimeout(r,0));
+  }
+  computing=false;
+}
+
 function makeSunIcon(sunny){
   const c=document.createElement('canvas'); c.width=20; c.height=20;
   const ctx=c.getContext('2d');
@@ -528,15 +548,14 @@ const DOT_SUN=makeSunIcon(true), DOT_SHADE=makeSunIcon(false);
 
 function syncDots(){
   terrasses.forEach(t=>{
-    if(!markerEntities[t.id]){
-      markerEntities[t.id]=viewer.entities.add({
-        position:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,2),
-        billboard:{image:DOT_SUN,verticalOrigin:Cesium.VerticalOrigin.CENTER,heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND,width:20,height:20,disableDepthTestDistance:Number.POSITIVE_INFINITY},
-        properties:{id:t.id}
-      });
-    }
-  });
-}
+    const s=sunStates[t.id]===true;
+    if(s){
+      if(!markerEntities[t.id]){
+        markerEntities[t.id]=viewer.entities.add({
+          position:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,2),
+          billboard:{image:DOT_SUN,verticalOrigin:Cesium.VerticalOrigin.CENTER,heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND,width:20,height:20,disableDepthTestDistance:Number.POSITIVE_INFINITY},
+          properties:{id:t.id}
+        });
       } else { markerEntities[t.id].billboard.image=DOT_SUN; markerEntities[t.id].show=true; }
     } else {
       if(markerEntities[t.id]) markerEntities[t.id].show=false;
@@ -644,7 +663,6 @@ async function loadTerrasses(){
     terrasses=data; terrasses.forEach(t=>{sunStates[t.id]=false;});
     document.getElementById('footerText').textContent=`${terrasses.length} terrasses · OpenStreetMap`;
     renderList(currentHeure,'');
-    syncDots();
   } catch(e){
     document.getElementById('loadingState').style.display='none';
     document.getElementById('terrasseList').style.display='block';
