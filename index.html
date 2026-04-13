@@ -572,6 +572,8 @@ function showTooltip(t,x,y){
   document.getElementById('ttName').textContent=t.nom;
   document.getElementById('ttType').textContent=t.type+(t.adresse?' · '+t.adresse:'');
   const el=document.getElementById('ttSun');
+  el.textContent=s?'☀ Au soleil':'🌥 À l\'ombre';
+  el.className='tt-sun '+(s?'sun':'shade');
   const w=260;
   tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
   tooltip.style.top=Math.max(y-130,10)+'px';
@@ -599,16 +601,18 @@ function renderList(h,query){
   countEl.textContent=q?`${sorted.length} résultat${sorted.length>1?'s':''}`:`${sorted.filter(t=>sunStates[t.id]===true).length} au soleil`;
   list.innerHTML='';
   if(!sorted.length){list.innerHTML=`<div class="no-results">Aucun résultat pour<br><strong>"${query}"</strong></div>`;return;}
- sorted.forEach(t=>{
+  sorted.forEach(t=>{
     const s=sunStates[t.id]===true;
     const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id;
-card.innerHTML=`<div class="card-icon sun">☀️</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${t.type}${t.adresse?' · '+t.adresse:''}</div></div>`;
+    card.innerHTML=`<div class="card-icon ${s?'sun':'shade'}">${s?'☀️':'🌥'}</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${t.type}${t.adresse?' · '+t.adresse:''}</div></div><div class="card-badge ${s?'sun':'shade'}">${s?'Soleil':'Ombre'}</div>`;
+    card.addEventListener('click',()=>{
       document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
       card.classList.add('active'); closeDrawer();
       const target=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,0);
       viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(target,120),{offset:new Cesium.HeadingPitchRange(0,Cesium.Math.toRadians(-65),220),duration:1.4});
     });
     list.appendChild(card);
+  });
 }
 
 const searchInput=document.getElementById('searchInput'), searchClear=document.getElementById('searchClear');
