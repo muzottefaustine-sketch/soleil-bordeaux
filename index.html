@@ -597,7 +597,7 @@ function renderList(h,query){
   const q=normalize(query||'');
   let filtered=terrasses;
   if(q) filtered=terrasses.filter(t=>normalize(t.nom).includes(q)||normalize(t.type).includes(q)||normalize(t.adresse).includes(q));
- const sorted = [...filtered].filter(t => sunStates[t.id]);
+  const sorted=[...filtered].sort((a,b)=>(sunStates[b.id]?1:0)-(sunStates[a.id]?1:0));
   countEl.textContent=q?`${sorted.length} résultat${sorted.length>1?'s':''}`:`${sorted.filter(t=>sunStates[t.id]===true).length} au soleil`;
   list.innerHTML='';
   if(!sorted.length){list.innerHTML=`<div class="no-results">Aucun résultat pour<br><strong>"${query}"</strong></div>`;return;}
