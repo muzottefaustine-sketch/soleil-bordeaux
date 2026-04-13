@@ -323,7 +323,6 @@ isolation: isolate;
   </div>
   <div class="section-title">
     <span class="section-label">Résultats</span>
-    <span class="count-pill" id="sunCount">…</span>
   </div>
   <div id="loadingState"><div class="spinner"></div><span>Chargement…</span></div>
   <div class="list" id="terrasseList" style="display:none;"></div>
@@ -599,7 +598,6 @@ function renderList(h,query){
   let filtered=terrasses;
   if(q) filtered=terrasses.filter(t=>normalize(t.nom).includes(q)||normalize(t.type).includes(q)||normalize(t.adresse).includes(q));
   const sorted=[...filtered].sort((a,b)=>(sunStates[b.id]?1:0)-(sunStates[a.id]?1:0));
-  countEl.textContent=q?`${sorted.length} résultat${sorted.length>1?'s':''}`:`${sorted.filter(t=>sunStates[t.id]===true).length} au soleil`;
   list.innerHTML='';
   if(!sorted.length){list.innerHTML=`<div class="no-results">Aucun résultat pour<br><strong>"${query}"</strong></div>`;return;}
   sorted.forEach(t=>{
