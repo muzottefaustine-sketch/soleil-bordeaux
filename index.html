@@ -575,8 +575,6 @@ function showTooltip(t,x,y){
   document.getElementById('ttName').textContent=t.nom;
   document.getElementById('ttType').textContent=t.type+(t.adresse?' · '+t.adresse:'');
   const el=document.getElementById('ttSun');
-  el.textContent=s?'☀ Au soleil':'🌥 À l\'ombre';
-  el.className='tt-sun '+(s?'sun':'shade');
   const w=260;
   tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
   tooltip.style.top=Math.max(y-130,10)+'px';
