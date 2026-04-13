@@ -688,14 +688,6 @@ async function init(){
   const now=new Date();
   const initH=Math.min(21,Math.max(8,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
   slider.value=initH; slider.dispatchEvent(new Event('input'));
-
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(pos=>{
-      const {longitude:lng, latitude:lat}=pos.coords;
-      placeUserDot(lng,lat);
-      viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(lng,lat,450),orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0}});
-    },()=>{},{enableHighAccuracy:false,timeout:6000,maximumAge:60000});
-  }
   loadTerrasses();
 }
 init();
