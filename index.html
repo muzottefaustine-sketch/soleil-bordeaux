@@ -604,8 +604,9 @@ function renderList(h,query){
   if(!sorted.length){list.innerHTML=`<div class="no-results">Aucun résultat pour<br><strong>"${query}"</strong></div>`;return;}
   sorted.forEach(t=>{
     const s=sunStates[t.id]===true;
-    const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id;
-    card.innerHTML=`<div class="card-icon ${s?'sun':'shade'}">${s?'☀️':'🌥'}</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${t.type}${t.adresse?' · '+t.adresse:''}</div></div><div class="card-badge ${s?'sun':'shade'}">${s?'Soleil':'Ombre'}</div>`;
+const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id;
+card.innerHTML=`<div class="card-icon sun">☀️</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${t.type}${t.adresse?' · '+t.adresse:''}</div></div>`;
+
     card.addEventListener('click',()=>{
       document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
       card.classList.add('active'); closeDrawer();
