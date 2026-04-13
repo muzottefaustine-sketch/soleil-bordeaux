@@ -294,10 +294,8 @@ isolation: isolate;
       <circle cx="10" cy="10" r="6" stroke="#007AFF" stroke-width="1.2" fill="none" opacity="0.35"/>
       <path d="M10 2V4.5M10 15.5V18M2 10H4.5M15.5 10H18" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
-</button>
-</div>
-<div id="weatherBanner" style="position:fixed;top:calc(env(safe-area-inset-top,44px) + 70px);left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;z-index:30;"></div>
-<!-- CURSEUR BAS --><div class="panel-map">
+  </button>
+</div><!-- CURSEUR BAS --><div class="panel-map">
   <h3>☀️ <span class="heure" id="heureAffichee">14h00</span></h3>
   <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25">
   <div class="panel-labels"><span>8h</span><span>12h</span><span>17h</span><span>21h</span></div>
@@ -671,18 +669,11 @@ async function loadTerrasses(){
     document.getElementById('terrasseList').innerHTML=`<div class="no-results">Impossible de charger les terrasses.<br>Vérifiez votre connexion.<br><br><button onclick="loadTerrasses()" style="margin-top:8px;background:#FFD600;border:none;padding:10px 20px;border-radius:12px;font-weight:600;cursor:pointer;font-size:14px;">🔄 Réessayer</button></div>`;
   }
 }
-async function fetchWeather(){
-  try{
-    const res=await fetch('https://wttr.in/Bordeaux?format=3');
-    const text=await res.text();
-    document.getElementById('weatherBanner').textContent=text;
-  }catch(e){}
-}
+
 async function init(){
   const now=new Date();
   const initH=Math.min(21,Math.max(8,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
   slider.value=initH; slider.dispatchEvent(new Event('input'));
-  fetchWeather();
   loadTerrasses();
 }
 init();
