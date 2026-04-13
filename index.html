@@ -301,7 +301,6 @@ isolation: isolate;
 </div><!-- TOOLTIP --><div id="tooltip">
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
-  <div class="tt-sun" id="ttSun"></div>
   <a id="ttMaps" href="#" target="_blank" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;width:100%;box-sizing:border-box;">🗺 Ouvrir dans Plans</a>
 </div><!-- DRAWER --><div id="drawer">
   <div class="drawer-handle" id="drawerHandle"><div class="drawer-bar"></div></div>
@@ -571,9 +570,6 @@ function showTooltip(t,x,y){
   const s=sunStates[t.id]===true;
   document.getElementById('ttName').textContent=t.nom;
   document.getElementById('ttType').textContent=t.type+(t.adresse?' · '+t.adresse:'');
-  const el=document.getElementById('ttSun');
-  el.textContent=s?'☀ Au soleil':'🌥 À l\'ombre';
-  el.className='tt-sun '+(s?'sun':'shade');
   const w=260;
   tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
   tooltip.style.top=Math.max(y-130,10)+'px';
