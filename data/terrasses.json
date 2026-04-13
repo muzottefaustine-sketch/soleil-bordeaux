@@ -37556,6 +37556,21 @@
         ]
       },
       "id": "node/13704298902"
+    } ,
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "avant-comptoir-palais",
+        "name": "L'Avant Comptoir du Palais",
+        "amenity": "bar",
+        "addr:housenumber": "2",
+        "addr:street": "Place du Palais"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.5693, 44.8368]
+      },
+      "id": "avant-comptoir-palais"
     }
   ]
 }
