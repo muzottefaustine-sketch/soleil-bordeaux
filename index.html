@@ -669,7 +669,7 @@ async function loadTerrasses(){
     const data = await fetchTerrasses();
     document.getElementById('loadingState').style.display='none';
     document.getElementById('terrasseList').style.display='block';
-    terrasses=data; terrasses.forEach(t=>{sunStates[t.id]=false;});
+    terrasses=data; terrasses.forEach(t=>{sunStates[t.id]=true;});
     document.getElementById('footerText').textContent=`${terrasses.length} terrasses · OpenStreetMap`;
     renderList(currentHeure,'');
     const launch=()=>{
