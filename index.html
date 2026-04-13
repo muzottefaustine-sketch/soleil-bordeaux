@@ -1,7 +1,6 @@
 <!DOCTYPE html><html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -504,12 +503,15 @@ let cameraMoving = false;
 viewer.camera.moveStart.addEventListener(()=>{ cameraMoving=true; });
 viewer.camera.moveEnd.addEventListener(()=>{ cameraMoving=false; });
 
+let shadowDebounce=null, computing=false, shadowVersion=0;
+function scheduleShadow(){
   clearTimeout(shadowDebounce);
   shadowDebounce=setTimeout(()=>{
     if(cameraMoving) return;
     const unsub=viewer.scene.postRender.addEventListener(()=>{ unsub(); runShadow(); });
   }, 500);
 }
+async function runShadow(){
   if(computing) return;
   computing=true;
   const version=++shadowVersion;
@@ -570,6 +572,8 @@ function showTooltip(t,x,y){
   document.getElementById('ttName').textContent=t.nom;
   document.getElementById('ttType').textContent=t.type+(t.adresse?' · '+t.adresse:'');
   const el=document.getElementById('ttSun');
+  el.textContent=s?'☀ Au soleil':'🌥 À l\'ombre';
+  el.className='tt-sun '+(s?'sun':'shade');
   const w=260;
   tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
   tooltip.style.top=Math.max(y-130,10)+'px';
@@ -594,13 +598,13 @@ function renderList(h,query){
   let filtered=terrasses;
   if(q) filtered=terrasses.filter(t=>normalize(t.nom).includes(q)||normalize(t.type).includes(q)||normalize(t.adresse).includes(q));
   const sorted=[...filtered].sort((a,b)=>(sunStates[b.id]?1:0)-(sunStates[a.id]?1:0));
-countEl.textContent=q?`${sorted.length} résultat${sorted.length>1?'s':''}`:` `;
+  countEl.textContent=q?`${sorted.length} résultat${sorted.length>1?'s':''}`:`${sorted.filter(t=>sunStates[t.id]===true).length} au soleil`;
   list.innerHTML='';
   if(!sorted.length){list.innerHTML=`<div class="no-results">Aucun résultat pour<br><strong>"${query}"</strong></div>`;return;}
   sorted.forEach(t=>{
     const s=sunStates[t.id]===true;
     const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id;
-    card.innerHTML=`<div class="card-icon sun">☀️</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${t.type}${t.adresse?' · '+t.adresse:''}</div></div>`;
+    card.innerHTML=`<div class="card-icon ${s?'sun':'shade'}">${s?'☀️':'🌥'}</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${t.type}${t.adresse?' · '+t.adresse:''}</div></div><div class="card-badge ${s?'sun':'shade'}">${s?'Soleil':'Ombre'}</div>`;
     card.addEventListener('click',()=>{
       document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
       card.classList.add('active'); closeDrawer();
@@ -641,6 +645,9 @@ const date = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMon
   viewer.clock.currentTime=Cesium.JulianDate.fromDate(date);
   currentHeure=val;
 });
+slider.addEventListener('change',e=>{
+  if(terrasses.length>0) scheduleShadow();
+});
 
 const handler=new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 handler.setInputAction(click=>{
@@ -663,6 +670,13 @@ async function loadTerrasses(){
     terrasses=data; terrasses.forEach(t=>{sunStates[t.id]=false;});
     document.getElementById('footerText').textContent=`${terrasses.length} terrasses · OpenStreetMap`;
     renderList(currentHeure,'');
+    const launch=()=>{
+      viewer.scene.postRender.addEventListener(function once(){
+        viewer.scene.postRender.removeEventListener(once); runShadow();
+      });
+    };
+    if(splashDone) launch();
+    else { const w=setInterval(()=>{ if(splashDone){ clearInterval(w); launch(); } },100); }
   } catch(e){
     document.getElementById('loadingState').style.display='none';
     document.getElementById('terrasseList').style.display='block';
@@ -679,3 +693,4 @@ async function init(){
 init();
 </script></body>
 </html>
+
