@@ -24,6 +24,15 @@ il<!DOCTYPE html><html lang="fr">
       --white: #FFFFFF; --bg: #F2F2F7;
     }
 
+.panel-map input[type=range] {
+  touch-action: pan-x;
+}
+
+#cesiumContainer {
+  touch-action: none;
+}
+
+
 html, body {
   height: 100%; width: 100%;
   overflow: hidden;
@@ -300,7 +309,7 @@ isolation: isolate;
 </div><!-- CURSEUR BAS --><div class="panel-map">
   <h3>☀️ <span class="heure" id="heureAffichee">14h00</span></h3>
   <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25">
-  <div class="panel-labels"><span>8h</span><span>12h</span><span>17h</span><span>21</span></div>
+<div class="panel-labels"><span>8h</span><span>20h</span></div>
 </div><!-- TOOLTIP --><div id="tooltip">
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
@@ -391,6 +400,9 @@ viewer.shadows = true;
 viewer.resolutionScale = window.devicePixelRatio || 1;
 viewer.scene.globe.showWaterEffect = false;
 viewer.scene.postProcessStages.fxaa.enabled = false;
+viewer.scene.screenSpaceCameraController.inertiaSpin = 0.9;
+viewer.scene.screenSpaceCameraController.inertiaTranslate = 0.9;
+viewer.scene.screenSpaceCameraController.inertiaZoom = 0.8;
 
 viewer.camera.setView({
   destination: Cesium.Cartesian3.fromDegrees(-0.57918, 44.837789, 450),
@@ -693,6 +705,11 @@ async function init(){
 init();
 </script></body>
 </html>
+
+
+
+
+
 
 
 
