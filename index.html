@@ -299,8 +299,8 @@ isolation: isolate;
   </button>
 </div><!-- CURSEUR BAS --><div class="panel-map">
   <h3>☀️ <span class="heure" id="heureAffichee">14h00</span></h3>
-  <input type="range" id="timeSlider" min="8" max="18" value="14" step="0.25">
-  <div class="panel-labels"><span>8h</span><span>12h</span><span>17h</span><span>18</span></div>
+  <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25">
+  <div class="panel-labels"><span>8h</span><span>12h</span><span>17h</span><span>21</span></div>
 </div><!-- TOOLTIP --><div id="tooltip">
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
@@ -497,7 +497,7 @@ function checkSunny(t, sunDir){
   if(!sunDir) return false;
   const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,4);
   const up=Cesium.Cartesian3.normalize(pos,new Cesium.Cartesian3());
-  if(Cesium.Cartesian3.dot(sunDir,up)<=0.35) return false;
+  if(Cesium.Cartesian3.dot(sunDir,up)<=0.0) return false;
   return !viewer.scene.pickFromRay(new Cesium.Ray(pos,sunDir),Object.values(markerEntities));
 }
 
@@ -641,8 +641,8 @@ slider.addEventListener('input',e=>{
   const val=parseFloat(e.target.value), h=Math.floor(val), m=Math.round((val-h)*60);
   document.getElementById('heureAffichee').textContent=h+'h'+(m<10?'0'+m:m);
 slider.style.setProperty('--pct',((val-8)/10)*100+'%');
-const date = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate(), h, m, 0, 0));
-  viewer.clock.currentTime=Cesium.JulianDate.fromDate(date);
+const date=new Date(); date.setHours(h,m,0,0);
+viewer.clock.currentTime=Cesium.JulianDate.fromDate(date);
   currentHeure=val;
 });
 slider.addEventListener('change',e=>{
@@ -693,5 +693,10 @@ async function init(){
 init();
 </script></body>
 </html>
+
+
+
+
+
 
 
