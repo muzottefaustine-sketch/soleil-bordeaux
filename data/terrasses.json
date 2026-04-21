@@ -10916,6 +10916,17 @@
       "id": "node/4690461890"
     },
     {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/4704353246",
+        "addr:city": "Bordeaux",
+        "addr:housenumber": "4",
+        "addr:postcode": "33000",
+        "addr:street": "Rue des Ayres",
+        "amenity": "bar",
+        "check_date:opening_hours": "2023-04-24",
+        "name": "Grand Popo",
+        "opening_hours:signed": "no"
       },
       "geometry": {
         "type": "Point",
