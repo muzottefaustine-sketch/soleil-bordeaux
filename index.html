@@ -358,9 +358,6 @@ const osmBuildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
 osmBuildings.maximumScreenSpaceError = 2;
 viewer.scene.globe.tileLoadProgressEvent.addEventListener(remaining => {
   setProgress(Math.min(60, 10 + (1 - Math.min(remaining, 50) / 50) * 50), remaining === 0 ? 'Bâtiments…' : 'Chargement…');
-  if (remaining === 0 && terrasses.length > 0 && !computing) {
-    scheduleShadow();
-  }
 });
 let globeOk = false, buildingsOk = false;
 function tryOpen() {
@@ -402,8 +399,6 @@ function geolocate() {
 let terrasses=[], sunStates={}, searchQuery='', currentHeure=14, currentDate=new Date();
 const markerEntities={};
 
-const AMENITY_VALIDES = new Set(['bar','cafe','restaurant','pub','biergarten']);
-
 function typeLabel(a){return{bar:'Bar',cafe:'Café',restaurant:'Restaurant',pub:'Pub',biergarten:'Brasserie'}[a]||'Terrasse';}
 
 const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
@@ -414,26 +409,15 @@ async function fetchTerrasses(){
     const data = await res.json();
     const seen = new Set();
     return (data.features || data.elements || [])
-      .filter(f => {
-        const amenity = f.properties?.amenity || f.tags?.amenity;
-        const name = f.properties?.name || f.tags?.name;
-        return AMENITY_VALIDES.has(amenity) && name && !seen.has(name) && seen.add(name);
-      })
-      .slice(0, 200)
-      .map(f => {
-        const isGeoJSON = !!f.geometry;
-        return {
-          id: f.properties?.['@id'] || f.properties?.id || f.id || Math.random(),
-          nom: f.properties?.name || f.tags?.name,
-          adresse: isGeoJSON
-            ? (f.properties?.['addr:street'] ? ((f.properties?.['addr:housenumber']||'')+' '+f.properties?.['addr:street']).trim() : '')
-            : (f.tags?.['addr:street'] ? ((f.tags?.['addr:housenumber']||'')+' '+f.tags?.['addr:street']).trim() : ''),
-          type: typeLabel(isGeoJSON ? f.properties?.amenity : f.tags?.amenity),
-          lng: isGeoJSON ? f.geometry.coordinates[0] : f.lon,
-          lat: isGeoJSON ? f.geometry.coordinates[1] : f.lat
-        };
-      })
-      .filter(f => f.lat && f.lng);
+      .filter(f => f.properties?.name && !seen.has(f.properties.name) && seen.add(f.properties.name))
+      .map(f => ({
+        id: f.properties['@id'] || f.properties.id || Math.random(),
+        nom: f.properties.name,
+        adresse: f.properties['addr:street'] ? ((f.properties['addr:housenumber']||'')+' '+f.properties['addr:street']).trim() : '',
+        type: typeLabel(f.properties.amenity),
+        lng: f.geometry.coordinates[0],
+        lat: f.geometry.coordinates[1]
+      }));
   } catch(e) {
     console.warn('JSON local non trouvé, fallback Overpass');
     const bbox=`${currentCity.lat-0.04},${currentCity.lng-0.06},${currentCity.lat+0.04},${currentCity.lng+0.06}`;
@@ -450,10 +434,7 @@ function getSunDir(jd){
 }
 function checkSunny(t,sunDir){
   if(!sunDir) return false;
-  const carto=Cesium.Cartographic.fromDegrees(t.lng,t.lat);
-  const terrainH=viewer.scene.globe.getHeight(carto)||0;
-  const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,terrainH+2);
-  const up=Cesium.Cartesian3.normalize(pos,new Cesium.Cartesian3());
+  const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,4); const up=Cesium.Cartesian3.normalize(pos,new Cesium.Cartesian3());
   if(Cesium.Cartesian3.dot(sunDir,up)<=0.0) return false;
   return !viewer.scene.pickFromRay(new Cesium.Ray(pos,sunDir),Object.values(markerEntities));
 }
@@ -461,7 +442,7 @@ function checkSunny(t,sunDir){
 let cameraMoving=false;
 viewer.camera.moveStart.addEventListener(()=>{cameraMoving=true;});
 viewer.camera.moveEnd.addEventListener(()=>{cameraMoving=false;});
-
+  
 let shadowDebounce=null,computing=false,shadowVersion=0;
 function scheduleShadow(){
   clearTimeout(shadowDebounce);
@@ -535,13 +516,7 @@ function renderList(h,query){
   sorted.forEach(t=>{
     const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id;
     card.innerHTML=`<div class="card-icon sun">☀️</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${t.type}${t.adresse?' · '+t.adresse:''}</div></div>`;
-    card.addEventListener('click',()=>{
-      shadowVersion++;
-      document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
-      card.classList.add('active');
-      closeDrawer();
-      viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,300),orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0}});
-    });
+    card.addEventListener('click',()=>{ document.querySelectorAll('.card').forEach(c=>c.classList.remove('active')); card.classList.add('active'); closeDrawer(); viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,300),orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0},duration:0});});
     list.appendChild(card);
   });
 }
@@ -579,14 +554,10 @@ async function loadTerrasses(){
     terrasses.forEach(t=>{sunStates[t.id]=true;});
     document.getElementById('footerText').textContent=`${terrasses.length} terrasses · ${currentCity.nom}`;
     renderList(currentHeure,'');
-    const launch=()=>{
-      syncDots();
-      if (viewer.scene.globe.tilesLoaded) {
-        runShadow();
-      } else {
-        scheduleShadow();
-      }
-    };
+   const launch=()=>{
+  syncDots();
+  runShadow();
+};
     if(splashDone) launch();
     else{const w=setInterval(()=>{if(splashDone){clearInterval(w);launch();}},100);}
   }catch(e){
