@@ -230,8 +230,8 @@
 
 <div class="panel-map">
   <h3>☀️ <span class="heure" id="heureAffichee">14h00</span></h3>
-  <input type="range" id="timeSlider" min="8" max="21" value="14" step="0.25">
-  <div class="panel-labels"><span>8h</span><span>20h</span></div>
+  <input type="range" id="timeSlider" min="6" max="21" value="14" step="0.25">
+  <div class="panel-labels"><span>6h</span><span>20h</span></div>
 </div>
 
 <div id="tooltip">
@@ -358,6 +358,10 @@ const osmBuildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
 osmBuildings.maximumScreenSpaceError = 2;
 viewer.scene.globe.tileLoadProgressEvent.addEventListener(remaining => {
   setProgress(Math.min(60, 10 + (1 - Math.min(remaining, 50) / 50) * 50), remaining === 0 ? 'Bâtiments…' : 'Chargement…');
+  // FIX 2 : relancer les ombres dès que les tuiles 3D sont chargées
+  if (remaining === 0 && terrasses.length > 0 && !computing) {
+    scheduleShadow();
+  }
 });
 let globeOk = false, buildingsOk = false;
 function tryOpen() {
@@ -399,6 +403,9 @@ function geolocate() {
 let terrasses=[], sunStates={}, searchQuery='', currentHeure=14, currentDate=new Date();
 const markerEntities={};
 
+// FIX 1 : liste des amenity valides pour filtrer les JSON locaux
+const AMENITY_VALIDES = new Set(['bar','cafe','restaurant','pub','biergarten']);
+
 function typeLabel(a){return{bar:'Bar',cafe:'Café',restaurant:'Restaurant',pub:'Pub',biergarten:'Brasserie'}[a]||'Terrasse';}
 
 const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
@@ -408,21 +415,33 @@ async function fetchTerrasses(){
     if(!res.ok) throw new Error();
     const data = await res.json();
     const seen = new Set();
+    // FIX 1 : filtrer par amenity valide + limiter à 200 pour les performances
     return (data.features || data.elements || [])
-      .filter(f => f.properties?.name && !seen.has(f.properties.name) && seen.add(f.properties.name))
-      .map(f => ({
-        id: f.properties['@id'] || f.properties.id || Math.random(),
-        nom: f.properties.name,
-        adresse: f.properties['addr:street'] ? ((f.properties['addr:housenumber']||'')+' '+f.properties['addr:street']).trim() : '',
-        type: typeLabel(f.properties.amenity),
-        lng: f.geometry.coordinates[0],
-        lat: f.geometry.coordinates[1]
-      }));
+      .filter(f => {
+        const amenity = f.properties?.amenity || f.tags?.amenity;
+        const name = f.properties?.name || f.tags?.name;
+        return AMENITY_VALIDES.has(amenity) && name && !seen.has(name) && seen.add(name);
+      })
+
+      .map(f => {
+        const isGeoJSON = !!f.geometry;
+        return {
+          id: f.properties?.['@id'] || f.properties?.id || f.id || Math.random(),
+          nom: f.properties?.name || f.tags?.name,
+          adresse: isGeoJSON
+            ? (f.properties?.['addr:street'] ? ((f.properties?.['addr:housenumber']||'')+' '+f.properties?.['addr:street']).trim() : '')
+            : (f.tags?.['addr:street'] ? ((f.tags?.['addr:housenumber']||'')+' '+f.tags?.['addr:street']).trim() : ''),
+          type: typeLabel(isGeoJSON ? f.properties?.amenity : f.tags?.amenity),
+          lng: isGeoJSON ? f.geometry.coordinates[0] : f.lon,
+          lat: isGeoJSON ? f.geometry.coordinates[1] : f.lat
+        };
+      })
+      .filter(f => f.lat && f.lng);
   } catch(e) {
     console.warn('JSON local non trouvé, fallback Overpass');
     const bbox=`${currentCity.lat-0.04},${currentCity.lng-0.06},${currentCity.lat+0.04},${currentCity.lng+0.06}`;
     const q=`[out:json][timeout:25];(node["amenity"~"bar|cafe|restaurant|pub|biergarten"](${bbox}););out body;`;
-    for(const url of OVERPASS){try{const r=await fetch(url,{method:'POST',body:'data='+encodeURIComponent(q)});if(!r.ok)throw new Error();const d=await r.json();const seen=new Set();return(d.elements||[]).filter(el=>el.lat&&el.lon&&el.tags?.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name)).slice(0,150).map(el=>({id:el.id,nom:el.tags.name,adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'',type:typeLabel(el.tags.amenity),lng:el.lon,lat:el.lat}));}catch(e){}}
+    for(const url of OVERPASS){try{const r=await fetch(url,{method:'POST',body:'data='+encodeURIComponent(q)});if(!r.ok)throw new Error();const d=await r.json();const seen=new Set();return(d.elements||[]).filter(el=>el.lat&&el.lon&&el.tags?.name&&!seen.has(el.tags.name)&&seen.add(el.tags.name)).map(el=>({id:el.id,nom:el.tags.name,adresse:el.tags['addr:street']?((el.tags['addr:housenumber']||'')+' '+el.tags['addr:street']).trim():'',type:typeLabel(el.tags.amenity),lng:el.lon,lat:el.lat}));}catch(e){}}
     return [];
   }
 }
@@ -434,7 +453,11 @@ function getSunDir(jd){
 }
 function checkSunny(t,sunDir){
   if(!sunDir) return false;
-  const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,4); const up=Cesium.Cartesian3.normalize(pos,new Cesium.Cartesian3());
+  // Hauteur réelle du terrain au lieu d'un offset fixe au-dessus de l'ellipsoïde
+  const carto=Cesium.Cartographic.fromDegrees(t.lng,t.lat);
+  const terrainH=viewer.scene.globe.getHeight(carto)||0;
+  const pos=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,terrainH+2);
+  const up=Cesium.Cartesian3.normalize(pos,new Cesium.Cartesian3());
   if(Cesium.Cartesian3.dot(sunDir,up)<=0.0) return false;
   return !viewer.scene.pickFromRay(new Cesium.Ray(pos,sunDir),Object.values(markerEntities));
 }
@@ -442,7 +465,7 @@ function checkSunny(t,sunDir){
 let cameraMoving=false;
 viewer.camera.moveStart.addEventListener(()=>{cameraMoving=true;});
 viewer.camera.moveEnd.addEventListener(()=>{cameraMoving=false;});
-  
+
 let shadowDebounce=null,computing=false,shadowVersion=0;
 function scheduleShadow(){
   clearTimeout(shadowDebounce);
@@ -503,7 +526,7 @@ function showTooltip(t,x,y){
 }
 function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');}
 
-function normalize(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function normalize(s){return(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
 function highlight(text,q){if(!q)return text;return text.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'),'<mark style="background:#FFFBE0;color:#9A7E00;border-radius:3px;padding:0 2px">$1</mark>');}
 
 function renderList(h,query){
@@ -516,7 +539,14 @@ function renderList(h,query){
   sorted.forEach(t=>{
     const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id;
     card.innerHTML=`<div class="card-icon sun">☀️</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${t.type}${t.adresse?' · '+t.adresse:''}</div></div>`;
-    card.addEventListener('click',()=>{ document.querySelectorAll('.card').forEach(c=>c.classList.remove('active')); card.classList.add('active'); closeDrawer(); viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,300),orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0},duration:0});});
+    card.addEventListener('click',()=>{
+      shadowVersion++; // stoppe le runShadow en cours pour éviter le rebuild DOM
+      document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
+      card.classList.add('active');
+      closeDrawer();
+      // setView est instantané (pas de file d'animation comme flyTo)
+      viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,300),orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0}});
+    });
     list.appendChild(card);
   });
 }
@@ -530,8 +560,9 @@ const slider=document.getElementById('timeSlider');
 slider.addEventListener('input',e=>{
   const val=parseFloat(e.target.value),h=Math.floor(val),m=Math.round((val-h)*60);
   document.getElementById('heureAffichee').textContent=h+'h'+(m<10?'0'+m:m);
-  slider.style.setProperty('--pct',((val-8)/13)*100+'%');
-  currentDate=new Date(); currentDate.setHours(h-2,m,0,0);
+  slider.style.setProperty('--pct',((val-6)/15)*100+'%');
+  const tzOffset=-(new Date().getTimezoneOffset())/60;
+  currentDate=new Date(); currentDate.setUTCHours(h-tzOffset,m,0,0);
   viewer.clock.currentTime=Cesium.JulianDate.fromDate(currentDate); currentHeure=val;
 });
 slider.addEventListener('touchend',e=>{if(terrasses.length>0)scheduleShadow();});
@@ -554,10 +585,15 @@ async function loadTerrasses(){
     terrasses.forEach(t=>{sunStates[t.id]=true;});
     document.getElementById('footerText').textContent=`${terrasses.length} terrasses · ${currentCity.nom}`;
     renderList(currentHeure,'');
-   const launch=()=>{
-  syncDots();
-  runShadow();
-};
+    const launch=()=>{
+      syncDots();
+      // FIX 2 : attendre que les tuiles soient chargées avant de calculer les ombres
+      if (viewer.scene.globe.tilesLoaded) {
+        runShadow();
+      } else {
+        scheduleShadow();
+      }
+    };
     if(splashDone) launch();
     else{const w=setInterval(()=>{if(splashDone){clearInterval(w);launch();}},100);}
   }catch(e){
@@ -569,7 +605,7 @@ async function loadTerrasses(){
 
 async function init(){
   const now=new Date();
-  const initH=Math.min(21,Math.max(8,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
+  const initH=Math.min(21,Math.max(6,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
   slider.value=initH;
   slider.dispatchEvent(new Event('input'));
   loadTerrasses();
