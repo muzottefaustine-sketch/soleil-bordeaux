@@ -76,6 +76,18 @@
     }
     .icon-btn:active { transform: scale(0.94); background: rgba(255,255,255,0.98); }
 
+    #btnVille {
+      flex-shrink: 0; height: 50px; padding: 0 14px;
+      background: var(--glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.6); border-radius: 15px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8);
+      cursor: pointer; display: flex; align-items: center; gap: 5px;
+      font-family: Arial, sans-serif; font-size: 13px; font-weight: 600; color: var(--text);
+      white-space: nowrap; transition: transform 0.1s, background 0.15s;
+      -webkit-transform: translate3d(0, 0, 0); will-change: transform; isolation: isolate;
+    }
+    #btnVille:active { transform: scale(0.94); background: rgba(255,255,255,0.98); }
+
     /* Bouton géoloc flottant en bas à droite */
     #btnGeo {
       position: fixed; bottom: calc(env(safe-area-inset-bottom,34px) + 140px); right: 16px;
@@ -89,6 +101,31 @@
     #btnGeo:active { transform: scale(0.94); background: rgba(255,255,255,0.98); }
     #btnGeo.locating { animation: geo-pulse 1s ease-in-out infinite; }
     @keyframes geo-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    #cityMenu {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 44px) + 70px);
+      right: 16px;
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      z-index: 100;
+      display: none;
+      min-width: 160px;
+      overflow: hidden;
+      border: 1px solid var(--divider);
+    }
+    #cityMenu.open { display: block; }
+    .city-item {
+      padding: 13px 16px;
+      font-size: 14px; font-weight: 600; color: var(--text);
+      cursor: pointer; border-bottom: 1px solid var(--divider);
+      font-family: Arial, sans-serif;
+      transition: background 0.1s;
+    }
+    .city-item:last-child { border-bottom: none; }
+    .city-item.active { color: var(--yellow); background: var(--yellow-bg); }
+    .city-item:active { background: var(--bg); }
 
     .panel-map {
       position: fixed; bottom: calc(env(safe-area-inset-bottom, 34px) + 16px); left: 50%;
@@ -150,29 +187,6 @@
     .live-dot { width:6px; height:6px; border-radius:50%; background:#30D158; animation:blink 2s ease-in-out infinite; flex-shrink:0; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
     .privacy-link { margin-left:auto; font-size:10px; color:var(--text-3); cursor:pointer; text-decoration:none; }
-
-    /* ══ FICHE LIEU (bottom sheet Foursquare) ══ */
-    #psOverlay { position: fixed; inset: 0; z-index: 49; background: rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-    #psOverlay.open { opacity: 1; pointer-events: auto; }
-    #placeSheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: var(--white); border-radius: 20px 20px 0 0; box-shadow: 0 -8px 40px rgba(0,0,0,0.18); transform: translateY(110%); transition: transform 0.38s cubic-bezier(0.32,0.72,0,1); overflow: hidden; max-height: 85vh; padding-bottom: env(safe-area-inset-bottom, 16px); }
-    #placeSheet.open { transform: translateY(0); }
-    .ps-handle { display: flex; justify-content: center; padding: 12px 0 6px; cursor: pointer; flex-shrink: 0; }
-    .ps-bar { width: 40px; height: 4px; background: #E0E0E5; border-radius: 2px; }
-    .ps-photo { width: 100%; height: 200px; object-fit: cover; display: block; background: var(--bg); }
-    .ps-photo-placeholder { width: 100%; height: 120px; background: linear-gradient(135deg,#FFFBE0,#FFE580); display: flex; align-items: center; justify-content: center; font-size: 48px; }
-    .ps-body { padding: 16px 20px 20px; }
-    .ps-sun { font-size: 13px; font-weight: 600; margin-bottom: 6px; font-family: Arial, sans-serif; }
-    .ps-sun.sun { color: #9A7200; }
-    .ps-sun.shade { color: var(--shade); }
-    .ps-name { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 3px; line-height: 1.2; font-family: Arial, sans-serif; }
-    .ps-sub { font-size: 13px; color: var(--text-2); margin-bottom: 12px; font-family: Arial, sans-serif; }
-    .ps-rating { display: inline-flex; align-items: center; gap: 5px; background: var(--bg); border-radius: 20px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
-    .ps-btns { display: flex; gap: 10px; }
-    .ps-btn { flex: 1; padding: 14px; border: none; border-radius: 14px; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; font-family: Arial, sans-serif; }
-    .ps-btn:active { opacity: 0.75; }
-    .ps-btn.maps { background: #007AFF; color: white; }
-    .ps-btn.tel { background: #34C759; color: white; }
-    .ps-spinner-wrap { display: flex; align-items: center; justify-content: center; height: 80px; }
   </style>
 </head>
 <body>
@@ -216,7 +230,12 @@
   <button class="icon-btn" id="btnListe" onclick="openDrawer()" title="Liste">
     <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><rect width="18" height="2" rx="1" fill="#1C1C1E"/><rect y="6" width="18" height="2" rx="1" fill="#1C1C1E"/><rect y="12" width="18" height="2" rx="1" fill="#1C1C1E"/></svg>
   </button>
+  <button id="btnVille" ontouchend="toggleCityMenu()" onclick="toggleCityMenu()">
+    <span id="villeLabel">Bordeaux</span> ▾
+  </button>
 </div>
+
+<div id="cityMenu"></div>
 
 <button id="btnGeo" ontouchend="geolocate(event)" onclick="geolocate(event)" title="Ma position">
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3.5" fill="#007AFF"/><circle cx="10" cy="10" r="6" stroke="#007AFF" stroke-width="1.2" fill="none" opacity="0.35"/><path d="M10 2V4.5M10 15.5V18M2 10H4.5M15.5 10H18" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -233,13 +252,6 @@
   <div class="tt-type" id="ttType"></div>
   <div class="tt-sun" id="ttSun"></div>
   <a id="ttMaps" href="#" target="_blank" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;">Ouvrir dans Maps</a>
-</div>
-
-<!-- Fiche lieu Foursquare -->
-<div id="psOverlay" onclick="hidePlaceSheet()"></div>
-<div id="placeSheet">
-  <div class="ps-handle" onclick="hidePlaceSheet()"><div class="ps-bar"></div></div>
-  <div id="psContent"></div>
 </div>
 
 <div id="drawer">
@@ -280,7 +292,30 @@ const CITIES = [
 let currentCity = CITIES[0];
 let userLat = null, userLng = null;
 
-// Plus de menu villes : la ville la plus proche est détectée automatiquement par GPS
+const cityMenuEl = document.getElementById('cityMenu');
+CITIES.forEach(city => {
+  const item = document.createElement('div');
+  item.className = 'city-item' + (city.id === 'bordeaux' ? ' active' : '');
+  item.dataset.id = city.id;
+  item.textContent = city.nom;
+  const goCity = (e) => {
+    if(e) e.preventDefault();
+    currentCity = city;
+    document.getElementById('villeLabel').textContent = city.nom;
+    document.querySelectorAll('.city-item').forEach(c => c.classList.toggle('active', c.dataset.id === city.id));
+    cityMenuEl.classList.remove('open');
+    Object.keys(markerEntities).forEach(k => { viewer.entities.remove(markerEntities[k]); delete markerEntities[k]; });
+    terrasses = []; sunStates = {};
+    viewer.camera.setView({ destination: Cesium.Cartesian3.fromDegrees(city.lng, city.lat, 500), orientation: { heading: 0, pitch: Cesium.Math.toRadians(-50), roll: 0 } });
+    loadTerrasses();
+  };
+  item.addEventListener('touchend', goCity);
+  item.addEventListener('click', goCity);
+  cityMenuEl.appendChild(item);
+});
+
+function toggleCityMenu() { cityMenuEl.classList.toggle('open'); }
+document.addEventListener('touchend', e => { if (!e.target.closest('#btnVille') && !e.target.closest('#cityMenu')) cityMenuEl.classList.remove('open'); });
 
 const drawer = document.getElementById('drawer');
 function openDrawer()  { drawer.classList.add('open'); }
@@ -344,56 +379,17 @@ viewer.scene.postRender.addEventListener(function watchGlobe() {
 });
 osmBuildings.readyPromise.then(() => { buildingsOk = true; setProgress(85, 'Finalisation…'); tryOpen(); }).catch(() => { buildingsOk = true; tryOpen(); });
 
-let userDot = null, userHalo = null, userPulse = null;
+let userDot = null;
 function makeUserDot() {
-  const c = document.createElement('canvas'); c.width = 32; c.height = 32; const ctx = c.getContext('2d');
-  // Ombre douce
-  ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 1;
-  // Cercle blanc
-  ctx.beginPath(); ctx.arc(16,16,10,0,Math.PI*2); ctx.fillStyle='white'; ctx.fill();
-  ctx.shadowColor = 'transparent';
-  // Point bleu
-  ctx.beginPath(); ctx.arc(16,16,7.5,0,Math.PI*2); ctx.fillStyle='#007AFF'; ctx.fill();
+  const c = document.createElement('canvas'); c.width = 24; c.height = 24; const ctx = c.getContext('2d');
+  ctx.beginPath(); ctx.arc(12,12,11,0,Math.PI*2); ctx.fillStyle='rgba(0,122,255,0.18)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(12,12,7,0,Math.PI*2); ctx.fillStyle='white'; ctx.fill();
+  ctx.beginPath(); ctx.arc(12,12,5,0,Math.PI*2); ctx.fillStyle='#007AFF'; ctx.fill();
   return c.toDataURL();
 }
-function placeUserDot(lng, lat, accuracy) {
+function placeUserDot(lng, lat) {
   if (userDot) viewer.entities.remove(userDot);
-  if (userHalo) viewer.entities.remove(userHalo);
-  if (userPulse) viewer.entities.remove(userPulse);
-  const pos = Cesium.Cartesian3.fromDegrees(lng, lat, 1);
-
-  // Halo de précision (rond bleu translucide, taille = précision GPS, comme Apple Plans)
-  const radius = Math.min(Math.max(accuracy || 30, 15), 150);
-  userHalo = viewer.entities.add({
-    position: pos,
-    ellipse: {
-      semiMajorAxis: radius, semiMinorAxis: radius,
-      material: Cesium.Color.fromCssColorString('rgba(0,122,255,0.15)'),
-      outline: true, outlineColor: Cesium.Color.fromCssColorString('rgba(0,122,255,0.35)'),
-      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-    }
-  });
-
-  // Anneau pulsant autour du point
-  let pulseT = 0;
-  userPulse = viewer.entities.add({
-    position: pos,
-    ellipse: {
-      semiMajorAxis: new Cesium.CallbackProperty(() => 8 + 14 * (pulseT % 1), false),
-      semiMinorAxis: new Cesium.CallbackProperty(() => 8 + 14 * (pulseT % 1), false),
-      material: new Cesium.ColorMaterialProperty(
-        new Cesium.CallbackProperty(() => Cesium.Color.fromCssColorString('rgba(0,122,255,1)').withAlpha(0.35 * (1 - (pulseT % 1))), false)
-      ),
-      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-    }
-  });
-  viewer.clock.onTick.addEventListener(() => { pulseT += 0.012; });
-
-  // Point bleu central
-  userDot = viewer.entities.add({
-    position: Cesium.Cartesian3.fromDegrees(lng, lat, 3),
-    billboard: { image: makeUserDot(), verticalOrigin: Cesium.VerticalOrigin.CENTER, heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND, width: 32, height: 32, disableDepthTestDistance: Number.POSITIVE_INFINITY }
-  });
+  userDot = viewer.entities.add({ position: Cesium.Cartesian3.fromDegrees(lng, lat, 3), billboard: { image:makeUserDot(), verticalOrigin:Cesium.VerticalOrigin.CENTER, heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND, width:24, height:24, disableDepthTestDistance:Number.POSITIVE_INFINITY } });
   userLat = lat; userLng = lng;
 }
 
@@ -404,21 +400,23 @@ function geolocate(e) {
   const btn = document.getElementById('btnGeo'); btn.classList.add('locating');
   navigator.geolocation.getCurrentPosition(pos => {
     btn.classList.remove('locating');
-    const { longitude:lng, latitude:lat, accuracy } = pos.coords;
-    placeUserDot(lng, lat, accuracy);
+    const { longitude:lng, latitude:lat } = pos.coords;
+    placeUserDot(lng, lat);
     const nearest = CITIES.reduce((best, city) => {
       const d = Math.hypot(city.lat-lat, city.lng-lng);
       return d < Math.hypot(best.lat-lat, best.lng-lng) ? city : best;
     });
     if (nearest.id !== currentCity.id) {
       currentCity = nearest;
+      document.getElementById('villeLabel').textContent = nearest.nom;
+      document.querySelectorAll('.city-item').forEach(c => c.classList.toggle('active', c.dataset.id === nearest.id));
       Object.keys(markerEntities).forEach(k => { viewer.entities.remove(markerEntities[k]); delete markerEntities[k]; });
       terrasses = []; sunStates = {};
       loadTerrasses();
     } else {
       renderList(currentHeure, searchQuery);
     }
-    viewer.camera.flyTo({ destination:Cesium.Cartesian3.fromDegrees(lng,lat,280), orientation:{heading:0,pitch:Cesium.Math.toRadians(-55),roll:0}, duration:1.2 });
+    viewer.camera.flyTo({ destination:Cesium.Cartesian3.fromDegrees(lng,lat,400), orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0}, duration:1.2 });
   }, err => {
     btn.classList.remove('locating');
     alert("Position introuvable. Vérifiez que la localisation est autorisée.");
@@ -545,50 +543,6 @@ function showTooltip(t,x,y){
 }
 function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');}
 
-// ══ FOURSQUARE — fiche lieu avec photo (via proxy Vercel /api/place) ══
-const fsqCache = {};
-async function fetchFoursquare(t) {
-  if (fsqCache[t.id]) return fsqCache[t.id];
-  try {
-    const r = await fetch(`/api/place?name=${encodeURIComponent(t.nom)}&lat=${t.lat}&lng=${t.lng}`);
-    if (!r.ok) throw new Error();
-    const data = await r.json();
-    fsqCache[t.id] = data;
-    return data;
-  } catch(e) { fsqCache[t.id] = {}; return {}; }
-}
-function hidePlaceSheet() {
-  document.getElementById('placeSheet').classList.remove('open');
-  document.getElementById('psOverlay').classList.remove('open');
-}
-async function showPlaceSheet(t) {
-  if (navigator.vibrate) navigator.vibrate(10);
-  const isSun = sunStates[t.id] === true;
-  const mapsUrl = `https://maps.apple.com/?q=${encodeURIComponent(t.nom+', '+currentCity.nom)}&ll=${t.lat},${t.lng}`;
-  const content = document.getElementById('psContent');
-  content.innerHTML = `
-    <div class="ps-spinner-wrap"><div class="spinner"></div></div>
-    <div class="ps-body">
-      <div class="ps-sun ${isSun?'sun':'shade'}">${isSun?'☀️ En ce moment au soleil':'🌑 En ce moment à l\'ombre'}</div>
-      <div class="ps-name">${t.nom}</div>
-      <div class="ps-sub">${t.type}${t.adresse?' · '+t.adresse:''}</div>
-      <div class="ps-btns" style="margin-top:16px">
-        <button class="ps-btn maps" onclick="window.open('${mapsUrl}','_blank')">🗺 Itinéraire</button>
-        <button class="ps-btn tel" id="psTelBtn" style="display:none">📞 Appeler</button>
-      </div>
-    </div>`;
-  document.getElementById('placeSheet').classList.add('open');
-  document.getElementById('psOverlay').classList.add('open');
-  const fsq = await fetchFoursquare(t);
-  const spinnerWrap = content.querySelector('.ps-spinner-wrap');
-  if (spinnerWrap) {
-    if (fsq.photo) { const img = document.createElement('img'); img.className = 'ps-photo'; img.src = fsq.photo; img.alt = t.nom; spinnerWrap.replaceWith(img); }
-    else { spinnerWrap.outerHTML = `<div class="ps-photo-placeholder">☀️</div>`; }
-  }
-  if (fsq.rating) { const sub = content.querySelector('.ps-sub'); if (sub) sub.insertAdjacentHTML('afterend', `<div class="ps-rating">⭐ ${fsq.rating} / 5</div>`); }
-  if (fsq.tel) { const telBtn = document.getElementById('psTelBtn'); if (telBtn) { telBtn.style.display = 'block'; telBtn.onclick = () => { window.location.href = 'tel:' + fsq.tel; }; } }
-}
-
 function normalize(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function distKm(lat,lng){if(userLat===null)return '';const d=Math.hypot((lat-userLat)*111,(lng-userLng)*111*Math.cos(userLat*Math.PI/180));return d<1?Math.round(d*1000)+'m':d.toFixed(1)+'km';}
 function highlight(text,q){if(!q)return text;return text.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'),'<mark style="background:#FFFBE0;color:#9A7E00;border-radius:3px;padding:0 2px">$1</mark>');}
@@ -610,7 +564,6 @@ function renderList(h,query){
       card.classList.add('active');
       closeDrawer();
       viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,300),orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0}});
-      showPlaceSheet(t);
     });
     list.appendChild(card);
   });
@@ -635,8 +588,8 @@ slider.addEventListener('change',e=>{if(terrasses.length>0)scheduleShadow();});
 const handler=new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 handler.setInputAction(click=>{
   const picked=viewer.scene.pick(click.position);
-  if(Cesium.defined(picked)&&picked.id){const id=picked.id.properties?.id?.getValue();const t=terrasses.find(x=>String(x.id)===String(id));if(t){showPlaceSheet(t);return;}}
-  hidePlaceSheet();
+  if(Cesium.defined(picked)&&picked.id){const id=picked.id.properties?.id?.getValue();const t=terrasses.find(x=>String(x.id)===String(id));if(t){showTooltip(t,click.position.x,click.position.y);return;}}
+  hideTooltip();
 },Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
 async function loadTerrasses(){
@@ -669,17 +622,19 @@ async function init(){
   slider.value=initH;
   slider.dispatchEvent(new Event('input'));
 
-  // Géoloc auto au démarrage : zoom exactement sur la position + point bleu + halo de précision
+  // Géoloc auto au démarrage : zoom sur position réelle + ville la plus proche
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(pos=>{
-      const {longitude:lng,latitude:lat,accuracy}=pos.coords;
-      placeUserDot(lng,lat,accuracy);
+      const {longitude:lng,latitude:lat}=pos.coords;
+      placeUserDot(lng,lat);
       const nearest=CITIES.reduce((best,city)=>{
         const d=Math.hypot(city.lat-lat,city.lng-lng);
         return d<Math.hypot(best.lat-lat,best.lng-lng)?city:best;
       });
       currentCity=nearest;
-      viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(lng,lat,280),orientation:{heading:0,pitch:Cesium.Math.toRadians(-55),roll:0}});
+      document.getElementById('villeLabel').textContent=nearest.nom;
+      document.querySelectorAll('.city-item').forEach(c=>c.classList.toggle('active',c.dataset.id===nearest.id));
+      viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(lng,lat,450),orientation:{heading:0,pitch:Cesium.Math.toRadians(-50),roll:0}});
       loadTerrasses();
     },()=>{
       loadTerrasses();
@@ -694,4 +649,3 @@ init();
 
 </body>
 </html>
-
