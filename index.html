@@ -434,15 +434,23 @@ async function setCurrentArea(lat, lng) {
         lng,
         dynamic: true
       };
+  updateLocationPill();
+  const expectedId = currentCity.id;
+  fetchAreaName(lat,lng,expectedId);
+  return currentCity;
+}
+
+async function fetchAreaName(lat,lng,expectedId){
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lng}&accept-language=fr`;
     const response = await fetchWithTimeout(url, { headers: { Accept: 'application/json' } }, 5000);
     if (!response.ok) throw new Error();
     const data = await response.json();
+    if(currentCity.id !== expectedId) return;
     currentCity.nom = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality || currentCity.nom || 'Autour de vous';
+    updateLocationPill();
+    if(terrasses.length) document.getElementById('footerText').textContent=`${terrasses.length} lieux · ${currentCity.nom}`;
   } catch (e) {}
-  updateLocationPill();
-  return currentCity;
 }
 
 function updateLocationPill(accuracy){
@@ -828,8 +836,9 @@ function osmDataToTerrasses(data, source='osm'){
 const cityDataCache = {};
 const cityScriptPromises = {};
 function localDataPaths(id, ext){
-  if(location.protocol === 'file:') return [`data/${id}.${ext}`, `outputs/data/${id}.${ext}`];
-  return [`/data/${id}.${ext}`, `data/${id}.${ext}`];
+  const names = [`data/${id}.${ext}`, `${id}.${ext}`, `outputs/data/${id}.${ext}`];
+  if(location.protocol === 'file:') return names;
+  return [`/data/${id}.${ext}`, `/outputs/data/${id}.${ext}`, ...names];
 }
 async function loadCityDataScript(id){
   if(window.LOCAL_OSM_DATA?.[id]) return window.LOCAL_OSM_DATA[id];
@@ -856,6 +865,10 @@ async function fetchLocalCityData(id){
     cityDataCache[id] = window.LOCAL_OSM_DATA[id];
     return cityDataCache[id];
   }
+  if(location.protocol === 'file:'){
+    cityDataCache[id] = await loadCityDataScript(id);
+    if(cityDataCache[id]) return cityDataCache[id];
+  }
   for(const path of localDataPaths(id, 'json')){
     try{
       const res = await fetch(path, {cache:'force-cache'});
@@ -868,20 +881,27 @@ async function fetchLocalCityData(id){
   return cityDataCache[id];
 }
 
+async function localTerrassesForCurrentArea(){
+  const localCity = currentCity.dynamic
+    ? nearestKnownCity(currentCity.lat,currentCity.lng)
+    : (CITIES.find(c=>c.id===currentCity.id) || currentCity);
+  if(!localCity?.id) return [];
+  try{
+    const localData = await fetchLocalCityData(localCity.id);
+    return localData ? osmDataToTerrasses(localData,`local-${localCity.id}`) : [];
+  }catch(e){
+    return [];
+  }
+}
+
 const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
 const OVERPASS_RADIUS_METERS = 12000;
 const OVERPASS_TIMEOUT_MS = 24000;
 const OVERPASS_QUERY_TIMEOUT_SECONDS = 30;
 const MAX_TERRASSES = 1800;
 async function fetchTerrasses(){
-  let local = [];
+  let local = await localTerrassesForCurrentArea();
   const fallback = [...localFallbackTerrasses(), ...localFallbackUtilities()];
-  if (!currentCity.dynamic) {
-    try {
-      const localData = await fetchLocalCityData(currentCity.id);
-      if(localData) local = osmDataToTerrasses(localData,`local-${currentCity.id}`);
-    } catch(e) {}
-  }
   if(local.length > 80){
     const merged = mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...fallback]));
     return merged.slice(0, MAX_TERRASSES);
@@ -2106,6 +2126,17 @@ async function loadTerrasses(){
   document.getElementById('terrasseList').style.display='none';
   const signature=areaSignature();
   const version=++terraceLoadVersion;
+  const local = await localTerrassesForCurrentArea();
+  if(version!==terraceLoadVersion || signature!==areaSignature()) return;
+  if(local.length > 80){
+    const localMerged=mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
+    paintTerrasses(localMerged);
+    preloadGooglePhotosForFeatured(localMerged, 1200).then(()=>{
+      if(version===terraceLoadVersion && signature===areaSignature()) renderList(currentHeure,searchQuery);
+    }).catch(()=>{});
+    setTimeout(()=>hydrateUtilitiesInBackground(signature), 700);
+    return;
+  }
   const quick=mergeFeaturedPlaces(mergePlacesByIdentity([...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
   paintTerrasses(quick,' · chargement…');
   preloadGooglePhotosForFeatured(quick, 1200).then(()=>{
