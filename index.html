@@ -408,6 +408,7 @@ const MAX_RENDERED_LIST_ITEMS = 280;
 const MAX_MARKERS_ON_MAP = 950;
 const MARKER_RENDER_BATCH = 180;
 const PHOTO_HYDRATE_LIMIT = 6;
+const LOCAL_CITY_RADIUS_METERS = 30000;
 let currentCity = CITIES[0];
 let userLat = null, userLng = null;
 let lastLoadedArea = null;
@@ -423,19 +424,22 @@ async function fetchWithTimeout(url, options={}, timeout=10000) {
 }
 
 async function setCurrentArea(lat, lng) {
-  currentCity = {
-    id: `gps-${lat.toFixed(3)}-${lng.toFixed(3)}`,
-    nom: 'Autour de vous',
-    lat,
-    lng,
-    dynamic: true
-  };
+  const nearbyCity = nearestKnownCity(lat, lng);
+  currentCity = nearbyCity
+    ? {...nearbyCity, nom: nearbyCity.nom, lat, lng, dynamic: false, gps: true}
+    : {
+        id: `gps-${lat.toFixed(3)}-${lng.toFixed(3)}`,
+        nom: 'Autour de vous',
+        lat,
+        lng,
+        dynamic: true
+      };
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lng}&accept-language=fr`;
     const response = await fetchWithTimeout(url, { headers: { Accept: 'application/json' } }, 5000);
     if (!response.ok) throw new Error();
     const data = await response.json();
-    currentCity.nom = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality || 'Autour de vous';
+    currentCity.nom = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality || currentCity.nom || 'Autour de vous';
   } catch (e) {}
   updateLocationPill();
   return currentCity;
@@ -460,6 +464,15 @@ function showAreaPill(label){
 
 function metersBetween(lat1,lng1,lat2,lng2){
   return Math.hypot((lat1-lat2)*111320,(lng1-lng2)*111320*Math.cos(((lat1+lat2)/2)*Math.PI/180));
+}
+
+function nearestKnownCity(lat,lng,maxMeters=LOCAL_CITY_RADIUS_METERS){
+  let best=null;
+  CITIES.forEach(city=>{
+    const distance=metersBetween(lat,lng,city.lat,city.lng);
+    if(distance<=maxMeters && (!best || distance<best.distance)) best={...city,distance};
+  });
+  return best;
 }
 
 function clearPlaces(){
@@ -857,8 +870,8 @@ async function fetchLocalCityData(id){
 
 const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
 const OVERPASS_RADIUS_METERS = 12000;
-const OVERPASS_TIMEOUT_MS = 8500;
-const OVERPASS_QUERY_TIMEOUT_SECONDS = 14;
+const OVERPASS_TIMEOUT_MS = 24000;
+const OVERPASS_QUERY_TIMEOUT_SECONDS = 30;
 const MAX_TERRASSES = 1800;
 async function fetchTerrasses(){
   let local = [];
@@ -874,14 +887,7 @@ async function fetchTerrasses(){
     return merged.slice(0, MAX_TERRASSES);
   }
 
-  const q=`[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];(
-    nwr["amenity"~"^(bar|cafe|restaurant|pub|biergarten|drinking_water|fountain|parking|bicycle_parking|library|cinema)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
-    nwr["leisure"~"^(park|garden|nature_reserve)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
-    nwr["natural"="wood"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
-    nwr["landuse"="forest"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
-    nwr["tourism"="museum"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
-    nwr["shop"="mall"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
-  );out center tags;`;
+  const q=`[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];nwr["amenity"~"^(bar|cafe|restaurant|pub|biergarten)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});out center tags;`;
   const overpassRequests=OVERPASS.map(async url=>{
       const r=await fetchWithTimeout(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(q)},OVERPASS_TIMEOUT_MS);
       if(!r.ok) throw new Error();
@@ -2101,8 +2107,10 @@ async function loadTerrasses(){
   const signature=areaSignature();
   const version=++terraceLoadVersion;
   const quick=mergeFeaturedPlaces(mergePlacesByIdentity([...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
-  await preloadGooglePhotosForFeatured(quick);
   paintTerrasses(quick,' · chargement…');
+  preloadGooglePhotosForFeatured(quick, 1200).then(()=>{
+    if(version===terraceLoadVersion && signature===areaSignature()) renderList(currentHeure,searchQuery);
+  }).catch(()=>{});
 
   fetchTerrasses().then(data=>{
     if(version!==terraceLoadVersion || signature!==areaSignature()) return;
