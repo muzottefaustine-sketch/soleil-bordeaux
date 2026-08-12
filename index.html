@@ -382,6 +382,7 @@
 <script>
 const CITIES = [
   {id:'bordeaux',   nom:'Bordeaux',    lat:44.837789, lng:-0.57918 },
+  {id:'paris',      nom:'Paris',       lat:48.856614, lng:2.352222 },
   {id:'marseille',  nom:'Marseille',   lat:43.296482, lng:5.381118 },
   {id:'lyon',       nom:'Lyon',        lat:45.764043, lng:4.835659 },
   {id:'toulouse',   nom:'Toulouse',    lat:43.604652, lng:1.444209 },
@@ -391,11 +392,21 @@ const CITIES = [
   {id:'strasbourg', nom:'Strasbourg',  lat:48.573405, lng:7.752111 },
   {id:'montpellier',nom:'Montpellier', lat:43.610769, lng:3.876716 },
   {id:'lille',      nom:'Lille',       lat:50.629250, lng:3.057256 },
+  {id:'arcachon',   nom:'Arcachon',    lat:44.65860,  lng:-1.16879 },
+  {id:'agen',       nom:'Agen',        lat:44.20490,  lng:0.62116 },
   {id:'cap-ferret', nom:'Cap Ferret',  lat:44.65090,  lng:-1.24920 },
 ];
+const LOCAL_DATA_ALIASES = {
+  'lege-cap-ferret': ['cap-ferret'],
+  'le-cap-ferret': ['cap-ferret'],
+  'capferret': ['cap-ferret'],
+  'bordeaux-centre': ['bordeaux'],
+  'la-teste-de-buch': ['arcachon'],
+  'la-teste': ['arcachon']
+};
 // Colle ta cle Google Maps ici pour activer les vraies photos, liens Google,
 // telephones et sites en local. APIs a activer: Maps JavaScript API + Places API.
-const GOOGLE_MAPS_API_KEY = "AIzaSyDGy4xByAiogyUgUcvJCTQlxehhUpdlwSk";
+const GOOGLE_MAPS_API_KEY = "AIzaSyC5pxLbx_Ty67q-PNgI2aqyd5gISypb_6s";
 // Test 3D Google photorealiste: colle ici une cle avec Map Tiles API activee.
 // Si cette valeur reste vide, l'app garde la 3D OpenStreetMap normale.
 const GOOGLE_MAP_TILES_API_KEY = "AIzaSyA2qaFERG7pF-uHHwgIA2upLxZxoWqlNDs";
@@ -409,7 +420,7 @@ const MAX_MARKERS_ON_MAP = 950;
 const MARKER_RENDER_BATCH = 180;
 const PHOTO_HYDRATE_LIMIT = 6;
 const LOCAL_CITY_RADIUS_METERS = 30000;
-let currentCity = CITIES[0];
+let currentCity = {...CITIES[0], localDataIds: localDataCandidateIds(CITIES[0].id, CITIES[0].nom)};
 let userLat = null, userLng = null;
 let lastLoadedArea = null;
 
@@ -426,13 +437,14 @@ async function fetchWithTimeout(url, options={}, timeout=10000) {
 async function setCurrentArea(lat, lng) {
   const nearbyCity = nearestKnownCity(lat, lng);
   currentCity = nearbyCity
-    ? {...nearbyCity, nom: nearbyCity.nom, lat, lng, dynamic: false, gps: true}
+    ? {...nearbyCity, nom: nearbyCity.nom, lat, lng, dynamic: false, gps: true, localDataIds: localDataCandidateIds(nearbyCity.id, nearbyCity.nom)}
     : {
         id: `gps-${lat.toFixed(3)}-${lng.toFixed(3)}`,
         nom: 'Autour de vous',
         lat,
         lng,
-        dynamic: true
+        dynamic: true,
+        localDataIds: []
       };
   updateLocationPill();
   const expectedId = currentCity.id;
@@ -447,9 +459,16 @@ async function fetchAreaName(lat,lng,expectedId){
     if (!response.ok) throw new Error();
     const data = await response.json();
     if(currentCity.id !== expectedId) return;
-    currentCity.nom = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality || currentCity.nom || 'Autour de vous';
+    const detectedName = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality;
+    currentCity.nom = detectedName || currentCity.nom || 'Autour de vous';
+    currentCity.localDataIds = localDataCandidateIds(currentCity.id, currentCity.nom, detectedName);
     updateLocationPill();
     if(terrasses.length) document.getElementById('footerText').textContent=`${terrasses.length} lieux · ${currentCity.nom}`;
+    const local = await localTerrassesForCurrentArea();
+    if(currentCity.id === expectedId && local.length > 80){
+      const merged=mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
+      paintTerrasses(merged);
+    }
   } catch (e) {}
 }
 
@@ -483,6 +502,25 @@ function nearestKnownCity(lat,lng,maxMeters=LOCAL_CITY_RADIUS_METERS){
   return best;
 }
 
+function slugifyCityName(value){
+  return normalize(value)
+    .replace(/['’]/g,'')
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'');
+}
+
+function uniq(values){
+  return [...new Set(values.filter(Boolean))];
+}
+
+function localDataCandidateIds(...values){
+  const slugs = values.flatMap(value=>{
+    const slug=slugifyCityName(value);
+    return slug ? [slug, ...(LOCAL_DATA_ALIASES[slug] || [])] : [];
+  });
+  return uniq(slugs);
+}
+
 function clearPlaces(){
   Object.keys(markerEntities).forEach(k => { viewer.entities.remove(markerEntities[k]); delete markerEntities[k]; });
   terrasses = [];
@@ -492,7 +530,7 @@ function clearPlaces(){
 async function switchCity(cityId){
   const city = CITIES.find(c => c.id === cityId);
   if(!city) return;
-  currentCity = {...city};
+  currentCity = {...city, localDataIds: localDataCandidateIds(city.id, city.nom)};
   userLat = null;
   userLng = null;
   lastLoadedArea = null;
@@ -836,9 +874,19 @@ function osmDataToTerrasses(data, source='osm'){
 const cityDataCache = {};
 const cityScriptPromises = {};
 function localDataPaths(id, ext){
-  const names = [`data/${id}.${ext}`, `${id}.${ext}`, `outputs/data/${id}.${ext}`];
+  const variants = uniq([
+    id,
+    id.replace(/-/g,''),
+    `restaurants-${id}`,
+    `${id}-restaurants`,
+    `restos-${id}`,
+    `${id}-restos`,
+    `terrasses-${id}`,
+    `${id}-terrasses`
+  ]);
+  const names = variants.flatMap(name=>[`data/${name}.${ext}`, `${name}.${ext}`, `outputs/data/${name}.${ext}`]);
   if(location.protocol === 'file:') return names;
-  return [`/data/${id}.${ext}`, `/outputs/data/${id}.${ext}`, ...names];
+  return [...variants.flatMap(name=>[`/data/${name}.${ext}`, `/outputs/data/${name}.${ext}`]), ...names];
 }
 async function loadCityDataScript(id){
   if(window.LOCAL_OSM_DATA?.[id]) return window.LOCAL_OSM_DATA[id];
@@ -885,13 +933,18 @@ async function localTerrassesForCurrentArea(){
   const localCity = currentCity.dynamic
     ? nearestKnownCity(currentCity.lat,currentCity.lng)
     : (CITIES.find(c=>c.id===currentCity.id) || currentCity);
-  if(!localCity?.id) return [];
-  try{
-    const localData = await fetchLocalCityData(localCity.id);
-    return localData ? osmDataToTerrasses(localData,`local-${localCity.id}`) : [];
-  }catch(e){
-    return [];
+  const ids = uniq([
+    ...(currentCity.localDataIds || []),
+    ...localDataCandidateIds(currentCity.id, currentCity.nom, localCity?.id, localCity?.nom)
+  ]);
+  for(const id of ids){
+    try{
+      const localData = await fetchLocalCityData(id);
+      const places = localData ? osmDataToTerrasses(localData,`local-${id}`) : [];
+      if(places.length > 20) return places;
+    }catch(e){}
   }
+  return [];
 }
 
 const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
@@ -899,14 +952,7 @@ const OVERPASS_RADIUS_METERS = 12000;
 const OVERPASS_TIMEOUT_MS = 24000;
 const OVERPASS_QUERY_TIMEOUT_SECONDS = 30;
 const MAX_TERRASSES = 1800;
-async function fetchTerrasses(){
-  let local = await localTerrassesForCurrentArea();
-  const fallback = [...localFallbackTerrasses(), ...localFallbackUtilities()];
-  if(local.length > 80){
-    const merged = mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...fallback]));
-    return merged.slice(0, MAX_TERRASSES);
-  }
-
+async function fetchFoodPlacesFromOverpass(){
   const q=`[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];nwr["amenity"~"^(bar|cafe|restaurant|pub|biergarten)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});out center tags;`;
   const overpassRequests=OVERPASS.map(async url=>{
       const r=await fetchWithTimeout(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(q)},OVERPASS_TIMEOUT_MS);
@@ -926,9 +972,19 @@ async function fetchTerrasses(){
         })
         .sort((a,b)=>metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng));
   });
-  const overpassPromise = Promise.any(overpassRequests).catch(()=>[]);
+  return Promise.any(overpassRequests).catch(()=>[]);
+}
+
+async function fetchTerrasses(){
+  let local = await localTerrassesForCurrentArea();
+  const fallback = [...localFallbackTerrasses(), ...localFallbackUtilities()];
+  if(local.length > 80){
+    const merged = mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...fallback]));
+    return merged.slice(0, MAX_TERRASSES);
+  }
+
   try{
-    const overpassPlaces = await overpassPromise;
+    const overpassPlaces = await fetchFoodPlacesFromOverpass();
     const merged = mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...overpassPlaces, ...fallback]));
     return merged.slice(0, MAX_TERRASSES);
   }catch(e){
@@ -1975,7 +2031,7 @@ function renderList(h,query){
   }
 
   const allListItems = (!q && refTerrasses.length) ? sorted.filter(t=>!findReferenced(t.nom)) : sorted;
-  const renderLimit = q ? Math.max(MAX_RENDERED_LIST_ITEMS, 520) : MAX_RENDERED_LIST_ITEMS;
+  const renderLimit = q ? Math.max(MAX_RENDERED_LIST_ITEMS, 900) : Math.min(allListItems.length, 900);
   const listItems = allListItems.slice(0, renderLimit);
   if(!allListItems.length){const nr=document.createElement('div');nr.className='no-results';nr.innerHTML=`Aucun résultat${query?' pour <strong>"'+escapeHTML(query)+'"</strong>':''}`;fragment.appendChild(nr);list.appendChild(fragment);return;}
   listItems.forEach(t=>{
@@ -1998,7 +2054,7 @@ function renderList(h,query){
   if(allListItems.length>listItems.length){
     const more=document.createElement('div');
     more.className='no-results';
-    more.innerHTML=`${allListItems.length-listItems.length} autres résultats disponibles avec la recherche.`;
+    more.innerHTML=`${allListItems.length-listItems.length} autres résultats disponibles. Utilise la recherche pour les retrouver instantanément.`;
     fragment.appendChild(more);
   }
   list.appendChild(fragment);
@@ -2120,6 +2176,17 @@ async function hydrateUtilitiesInBackground(signature){
   }catch(e){}
 }
 
+let overpassHydrationVersion=0;
+async function hydrateOverpassInBackground(signature){
+  const version=++overpassHydrationVersion;
+  try{
+    const overpassPlaces=await fetchFoodPlacesFromOverpass();
+    if(version!==overpassHydrationVersion || signature!==areaSignature() || !overpassPlaces.length) return;
+    const merged=mergeFeaturedPlaces(mergePlacesByIdentity([...terrasses,...overpassPlaces])).slice(0,MAX_TERRASSES);
+    if(merged.length>terrasses.length) paintTerrasses(merged);
+  }catch(e){}
+}
+
 let terraceLoadVersion=0;
 async function loadTerrasses(){
   document.getElementById('loadingState').style.display='flex';
@@ -2134,7 +2201,9 @@ async function loadTerrasses(){
     preloadGooglePhotosForFeatured(localMerged, 1200).then(()=>{
       if(version===terraceLoadVersion && signature===areaSignature()) renderList(currentHeure,searchQuery);
     }).catch(()=>{});
-    setTimeout(()=>hydrateUtilitiesInBackground(signature), 700);
+    setTimeout(()=>hydrateOverpassInBackground(signature), 800);
+    setTimeout(()=>hydrateUtilitiesInBackground(signature), 1400);
+    setTimeout(()=>hydrateNearbyInBackground(signature), 3500);
     return;
   }
   const quick=mergeFeaturedPlaces(mergePlacesByIdentity([...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
