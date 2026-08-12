@@ -406,7 +406,7 @@ const LOCAL_DATA_ALIASES = {
 };
 // Colle ta cle Google Maps ici pour activer les vraies photos, liens Google,
 // telephones et sites en local. APIs a activer: Maps JavaScript API + Places API.
-const GOOGLE_MAPS_API_KEY = "AIzaSyC5pxLbx_Ty67q-PNgI2aqyd5gISypb_6s";
+const GOOGLE_MAPS_API_KEY = "AIzaSyD7ApectcO9UqS4B8POlEwm1hlRbmKiuig";
 // Test 3D Google photorealiste: colle ici une cle avec Map Tiles API activee.
 // Si cette valeur reste vide, l'app garde la 3D OpenStreetMap normale.
 const GOOGLE_MAP_TILES_API_KEY = "AIzaSyA2qaFERG7pF-uHHwgIA2upLxZxoWqlNDs";
@@ -947,32 +947,58 @@ async function localTerrassesForCurrentArea(){
   return [];
 }
 
-const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
-const OVERPASS_RADIUS_METERS = 12000;
+const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.openstreetmap.ru/api/interpreter'];
+const OVERPASS_RADIUS_METERS = 18000;
 const OVERPASS_TIMEOUT_MS = 24000;
 const OVERPASS_QUERY_TIMEOUT_SECONDS = 30;
 const MAX_TERRASSES = 1800;
+function overpassProxyUrl(query){
+  if(!/^https?:$/.test(location.protocol)) return '';
+  return `/api/overpass?data=${encodeURIComponent(query)}`;
+}
+async function overpassRequest(url, query, timeout=OVERPASS_TIMEOUT_MS){
+  const attempts = [];
+  if(url === 'proxy'){
+    const proxy = overpassProxyUrl(query);
+    if(proxy) attempts.push(() => fetchWithTimeout(proxy,{headers:{Accept:'application/json'}},timeout));
+  }else{
+    attempts.push(() => fetchWithTimeout(url,{method:'POST',body:'data='+encodeURIComponent(query)},timeout));
+    attempts.push(() => fetchWithTimeout(`${url}?data=${encodeURIComponent(query)}`,{headers:{Accept:'application/json'}},timeout));
+  }
+  let lastError=null;
+  for(const attempt of attempts){
+    try{
+      const response=await attempt();
+      if(!response.ok) throw new Error(`overpass ${response.status}`);
+      return await response.json();
+    }catch(error){
+      lastError=error;
+    }
+  }
+  throw lastError || new Error('overpass failed');
+}
+async function fetchOverpassPlaces(query, source){
+  const endpoints = ['proxy', ...OVERPASS];
+  const requests=endpoints.map(async url=>{
+    const data=await overpassRequest(url, query);
+    if(!(data.elements||[]).length) throw new Error('empty overpass response');
+    const seen=new Set();
+    return (data.elements||[])
+      .map((el,index)=>osmFeatureToPlace(el,index,source))
+      .filter(el=>{
+        if(!el || !el.lat || !el.lng || !el.nom) return false;
+        const key=`${el.category}-${normalize(el.nom)}-${el.lat.toFixed(4)}-${el.lng.toFixed(4)}`;
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a,b)=>metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng));
+  });
+  return Promise.any(requests).catch(()=>[]);
+}
 async function fetchFoodPlacesFromOverpass(){
   const q=`[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];nwr["amenity"~"^(bar|cafe|restaurant|pub|biergarten)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});out center tags;`;
-  const overpassRequests=OVERPASS.map(async url=>{
-      const r=await fetchWithTimeout(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(q)},OVERPASS_TIMEOUT_MS);
-      if(!r.ok) throw new Error();
-      const d=await r.json();
-      if(!(d.elements||[]).length) throw new Error();
-      const seen=new Set();
-      return (d.elements||[])
-        .map((el,index)=>osmFeatureToPlace(el,index,'osm'))
-        .filter(el=>{
-          if(!el) return false;
-          if(!el.lat||!el.lng||!el.nom) return false;
-          const key=`${el.category}-${normalize(el.nom)}-${el.lat.toFixed(4)}-${el.lng.toFixed(4)}`;
-          if(seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        })
-        .sort((a,b)=>metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng));
-  });
-  return Promise.any(overpassRequests).catch(()=>[]);
+  return fetchOverpassPlaces(q,'osm').then(items=>items.filter(isFoodPlace));
 }
 
 async function fetchTerrasses(){
@@ -1002,23 +1028,7 @@ async function fetchUtilityPlacesFromOverpass(){
     nwr["tourism"="museum"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
     nwr["shop"="mall"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
   );out center tags;`;
-  const requests=OVERPASS.map(async url=>{
-    const r=await fetchWithTimeout(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(q)},OVERPASS_TIMEOUT_MS);
-    if(!r.ok) throw new Error();
-    const d=await r.json();
-    const seen=new Set();
-    return (d.elements||[])
-      .map((el,index)=>osmFeatureToPlace(el,index,'utility-osm'))
-      .filter(el=>{
-        if(!el || isFoodPlace(el) || !el.lat || !el.lng || !el.nom) return false;
-        const key=`${el.category}-${normalize(el.nom)}-${el.lat.toFixed(4)}-${el.lng.toFixed(4)}`;
-        if(seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .sort((a,b)=>metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng));
-  });
-  return Promise.any(requests).catch(()=>[]);
+  return fetchOverpassPlaces(q,'utility-osm').then(items=>items.filter(t=>!isFoodPlace(t)));
 }
 
 function getSunDir(jd){
