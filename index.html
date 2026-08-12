@@ -461,7 +461,7 @@ async function fetchAreaName(lat,lng,expectedId){
     if(currentCity.id !== expectedId) return;
     const detectedName = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality;
     currentCity.nom = detectedName || currentCity.nom || 'Autour de vous';
-    currentCity.localDataIds = localDataCandidateIds(currentCity.id, currentCity.nom, detectedName);
+    currentCity.localDataIds = localDataCandidateIds(...(currentCity.localDataIds || []), currentCity.id, currentCity.nom, detectedName);
     updateLocationPill();
     if(terrasses.length) document.getElementById('footerText').textContent=`${terrasses.length} lieux · ${currentCity.nom}`;
     const local = await localTerrassesForCurrentArea();
@@ -1495,19 +1495,25 @@ function loadGooglePlacesLibrary(){
   if(googlePlacesLoaderPromise) return googlePlacesLoaderPromise;
   googlePlacesLoaderPromise = new Promise(resolve => {
     const callbackName = `initGooglePlaces_${Date.now()}`;
-    window[callbackName] = () => {
+    let done=false;
+    const finish = value => {
+      if(done) return;
+      done=true;
       delete window[callbackName];
-      resolve(!!window.google?.maps?.places);
+      resolve(value);
+    };
+    window[callbackName] = () => {
+      finish(!!window.google?.maps?.places);
     };
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY.trim())}&loading=async&libraries=places&callback=${callbackName}`;
     script.async = true;
     script.defer = true;
     script.onerror = () => {
-      delete window[callbackName];
-      resolve(false);
+      finish(false);
     };
     document.head.appendChild(script);
+    setTimeout(()=>finish(!!window.google?.maps?.places), 4500);
   });
   return googlePlacesLoaderPromise;
 }
