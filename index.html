@@ -326,7 +326,7 @@
 <div id="topBar">
   <div class="search-glass">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#1C1C1E" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <input type="text" id="searchInput" placeholder="Cherche une terrasse, un parc, un parking…">
+    <input type="text" id="searchInput" placeholder="Cherche une terrasse…">
     <button class="search-clear-btn" id="searchClear">✕</button>
   </div>
   <button class="icon-btn" id="btnListe" onclick="openDrawer()" title="Liste">
@@ -477,7 +477,7 @@ async function fetchAreaName(lat,lng,expectedId){
     if(terrasses.length) document.getElementById('footerText').textContent=`${terrasses.length} lieux · ${currentCity.nom}`;
     const local = await localTerrassesForCurrentArea();
     if(currentCity.id === expectedId && local.length > 80){
-      const merged=mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
+      const merged=mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...localFallbackTerrasses()])).slice(0,MAX_TERRASSES);
       paintTerrasses(merged);
     }
   } catch (e) {}
@@ -889,7 +889,7 @@ function localFallbackTerrasses(){
 
 function localFallbackUtilities(){
   return FALLBACK_UTILITY_PLACES
-    .filter(p=>metersBetween(currentCity.lat,currentCity.lng,p[4],p[5])<=18000)
+    .filter(p=>p[3]!=='parking' && metersBetween(currentCity.lat,currentCity.lng,p[4],p[5])<=18000)
     .map((p,i)=>({
       id:`fallback-utility-${i}`,
       nom:p[0],
@@ -987,7 +987,7 @@ async function localTerrassesForCurrentArea(){
     try{
       const localData = await fetchLocalCityData(id);
       const places = localData ? osmDataToTerrasses(localData,`local-${id}`) : [];
-      if(places.length > 20) return places;
+      if(places.length > 20) return places.filter(t=>placeCategory(t)!=='parking');
     }catch(e){}
   }
   return [];
@@ -1067,14 +1067,14 @@ async function fetchTerrasses(){
 
 async function fetchUtilityPlacesFromOverpass(){
   const q=`[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];(
-    nwr["amenity"~"^(drinking_water|fountain|parking|bicycle_parking|library|cinema)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
+    nwr["amenity"~"^(drinking_water|fountain|library|cinema)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
     nwr["leisure"~"^(park|garden|nature_reserve)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
     nwr["natural"="wood"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
     nwr["landuse"="forest"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
     nwr["tourism"="museum"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
     nwr["shop"="mall"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
   );out center tags;`;
-  return fetchOverpassPlaces(q,'utility-osm').then(items=>items.filter(t=>!isFoodPlace(t)));
+  return fetchOverpassPlaces(q,'utility-osm').then(items=>items.filter(t=>!isFoodPlace(t) && placeCategory(t)!=='parking'));
 }
 
 function getSunDir(jd){
@@ -1250,7 +1250,11 @@ function prioritizedMarkerItems(items=terrasses){
 function syncDots(items=terrasses){
   const token=++markerRenderToken;
   const fullRefresh = !items || items===terrasses || items.length===terrasses.length;
-  const mapItems = fullRefresh ? terrasses.filter(matchesActiveFilter) : items;
+  // La carte 3D reste dédiée aux terrasses. Les lieux Canicule vivent dans
+  // leur liste, sans transformer la carte en série d'emojis.
+  const mapItems = fullRefresh
+    ? terrasses.filter(t=>isFoodPlace(t) && (activeFilter==='heatwave' || matchesActiveFilter(t)))
+    : items.filter(isFoodPlace);
   const targets=fullRefresh ? prioritizedMarkerItems(mapItems) : mapItems;
   if(fullRefresh){
     const visibleIds=new Set(targets.map(t=>String(t.id)));
@@ -2052,7 +2056,6 @@ function matchesActiveFilter(t){
   const category=placeCategory(t);
   if(activeFilter==='favorite') return isFavorite(t)||!!findReferenced(t);
   if(activeFilter==='heatwave') {
-    if(category==='parking') return false;
     return ['park','water','cool'].includes(category);
   }
   if(activeFilter==='park') return category==='park';
@@ -2062,12 +2065,16 @@ function matchesActiveFilter(t){
   if(activeFilter==='restaurant') return isFoodPlace(t) && (type.includes('restaurant')||type.includes('brasserie')||type.includes('bistrot'));
   if(activeFilter==='cafe') return isFoodPlace(t) && type.includes('cafe');
   if(activeFilter==='bar') return isFoodPlace(t) && (type.includes('bar')||type.includes('pub'));
-  return true;
+  return isFoodPlace(t);
 }
 
 function focusPlace(t,duration=0.75){
+  // On recentre sur le lieu sans entrer trop près : les autres terrasses
+  // restent visibles autour au lieu de donner l'impression de disparaître.
+  const currentHeight=viewer.camera.positionCartographic?.height||0;
+  const height=Math.max(currentHeight,1200);
   viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(t.lng,t.lat,300),
+    destination: Cesium.Cartesian3.fromDegrees(t.lng,t.lat,height),
     orientation: { heading:0, pitch:Cesium.Math.toRadians(-50), roll:0 },
     duration,
     easingFunction: Cesium.EasingFunction.CUBIC_OUT
@@ -2075,7 +2082,6 @@ function focusPlace(t,duration=0.75){
 }
 
 function selectTerrasse(t,card){
-  shadowVersion++;
   document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
   if(card) card.classList.add('active');
   closeDrawer();
@@ -2095,8 +2101,8 @@ function renderList(h,query){
     if(pa!==pb) return pb-pa;
     if(pa&&pb) return referencedRank(a.nom)-referencedRank(b.nom);
     if(activeFilter==='heatwave'){
-      const ca=isFoodPlace(a)?1:0, cb=isFoodPlace(b)?1:0;
-      if(ca!==cb) return ca-cb;
+      const sa=sunStates[a.id]===false?0:1, sb=sunStates[b.id]===false?0:1;
+      if(sa!==sb) return sa-sb;
     }else if(activeFilter==='all'){
       const ca=isFoodPlace(a)?0:1, cb=isFoodPlace(b)?0:1;
       if(ca!==cb) return ca-cb;
@@ -2183,41 +2189,81 @@ document.getElementById('filterChips').addEventListener('click',e=>{
 });
 
 const slider=document.getElementById('timeSlider');
-let sliderUiTimer=null;
-slider.addEventListener('input',e=>{
-  const val=parseFloat(e.target.value),h=Math.floor(val),m=Math.round((val-h)*60);
+let sliderFrame=null;
+let sliderCommitTimer=null;
+let sliderIsDragging=false;
+let sliderPendingValue=parseFloat(slider.value);
+let sliderLastCommitted=sliderPendingValue;
+
+function updateSliderLabel(val){
+  const h=Math.floor(val),m=Math.round((val-h)*60);
   document.getElementById('heureAffichee').textContent=h+'h'+(m<10?'0'+m:m);
   slider.style.setProperty('--pct',((val-6)/15)*100+'%');
+}
+function updateSliderClock(val){
+  const h=Math.floor(val),m=Math.round((val-h)*60);
   currentDate=new Date(); currentDate.setHours(h,m,0,0);
   viewer.clock.currentTime=Cesium.JulianDate.fromDate(currentDate); currentHeure=val;
-  // Force immédiatement le nouveau soleil et les ombres, y compris sur mobile.
   viewer.scene.requestRender();
+}
+function commitSliderChange(){
+  clearTimeout(sliderCommitTimer);
+  if(sliderFrame){
+    cancelAnimationFrame(sliderFrame);
+    sliderFrame=null;
+    updateSliderClock(sliderPendingValue);
+  }
+  if(Math.abs(sliderLastCommitted-sliderPendingValue)<0.001) return;
+  sliderLastCommitted=sliderPendingValue;
   if(terrasses.length>0){
     shadowVersion++;
     if(ENABLE_SHADOW_RAYCASTS){
       terrasses.forEach(t=>{sunStates[t.id]=null;});
-      clearTimeout(sliderUiTimer);
-      sliderUiTimer=setTimeout(()=>{
-        syncDots();
-        renderList(currentHeure,searchQuery);
-        refreshActivePlaceSunStatus();
-      }, 90);
+      syncDots();
+      renderList(currentHeure,searchQuery);
+      refreshActivePlaceSunStatus();
       scheduleShadow();
     }else{
       computeFastSunStates();
       syncDots();
       refreshActivePlaceSunStatus();
-      clearTimeout(sliderUiTimer);
-      sliderUiTimer=setTimeout(()=>renderList(currentHeure,searchQuery), 80);
+      renderList(currentHeure,searchQuery);
     }
   }
+}
+slider.addEventListener('pointerdown',()=>{
+  sliderIsDragging=true;
+  clearTimeout(sliderCommitTimer);
 });
-slider.addEventListener('change',e=>{
-  if(terrasses.length>0){
-    shadowVersion++;
-    if(ENABLE_SHADOW_RAYCASTS) scheduleShadow();
-    else { computeFastSunStates(); syncDots(); renderList(currentHeure,searchQuery); refreshActivePlaceSunStatus(); }
+slider.addEventListener('input',e=>{
+  sliderPendingValue=parseFloat(e.target.value);
+  updateSliderLabel(sliderPendingValue);
+  // Pendant le glissement, seule la scène 3D est mise à jour : la carte
+  // et la liste attendent la fin du geste, ce qui garde le curseur fluide.
+  if(!sliderFrame){
+    sliderFrame=requestAnimationFrame(()=>{
+      sliderFrame=null;
+      updateSliderClock(sliderPendingValue);
+    });
   }
+  clearTimeout(sliderCommitTimer);
+  if(!sliderIsDragging) sliderCommitTimer=setTimeout(commitSliderChange,180);
+});
+slider.addEventListener('pointerup',()=>{
+  sliderIsDragging=false;
+  commitSliderChange();
+});
+slider.addEventListener('pointercancel',()=>{
+  sliderIsDragging=false;
+  commitSliderChange();
+});
+slider.addEventListener('change',()=>{
+  sliderIsDragging=false;
+  commitSliderChange();
+});
+slider.addEventListener('blur',()=>{
+  sliderIsDragging=false;
+  commitSliderChange();
 });
 
 const handler=new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
@@ -2242,7 +2288,9 @@ function areaSignature(){
 function paintTerrasses(data, suffix=''){
   document.getElementById('loadingState').style.display='none';
   document.getElementById('terrasseList').style.display='block';
-  terrasses=data;
+  // Les parkings sont exclus. Les lieux Canicule sont conservés uniquement
+  // pour l'onglet dédié, jamais comme icônes sur la carte 3D.
+  terrasses=(data||[]).filter(t=>placeCategory(t)!=='parking');
   lastLoadedArea={lat:currentCity.lat,lng:currentCity.lng};
   sunStates={};
   terrasses.forEach(t=>{sunStates[t.id]=sunStates[t.id] ?? null;});
