@@ -68,6 +68,14 @@
     #searchInput::placeholder { color: var(--text-3); }
     .search-clear-btn { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 16px; padding: 0; display: none; align-items: center; justify-content: center; width: 20px; height: 20px; }
     .search-clear-btn.visible { display: flex; }
+    #searchSuggestions { position:fixed; z-index:45; top:calc(env(safe-area-inset-top, 44px) + 70px); left:50%; transform:translateX(-50%); width:calc(100% - 32px); max-width:480px; display:none; overflow:hidden; border:1px solid rgba(255,255,255,.85); border-radius:16px; background:rgba(255,255,255,.96); box-shadow:0 16px 38px rgba(15,23,42,.17); backdrop-filter:blur(20px); }
+    #searchSuggestions.visible { display:block; }
+    .city-suggestion { width:100%; border:0; border-bottom:1px solid rgba(226,232,240,.8); padding:12px 14px; display:flex; align-items:center; gap:10px; background:transparent; color:var(--text); font:inherit; text-align:left; cursor:pointer; }
+    .city-suggestion:last-child { border-bottom:0; }
+    .city-suggestion:active { background:#FFF7D6; }
+    .city-suggestion-icon { width:28px; height:28px; display:grid; place-items:center; border-radius:9px; background:#FFF3D6; font-size:15px; flex:0 0 auto; }
+    .city-suggestion-name { font-size:14px; font-weight:800; }
+    .city-suggestion-sub { margin-top:1px; font-size:11px; color:var(--text-3); }
     .icon-btn {
       flex-shrink: 0; width: 52px; height: 52px; background: var(--glass);
       backdrop-filter: blur(24px) saturate(1.15); -webkit-backdrop-filter: blur(24px) saturate(1.15);
@@ -359,13 +367,14 @@
 <div id="topBar">
   <div class="search-glass">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#1C1C1E" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <input type="text" id="searchInput" placeholder="Cherche une terrasse…">
+    <input type="text" id="searchInput" placeholder="Ville ou terrasse…" autocomplete="off">
     <button class="search-clear-btn" id="searchClear">✕</button>
   </div>
   <button class="icon-btn" id="btnListe" onclick="openDrawer()" title="Liste">
     <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><rect width="18" height="2" rx="1" fill="#1C1C1E"/><rect y="6" width="18" height="2" rx="1" fill="#1C1C1E"/><rect y="12" width="18" height="2" rx="1" fill="#1C1C1E"/></svg>
   </button>
 </div>
+<div id="searchSuggestions" role="listbox" aria-label="Villes proposées"></div>
 
 <button id="btnGeo" ontouchend="geolocate(event)" onclick="geolocate(event)" title="Ma position">
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3.5" fill="#007AFF"/><circle cx="10" cy="10" r="6" stroke="#007AFF" stroke-width="1.2" fill="none" opacity="0.35"/><path d="M10 2V4.5M10 15.5V18M2 10H4.5M15.5 10H18" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -450,18 +459,22 @@ const LOCAL_DATA_ALIASES = {
 };
 // Colle ta cle Google Maps ici pour activer les vraies photos, liens Google,
 // telephones et sites en local. APIs a activer: Maps JavaScript API + Places API.
-const GOOGLE_MAPS_API_KEY = "AIzaSyD7ApectcO9UqS4B8POlEwm1hlRbmKiuig";
+// Google Places enrichit les fiches avec la vraie photo, la note et les liens.
+// À restreindre dans Google Cloud aux domaines autorisés avant publication.
+const GOOGLE_MAPS_API_KEY = window.SOLEIL_GOOGLE_MAPS_API_KEY || "AIzaSyD7ApectcO9UqS4B8POlEwm1hlRbmKiuig";
 // Test 3D Google photorealiste: colle ici une cle avec Map Tiles API activee.
 // Si cette valeur reste vide, l'app garde la 3D OpenStreetMap normale.
-const GOOGLE_MAP_TILES_API_KEY = "AIzaSyA2qaFERG7pF-uHHwgIA2upLxZxoWqlNDs";
-const GOOGLE_NEARBY_RADIUS_METERS = 3500;
+const GOOGLE_MAP_TILES_API_KEY = "";
+const GOOGLE_NEARBY_RADIUS_METERS = 5000;
 const GOOGLE_NEARBY_TYPES = ['restaurant', 'cafe', 'bar'];
+// Une page par type suffit pour compléter la liste sans surcharger le mobile.
+const GOOGLE_NEARBY_MAX_EXTRA_PAGES = 0;
 const PERFORMANCE_MODE = false;
 const ENABLE_GOOGLE_3D_TEST = false;
 const ENABLE_SHADOW_RAYCASTS = false;
-const MAX_RENDERED_LIST_ITEMS = 280;
-const MAX_MARKERS_ON_MAP = 950;
-const MARKER_RENDER_BATCH = 180;
+const MAX_RENDERED_LIST_ITEMS = 220;
+const MAX_MARKERS_ON_MAP = 300;
+const MARKER_RENDER_BATCH = 60;
 const PHOTO_HYDRATE_LIMIT = 6;
 const LOCAL_CITY_RADIUS_METERS = 30000;
 let currentCity = {...CITIES[0], localDataIds: localDataCandidateIds(CITIES[0].id, CITIES[0].nom)};
@@ -587,6 +600,28 @@ async function switchCity(cityId){
   showAreaPill(currentCity.nom);
   clearPlaces();
   frameArea(city.lng, city.lat, {animate:true});
+  await loadTerrasses();
+}
+
+async function switchToSearchedCity(city){
+  if(!city || !Number.isFinite(city.lat) || !Number.isFinite(city.lng)) return;
+  currentCity={
+    id:`search-${city.lat.toFixed(3)}-${city.lng.toFixed(3)}`,
+    nom:city.nom,
+    lat:city.lat,
+    lng:city.lng,
+    dynamic:true,
+    localDataIds:localDataCandidateIds(city.nom)
+  };
+  lastLoadedArea=null;
+  searchQuery='';
+  document.getElementById('searchInput').value='';
+  document.getElementById('drawerSearch').value='';
+  document.getElementById('searchClear').classList.remove('visible');
+  hideCitySuggestions();
+  showAreaPill(currentCity.nom);
+  clearPlaces();
+  frameArea(city.lng,city.lat,{animate:true});
   await loadTerrasses();
 }
 
@@ -1027,11 +1062,17 @@ async function localTerrassesForCurrentArea(){
   return [];
 }
 
-const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.openstreetmap.ru/api/interpreter'];
-const OVERPASS_RADIUS_METERS = 18000;
-const OVERPASS_TIMEOUT_MS = 24000;
-const OVERPASS_QUERY_TIMEOUT_SECONDS = 30;
-const MAX_TERRASSES = 1800;
+// On interroge uniquement la zone que l'utilisateur regarde : c'est ce qui
+// rend la recherche utilisable aussi bien à Paris que dans une petite ville.
+const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
+const OVERPASS_RADIUS_METERS = 6500;
+const OVERPASS_TIMEOUT_MS = 9000;
+const OVERPASS_QUERY_TIMEOUT_SECONDS = 16;
+const MAX_TERRASSES = 600;
+const foodPlaceCache = new Map();
+function foodCacheKey(){
+  return `${currentCity.lat.toFixed(2)}:${currentCity.lng.toFixed(2)}`;
+}
 function overpassProxyUrl(query){
   if(!/^https?:$/.test(location.protocol)) return '';
   return `/api/overpass?data=${encodeURIComponent(query)}`;
@@ -1058,27 +1099,34 @@ async function overpassRequest(url, query, timeout=OVERPASS_TIMEOUT_MS){
   throw lastError || new Error('overpass failed');
 }
 async function fetchOverpassPlaces(query, source){
-  const endpoints = ['proxy', ...OVERPASS];
-  const requests=endpoints.map(async url=>{
-    const data=await overpassRequest(url, query);
-    if(!(data.elements||[]).length) throw new Error('empty overpass response');
-    const seen=new Set();
-    return (data.elements||[])
-      .map((el,index)=>osmFeatureToPlace(el,index,source))
-      .filter(el=>{
-        if(!el || !el.lat || !el.lng || !el.nom) return false;
-        const key=`${el.category}-${normalize(el.nom)}-${el.lat.toFixed(4)}-${el.lng.toFixed(4)}`;
-        if(seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .sort((a,b)=>metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng));
-  });
-  return Promise.any(requests).catch(()=>[]);
+  // Un seul appel à la fois : Promise.any laissait les trois requêtes coûteuses
+  // tourner en parallèle, même après avoir déjà reçu une réponse valide.
+  for(const url of ['proxy', ...OVERPASS]){
+    try{
+      const data=await overpassRequest(url, query);
+      const seen=new Set();
+      const places=(data.elements||[])
+        .map((el,index)=>osmFeatureToPlace(el,index,source))
+        .filter(el=>{
+          if(!el || !el.lat || !el.lng || !el.nom) return false;
+          const key=`${el.category}-${normalize(el.nom)}-${el.lat.toFixed(4)}-${el.lng.toFixed(4)}`;
+          if(seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .sort((a,b)=>metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng));
+      if(places.length) return places;
+    }catch(e){}
+  }
+  return [];
 }
 async function fetchFoodPlacesFromOverpass(){
+  const cached=foodPlaceCache.get(foodCacheKey());
+  if(cached) return cached;
   const q=`[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];nwr["amenity"~"^(bar|cafe|restaurant|pub|biergarten)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});out center tags;`;
-  return fetchOverpassPlaces(q,'osm').then(items=>items.filter(isFoodPlace));
+  const places=(await fetchOverpassPlaces(q,'osm')).filter(isFoodPlace).slice(0,MAX_TERRASSES);
+  if(places.length) foodPlaceCache.set(foodCacheKey(),places);
+  return places;
 }
 
 async function fetchTerrasses(){
@@ -1723,7 +1771,7 @@ function googleNearbySearch(service, type){
         const t = googlePlaceToTerrasse(place, type);
         if(t) found.push(t);
       });
-      if(pagination?.hasNextPage && pages < 2) {
+      if(pagination?.hasNextPage && pages < GOOGLE_NEARBY_MAX_EXTRA_PAGES) {
         pages++;
         setTimeout(() => pagination.nextPage(), 450);
       } else {
@@ -2206,8 +2254,68 @@ function renderList(h,query){
 }
 
 const searchInput=document.getElementById('searchInput'),searchClear=document.getElementById('searchClear');
-searchInput.addEventListener('input',e=>{searchQuery=e.target.value;document.getElementById('drawerSearch').value=searchQuery;searchClear.classList.toggle('visible',searchQuery.length>0);renderList(currentHeure,searchQuery);if(searchQuery.length>0)openDrawer();});
-searchClear.addEventListener('click',()=>{searchInput.value='';searchQuery='';document.getElementById('drawerSearch').value='';searchClear.classList.remove('visible');renderList(currentHeure,'');});
+const searchSuggestions=document.getElementById('searchSuggestions');
+let citySearchTimer=null, citySearchVersion=0, citySuggestions=[];
+
+function hideCitySuggestions(){
+  citySuggestions=[];
+  searchSuggestions.innerHTML='';
+  searchSuggestions.classList.remove('visible');
+}
+function renderCitySuggestions(cities){
+  citySuggestions=cities;
+  if(!cities.length){ hideCitySuggestions(); return; }
+  searchSuggestions.innerHTML='';
+  cities.slice(0,6).forEach(city=>{
+    const button=document.createElement('button');
+    button.type='button'; button.className='city-suggestion'; button.setAttribute('role','option');
+    button.innerHTML=`<span class="city-suggestion-icon">⌖</span><span><span class="city-suggestion-name">${escapeHTML(city.nom)}</span><span class="city-suggestion-sub">${escapeHTML(city.sousTitre||'France')}</span></span>`;
+    button.addEventListener('click',()=>switchToSearchedCity(city));
+    searchSuggestions.appendChild(button);
+  });
+  searchSuggestions.classList.add('visible');
+}
+async function searchFrenchCities(value){
+  const q=String(value||'').trim();
+  const token=++citySearchVersion;
+  if(q.length<2){ hideCitySuggestions(); return; }
+  const normalized=normalize(q);
+  const known=CITIES.filter(city=>normalize(city.nom).includes(normalized)).map(city=>({nom:city.nom,sousTitre:'Ville proposée',lat:city.lat,lng:city.lng}));
+  renderCitySuggestions(known);
+  if(q.length<3) return;
+  try{
+    const url=`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=fr&featuretype=city&q=${encodeURIComponent(q)}`;
+    const response=await fetchWithTimeout(url,{headers:{Accept:'application/json','Accept-Language':'fr'}},5000);
+    if(!response.ok || token!==citySearchVersion) return;
+    const data=await response.json();
+    const remote=(data||[]).map(item=>{
+      const a=item.address||{};
+      const nom=a.city||a.town||a.village||a.municipality||item.display_name.split(',')[0];
+      const sousTitre=[a.county||a.state,'France'].filter(Boolean).join(' · ');
+      return {nom,sousTitre,lat:parseFloat(item.lat),lng:parseFloat(item.lon)};
+    }).filter(city=>city.nom&&Number.isFinite(city.lat)&&Number.isFinite(city.lng));
+    const merged=[];
+    [...known,...remote].forEach(city=>{
+      const key=`${normalize(city.nom)}-${city.lat.toFixed(2)}-${city.lng.toFixed(2)}`;
+      if(!merged.some(other=>`${normalize(other.nom)}-${other.lat.toFixed(2)}-${other.lng.toFixed(2)}`===key)) merged.push(city);
+    });
+    if(token===citySearchVersion) renderCitySuggestions(merged);
+  }catch(e){}
+}
+function handleMainSearch(value){
+  searchQuery=value;
+  document.getElementById('drawerSearch').value=value;
+  searchClear.classList.toggle('visible',value.length>0);
+  renderList(currentHeure,value);
+  if(value.length>0){ openDrawer(); clearTimeout(citySearchTimer); citySearchTimer=setTimeout(()=>searchFrenchCities(value),300); }
+  else { clearTimeout(citySearchTimer); hideCitySuggestions(); }
+}
+searchInput.addEventListener('input',e=>handleMainSearch(e.target.value));
+searchInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter' && citySuggestions[0]){ e.preventDefault(); switchToSearchedCity(citySuggestions[0]); }
+  if(e.key==='Escape') hideCitySuggestions();
+});
+searchClear.addEventListener('click',()=>{searchInput.value='';searchQuery='';document.getElementById('drawerSearch').value='';searchClear.classList.remove('visible');hideCitySuggestions();renderList(currentHeure,'');});
 document.getElementById('drawerSearch').addEventListener('input',e=>{searchQuery=e.target.value;searchInput.value=searchQuery;searchClear.classList.toggle('visible',searchQuery.length>0);renderList(currentHeure,searchQuery);});
 document.getElementById('filterChips').addEventListener('click',e=>{
   const chip=e.target.closest('.filter-chip');
@@ -2399,11 +2507,16 @@ async function loadTerrasses(){
     if(version===terraceLoadVersion && signature===areaSignature()) renderList(currentHeure,searchQuery);
   }).catch(()=>{});
 
+  // Les données OSM arrivent en priorité. Google, si activé plus tard, complète
+  // la zone sans bloquer ni vider les résultats déjà visibles.
+  setTimeout(()=>hydrateNearbyInBackground(signature), 900);
   fetchTerrasses().then(data=>{
     if(version!==terraceLoadVersion || signature!==areaSignature()) return;
-    paintTerrasses(data);
+    if(data.length){
+      const merged=mergeFeaturedPlaces(mergePlacesByIdentity([...terrasses,...data])).slice(0,MAX_TERRASSES);
+      paintTerrasses(merged);
+    }
     setTimeout(()=>hydrateUtilitiesInBackground(signature), 700);
-    setTimeout(()=>hydrateNearbyInBackground(signature), 3500);
   }).catch(()=>{
     if(version!==terraceLoadVersion || terrasses.length) return;
     document.getElementById('loadingState').style.display='none';
