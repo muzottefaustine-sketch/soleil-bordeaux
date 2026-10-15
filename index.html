@@ -68,14 +68,6 @@
     #searchInput::placeholder { color: var(--text-3); }
     .search-clear-btn { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 16px; padding: 0; display: none; align-items: center; justify-content: center; width: 20px; height: 20px; }
     .search-clear-btn.visible { display: flex; }
-    #searchSuggestions { position:fixed; z-index:45; top:calc(env(safe-area-inset-top, 44px) + 70px); left:50%; transform:translateX(-50%); width:calc(100% - 32px); max-width:480px; display:none; overflow:hidden; border:1px solid rgba(255,255,255,.85); border-radius:16px; background:rgba(255,255,255,.96); box-shadow:0 16px 38px rgba(15,23,42,.17); backdrop-filter:blur(20px); }
-    #searchSuggestions.visible { display:block; }
-    .city-suggestion { width:100%; border:0; border-bottom:1px solid rgba(226,232,240,.8); padding:12px 14px; display:flex; align-items:center; gap:10px; background:transparent; color:var(--text); font:inherit; text-align:left; cursor:pointer; }
-    .city-suggestion:last-child { border-bottom:0; }
-    .city-suggestion:active { background:#FFF7D6; }
-    .city-suggestion-icon { width:28px; height:28px; display:grid; place-items:center; border-radius:9px; background:#FFF3D6; font-size:15px; flex:0 0 auto; }
-    .city-suggestion-name { font-size:14px; font-weight:800; }
-    .city-suggestion-sub { margin-top:1px; font-size:11px; color:var(--text-3); }
     .icon-btn {
       flex-shrink: 0; width: 52px; height: 52px; background: var(--glass);
       backdrop-filter: blur(24px) saturate(1.15); -webkit-backdrop-filter: blur(24px) saturate(1.15);
@@ -330,6 +322,29 @@
       #placeSheet { max-height:80dvh; }
       .ps-hero, .ps-photo, .ps-photo-placeholder { min-height:190px; height:190px; }
     }
+
+    /* Fiche Sélection : compacte, actionnable et inspirée d'une fiche iOS. */
+    #placeSheet { max-height:min(70dvh,600px); }
+    .ps-close { width:36px; height:36px; top:6px; right:12px; font-size:22px; font-weight:500; }
+    .ps-primary-actions { display:grid; grid-template-columns:minmax(0,1fr) 46px 46px; gap:8px; margin:0 0 14px; }
+    .ps-primary-actions .ps-btn { display:grid; place-items:center; min-height:46px; padding:0 10px; text-decoration:none; }
+    .ps-primary-actions .ps-btn.reserve, .ps-primary-actions .ps-btn.contact { background:#1D1D1F; color:#fff; }
+    .ps-primary-actions .ps-btn.icon-action { background:#F2F2F7; color:#1D1D1F; font-size:12px; }
+    .ps-detail-section { margin:0 0 13px; padding:13px; border-radius:18px; background:#F7F7F9; }
+    .ps-section-title { margin:0 0 10px; color:#8E8E93; font-size:10px; font-weight:850; letter-spacing:.65px; text-transform:uppercase; }
+    .ps-info-rows { display:grid; gap:10px; }
+    .ps-info-row { display:grid; grid-template-columns:24px minmax(0,1fr); gap:8px; align-items:start; }
+    .ps-row-icon { width:24px; height:24px; display:grid; place-items:center; border-radius:8px; background:#fff; color:#5B5B60; font-size:13px; }
+    .ps-row-label { color:#8E8E93; font-size:11px; font-weight:700; margin-bottom:1px; }
+    .ps-row-value { color:#1D1D1F; font-size:13px; font-weight:700; line-height:1.35; }
+    .ps-row-value.multiline { white-space:pre-line; }
+    .ps-tags { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 14px; }
+    .ps-tag { padding:6px 9px; border-radius:999px; background:#F2F2F7; color:#4B4B4E; font-size:11px; font-weight:750; }
+    .ps-inline-note { margin:0 0 14px; color:#6E6E73; font-size:12px; line-height:1.4; }
+    .ps-secondary-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .ps-secondary-actions .ps-btn { display:grid; place-items:center; min-height:44px; padding:8px; text-decoration:none; }
+    .ps-btn { position:relative; z-index:2; touch-action:manipulation; }
+    @media (max-width:699px) { #placeSheet { max-height:72dvh; } }
   </style>
 </head>
 <body>
@@ -367,14 +382,13 @@
 <div id="topBar">
   <div class="search-glass">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#1C1C1E" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <input type="text" id="searchInput" placeholder="Ville ou terrasse…" autocomplete="off">
+    <input type="text" id="searchInput" placeholder="Cherche une terrasse…">
     <button class="search-clear-btn" id="searchClear">✕</button>
   </div>
   <button class="icon-btn" id="btnListe" onclick="openDrawer()" title="Liste">
     <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><rect width="18" height="2" rx="1" fill="#1C1C1E"/><rect y="6" width="18" height="2" rx="1" fill="#1C1C1E"/><rect y="12" width="18" height="2" rx="1" fill="#1C1C1E"/></svg>
   </button>
 </div>
-<div id="searchSuggestions" role="listbox" aria-label="Villes proposées"></div>
 
 <button id="btnGeo" ontouchend="geolocate(event)" onclick="geolocate(event)" title="Ma position">
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3.5" fill="#007AFF"/><circle cx="10" cy="10" r="6" stroke="#007AFF" stroke-width="1.2" fill="none" opacity="0.35"/><path d="M10 2V4.5M10 15.5V18M2 10H4.5M15.5 10H18" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -399,7 +413,7 @@
 <div id="psOverlay" onclick="hidePlaceSheet()"></div>
 <div id="placeSheet" role="dialog" aria-modal="true" aria-label="Fiche du lieu">
   <div class="ps-handle" id="psHandle" role="button" tabindex="0" aria-label="Fermer la fiche"><div class="ps-bar"></div></div>
-  <button class="ps-close" id="psClose" type="button" aria-label="Fermer la fiche" title="Fermer la fiche">⌄</button>
+  <button class="ps-close" id="psClose" type="button" aria-label="Fermer la fiche" title="Fermer la fiche">×</button>
   <div id="psContent"></div>
 </div>
 
@@ -459,22 +473,18 @@ const LOCAL_DATA_ALIASES = {
 };
 // Colle ta cle Google Maps ici pour activer les vraies photos, liens Google,
 // telephones et sites en local. APIs a activer: Maps JavaScript API + Places API.
-// Google Places enrichit les fiches avec la vraie photo, la note et les liens.
-// À restreindre dans Google Cloud aux domaines autorisés avant publication.
-const GOOGLE_MAPS_API_KEY = window.SOLEIL_GOOGLE_MAPS_API_KEY || "AIzaSyD7ApectcO9UqS4B8POlEwm1hlRbmKiuig";
+const GOOGLE_MAPS_API_KEY = "AIzaSyD7ApectcO9UqS4B8POlEwm1hlRbmKiuig";
 // Test 3D Google photorealiste: colle ici une cle avec Map Tiles API activee.
 // Si cette valeur reste vide, l'app garde la 3D OpenStreetMap normale.
-const GOOGLE_MAP_TILES_API_KEY = "";
-const GOOGLE_NEARBY_RADIUS_METERS = 5000;
+const GOOGLE_MAP_TILES_API_KEY = "AIzaSyA2qaFERG7pF-uHHwgIA2upLxZxoWqlNDs";
+const GOOGLE_NEARBY_RADIUS_METERS = 3500;
 const GOOGLE_NEARBY_TYPES = ['restaurant', 'cafe', 'bar'];
-// Une page par type suffit pour compléter la liste sans surcharger le mobile.
-const GOOGLE_NEARBY_MAX_EXTRA_PAGES = 0;
 const PERFORMANCE_MODE = false;
 const ENABLE_GOOGLE_3D_TEST = false;
 const ENABLE_SHADOW_RAYCASTS = false;
-const MAX_RENDERED_LIST_ITEMS = 220;
-const MAX_MARKERS_ON_MAP = 300;
-const MARKER_RENDER_BATCH = 60;
+const MAX_RENDERED_LIST_ITEMS = 280;
+const MAX_MARKERS_ON_MAP = 950;
+const MARKER_RENDER_BATCH = 180;
 const PHOTO_HYDRATE_LIMIT = 6;
 const LOCAL_CITY_RADIUS_METERS = 30000;
 let currentCity = {...CITIES[0], localDataIds: localDataCandidateIds(CITIES[0].id, CITIES[0].nom)};
@@ -600,28 +610,6 @@ async function switchCity(cityId){
   showAreaPill(currentCity.nom);
   clearPlaces();
   frameArea(city.lng, city.lat, {animate:true});
-  await loadTerrasses();
-}
-
-async function switchToSearchedCity(city){
-  if(!city || !Number.isFinite(city.lat) || !Number.isFinite(city.lng)) return;
-  currentCity={
-    id:`search-${city.lat.toFixed(3)}-${city.lng.toFixed(3)}`,
-    nom:city.nom,
-    lat:city.lat,
-    lng:city.lng,
-    dynamic:true,
-    localDataIds:localDataCandidateIds(city.nom)
-  };
-  lastLoadedArea=null;
-  searchQuery='';
-  document.getElementById('searchInput').value='';
-  document.getElementById('drawerSearch').value='';
-  document.getElementById('searchClear').classList.remove('visible');
-  hideCitySuggestions();
-  showAreaPill(currentCity.nom);
-  clearPlaces();
-  frameArea(city.lng,city.lat,{animate:true});
   await loadTerrasses();
 }
 
@@ -1062,17 +1050,11 @@ async function localTerrassesForCurrentArea(){
   return [];
 }
 
-// On interroge uniquement la zone que l'utilisateur regarde : c'est ce qui
-// rend la recherche utilisable aussi bien à Paris que dans une petite ville.
-const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
-const OVERPASS_RADIUS_METERS = 6500;
-const OVERPASS_TIMEOUT_MS = 9000;
-const OVERPASS_QUERY_TIMEOUT_SECONDS = 16;
-const MAX_TERRASSES = 600;
-const foodPlaceCache = new Map();
-function foodCacheKey(){
-  return `${currentCity.lat.toFixed(2)}:${currentCity.lng.toFixed(2)}`;
-}
+const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.openstreetmap.ru/api/interpreter'];
+const OVERPASS_RADIUS_METERS = 18000;
+const OVERPASS_TIMEOUT_MS = 24000;
+const OVERPASS_QUERY_TIMEOUT_SECONDS = 30;
+const MAX_TERRASSES = 1800;
 function overpassProxyUrl(query){
   if(!/^https?:$/.test(location.protocol)) return '';
   return `/api/overpass?data=${encodeURIComponent(query)}`;
@@ -1099,34 +1081,27 @@ async function overpassRequest(url, query, timeout=OVERPASS_TIMEOUT_MS){
   throw lastError || new Error('overpass failed');
 }
 async function fetchOverpassPlaces(query, source){
-  // Un seul appel à la fois : Promise.any laissait les trois requêtes coûteuses
-  // tourner en parallèle, même après avoir déjà reçu une réponse valide.
-  for(const url of ['proxy', ...OVERPASS]){
-    try{
-      const data=await overpassRequest(url, query);
-      const seen=new Set();
-      const places=(data.elements||[])
-        .map((el,index)=>osmFeatureToPlace(el,index,source))
-        .filter(el=>{
-          if(!el || !el.lat || !el.lng || !el.nom) return false;
-          const key=`${el.category}-${normalize(el.nom)}-${el.lat.toFixed(4)}-${el.lng.toFixed(4)}`;
-          if(seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        })
-        .sort((a,b)=>metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng));
-      if(places.length) return places;
-    }catch(e){}
-  }
-  return [];
+  const endpoints = ['proxy', ...OVERPASS];
+  const requests=endpoints.map(async url=>{
+    const data=await overpassRequest(url, query);
+    if(!(data.elements||[]).length) throw new Error('empty overpass response');
+    const seen=new Set();
+    return (data.elements||[])
+      .map((el,index)=>osmFeatureToPlace(el,index,source))
+      .filter(el=>{
+        if(!el || !el.lat || !el.lng || !el.nom) return false;
+        const key=`${el.category}-${normalize(el.nom)}-${el.lat.toFixed(4)}-${el.lng.toFixed(4)}`;
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a,b)=>metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng));
+  });
+  return Promise.any(requests).catch(()=>[]);
 }
 async function fetchFoodPlacesFromOverpass(){
-  const cached=foodPlaceCache.get(foodCacheKey());
-  if(cached) return cached;
   const q=`[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];nwr["amenity"~"^(bar|cafe|restaurant|pub|biergarten)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});out center tags;`;
-  const places=(await fetchOverpassPlaces(q,'osm')).filter(isFoodPlace).slice(0,MAX_TERRASSES);
-  if(places.length) foodPlaceCache.set(foodCacheKey(),places);
-  return places;
+  return fetchOverpassPlaces(q,'osm').then(items=>items.filter(isFoodPlace));
 }
 
 async function fetchTerrasses(){
@@ -1401,12 +1376,22 @@ const REFERENCED = [
     lng: -0.5729091,
     adresse: "10 Rue Sicard",
     photo: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1100&q=82",
-    description: "Adresse référencée depuis les données locales, ajoutée à la sélection pour remplacer le doublon Saint Georges.",
-    type: "Restaurant",
+    description: "Bistrot iodé au cœur des Chartrons : poissons, coquillages, ceviches et cuisine de saison travaillée avec les arrivages de l’Atlantique.",
+    type: "Bistrot iodé · Poissons & fruits de mer",
+    cuisine: "Cuisine française · Poissons · Fruits de mer",
     happyHours: "",
-    reservationUrl: "https://www.google.com/maps/search/?api=1&query=La%20Pointe%20Bordeaux",
+    reservationUrl: "https://www.lapointe-bordeaux.fr/reserver/",
     googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=La%20Pointe%20Bordeaux",
-    priceLevel: "€€"
+    websiteUrl: "https://www.lapointe-bordeaux.fr/",
+    menuUrl: "https://www.lapointe-bordeaux.fr/la-carte/",
+    instagramUrl: "https://www.instagram.com/lapointe_chartrons/",
+    tel: "+33556813324",
+    email: "reservation@lapointe-bordeaux.fr",
+    openingHours: ["Lundi — samedi · 12h–14h / 20h–22h30", "Dimanche · fermé"],
+    priceLevel: "€€€",
+    priceDetail: "Menu midi 14–26 € · plats 14–27 €",
+    bookingNote: "Réservation confirmée directement par l’équipe du restaurant.",
+    tags: ["Terrasse", "Poissons frais", "Cuisine de saison", "Vins"]
   },
   {
     match: "Utopia",
@@ -1691,6 +1676,10 @@ function stripAttribution(attrs){
   return raw.slice(0, 90);
 }
 
+function googlePriceLabel(level){
+  return Number.isInteger(level) && level>=0 && level<=4 ? ['Gratuit','€','€€','€€€','€€€€'][level] : '';
+}
+
 function normalizeGoogleJsPlace(place){
   if(!place) return {};
   const coords = latLngFromGoogle(place);
@@ -1702,7 +1691,11 @@ function normalizeGoogleJsPlace(place){
     tel: place.international_phone_number || place.formatted_phone_number || '',
     websiteUrl: place.website || '',
     googleMapsUrl: place.url || (place.place_id ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name||'Restaurant')}&query_place_id=${encodeURIComponent(place.place_id)}` : ''),
-    reservationUrl: place.url || '',
+    address: place.formatted_address || '',
+    openingHours: Array.isArray(place.opening_hours?.weekday_text) ? place.opening_hours.weekday_text : [],
+    openNow: typeof place.opening_hours?.open_now === 'boolean' ? place.opening_hours.open_now : null,
+    priceLevel: googlePriceLabel(place.price_level),
+    editorialSummary: place.editorial_summary?.overview || '',
     googlePlaceId: place.place_id || '',
     lat: coords?.lat,
     lng: coords?.lng
@@ -1718,7 +1711,7 @@ async function findGooglePlaceInBrowser(t){
       if(!googleStatusOk(status) || !results?.[0]?.place_id) { resolve({}); return; }
       service.getDetails({
         placeId: results[0].place_id,
-        fields:['name','place_id','geometry','photos','formatted_phone_number','international_phone_number','website','url','rating','user_ratings_total']
+        fields:['name','place_id','geometry','photos','formatted_phone_number','international_phone_number','formatted_address','website','url','rating','user_ratings_total','opening_hours','price_level','editorial_summary']
       }, (place, detailsStatus) => {
         if(!googleStatusOk(detailsStatus)) { resolve({}); return; }
         const coords = latLngFromGoogle(place);
@@ -1771,7 +1764,7 @@ function googleNearbySearch(service, type){
         const t = googlePlaceToTerrasse(place, type);
         if(t) found.push(t);
       });
-      if(pagination?.hasNextPage && pages < GOOGLE_NEARBY_MAX_EXTRA_PAGES) {
+      if(pagination?.hasNextPage && pages < 2) {
         pages++;
         setTimeout(() => pagination.nextPage(), 450);
       } else {
@@ -1856,12 +1849,27 @@ async function fetchFoursquare(t){
   }catch(e){ fsqCache[t.id]={}; return {}; }
 }
 
+function combinePlaceDetails(ref, details, source){
+  if(!ref) return {...details,source};
+  return {
+    ...ref,
+    ...details,
+    // Une vraie réservation n'est jamais remplacée par une simple fiche Maps.
+    reservationUrl: ref.reservationUrl || '',
+    menuUrl: ref.menuUrl || '',
+    instagramUrl: ref.instagramUrl || '',
+    email: ref.email || '',
+    priceDetail: ref.priceDetail || '',
+    openingHours: (ref.openingHours && ref.openingHours.length) ? ref.openingHours : (details.openingHours || []),
+    source
+  };
+}
 async function fetchPlaceDetails(t){
   const ref=findReferenced(t);
   const google=await fetchGooglePlace(t);
-  if(google.photo||google.rating||google.tel||google.googleMapsUrl||google.websiteUrl) return {...google,source:'google'};
+  if(google.photo||google.rating||google.tel||google.googleMapsUrl||google.websiteUrl) return combinePlaceDetails(ref,google,'google');
   const fsq=await fetchFoursquare(t);
-  if(fsq.photo||fsq.rating||fsq.tel) return {...fsq,source:'foursquare'};
+  if(fsq.photo||fsq.rating||fsq.tel) return combinePlaceDetails(ref,fsq,'foursquare');
   return ref ? {...ref,source:'referenced'} : {};
 }
 
@@ -2005,76 +2013,98 @@ function hidePlaceSheet(){
     if(dragStartY!==null && e.changedTouches[0].clientY-dragStartY>32) hidePlaceSheet();
     dragStartY=null;
   },{passive:true});
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape') hidePlaceSheet();
+  });
 })();
 
 function isFeaturedOrFavorite(t){
   return !!findReferenced(t) || isFavorite(t);
 }
 
-function placeFact(label,value){
+function directReservationUrl(value){
   if(!value) return '';
-  return `<div class="ps-fact"><div class="ps-fact-label">${escapeHTML(label)}</div><div class="ps-fact-value">${escapeHTML(value)}</div></div>`;
+  try{
+    const url=new URL(value,window.location.href);
+    const isGoogleMaps=/google\.[^/]+/i.test(url.hostname) && /\/maps\//i.test(url.pathname);
+    return /^https?:$/.test(url.protocol) && !isGoogleMaps ? url.href : '';
+  }catch(e){ return ''; }
 }
-
-function placeFactsHTML(t,ref,dist){
-  const address=(ref&&ref.adresse)||t.adresse||currentCity.nom;
-  const facts=[
-    placeFact('Style',preferredPlaceType(t,ref)),
-    placeFact('Distance',dist||'Autour de vous'),
-    placeFact('Budget',ref&&ref.priceLevel),
-    placeFact('Adresse',address)
-  ].filter(Boolean).join('');
-  return facts ? `<div class="ps-facts">${facts}</div>` : '';
+function infoRow(icon,label,value,extraClass=''){
+  if(!value) return '';
+  return `<div class="ps-info-row"><div class="ps-row-icon">${icon}</div><div><div class="ps-row-label">${escapeHTML(label)}</div><div class="ps-row-value ${extraClass}">${escapeHTML(value)}</div></div></div>`;
 }
-
-async function showPlaceSheet(t){
-  if(navigator.vibrate) navigator.vibrate(10);
-  activePlaceId=String(t.id);
-  const ref=findReferenced(t);
-  const mapsUrl=(ref&&ref.googleMapsUrl)||googleMapsSearchUrl(t);
-  const directionUrl=googleDirectionsUrl(t);
-  const reviewsUrl=googleReviewsUrl(t);
-  const eventsUrl=googleEventsUrl(t);
-  const reservationUrl=ref&&ref.reservationUrl;
-  const siteUrl=ref&&ref.websiteUrl;
-  const initialTel=ref&&ref.tel;
+function getPlaceProfile(t,ref,details={}){
+  const info={...(ref||{}),...(details||{})};
+  const address=info.address||info.adresse||t.adresse||currentCity.nom;
+  const websiteUrl=info.websiteUrl||'';
+  const bookingUrl=directReservationUrl(info.reservationUrl);
+  const hours=Array.isArray(info.openingHours) ? info.openingHours : [];
+  return {
+    address, websiteUrl, bookingUrl,
+    contactUrl:websiteUrl||info.googleMapsUrl||googleMapsSearchUrl(t),
+    menuUrl:info.menuUrl||'', instagramUrl:info.instagramUrl||'', email:info.email||'',
+    tel:info.tel||'', hours, tags:Array.isArray(info.tags)?info.tags:[],
+    type:info.type||preferredPlaceType(t,ref), cuisine:info.cuisine||'',
+    description:info.description||info.editorialSummary||'',
+    price:info.priceDetail||info.priceLevel||'', priceLevel:info.priceLevel||'',
+    rating:info.rating||'', ratingCount:info.userRatingCount||'',
+    bookingNote:info.bookingNote||'', openNow:info.openNow,
+    photo:placePhotoUrl(t,ref,details),
+    mapsUrl:info.googleMapsUrl||googleMapsSearchUrl(t),
+    directionsUrl:googleDirectionsUrl(t,info),
+    reviewsUrl:googleReviewsUrl(t,info), eventsUrl:googleEventsUrl(t)
+  };
+}
+function renderPlaceSheetContent(t,ref,details={}){
+  const p=getPlaceProfile(t,ref,details);
   const content=document.getElementById('psContent');
   const dist=distKm(t.lat,t.lng);
-  const initialPhoto=placePhotoUrl(t,ref,null);
-
-  const badge = ref ? `<div class="ps-badge">⭐ Sélection Soleilenterrasse</div>` : '';
-  const typeLine = preferredPlaceType(t,ref);
-  const priceLine = ref&&ref.priceLevel ? ' · '+ref.priceLevel : '';
-  const desc = ref&&ref.description ? `<div class="ps-desc">${escapeHTML(ref.description)}</div>` : '';
-  const happy = ref&&ref.happyHours ? `<span class="ps-happy">🍹 Happy hour ${escapeHTML(ref.happyHours)}</span>` : '';
-  const facts = placeFactsHTML(t,ref,dist);
-  const favActive=isFavorite(t);
-
+  const featured=!!ref;
+  const bookingAction=p.bookingUrl
+    ? `<a class="ps-btn reserve" href="${escapeAttr(p.bookingUrl)}" target="_blank" rel="noopener noreferrer">Réserver</a>`
+    : `<a class="ps-btn contact" href="${escapeAttr(p.contactUrl)}" target="_blank" rel="noopener noreferrer">Voir le restaurant</a>`;
+  const phoneAction=p.tel
+    ? `<a class="ps-btn icon-action" href="tel:${escapeAttr(p.tel)}" aria-label="Appeler">Appeler</a>`
+    : `<a class="ps-btn icon-action" href="${escapeAttr(p.mapsUrl)}" target="_blank" rel="noopener noreferrer">Infos</a>`;
+  const practical=[
+    infoRow('€','Budget',p.price),
+    infoRow('◷','Horaires',p.hours.join('\n'),'multiline'),
+    infoRow('⌖','Adresse',p.address),
+    infoRow('⌁','Cuisine',p.cuisine||p.type)
+  ].filter(Boolean).join('');
+  const tags=p.tags.length ? `<div class="ps-tags">${p.tags.map(tag=>`<span class="ps-tag">${escapeHTML(tag)}</span>`).join('')}</div>` : '';
+  const meta=[
+    p.rating ? `<span class="ps-rating">★ ${escapeHTML(p.rating)}${p.ratingCount?` · ${escapeHTML(p.ratingCount)} avis`:''}</span>` : '',
+    p.openNow===true ? `<span class="ps-happy">Ouvert maintenant</span>` : '',
+    p.openNow===false ? `<span class="ps-happy">Fermé actuellement</span>` : '',
+    ref?.happyHours ? `<span class="ps-happy">Happy hour ${escapeHTML(ref.happyHours)}</span>` : ''
+  ].filter(Boolean).join('');
+  const secondary=[
+    `<button class="ps-btn fav ${isFavorite(t)?'active':''}" id="psFavBtn">${isFavorite(t)?'Favori enregistré':'Ajouter aux favoris'}</button>`,
+    `<a class="ps-btn maps" href="${escapeAttr(p.mapsUrl)}" target="_blank" rel="noopener noreferrer">Fiche Google</a>`,
+    `<a class="ps-btn maps" href="${escapeAttr(p.reviewsUrl)}" target="_blank" rel="noopener noreferrer">Avis</a>`,
+    `<a class="ps-btn maps" href="${escapeAttr(p.eventsUrl)}" target="_blank" rel="noopener noreferrer">Événements</a>`,
+    p.websiteUrl ? `<a class="ps-btn site" href="${escapeAttr(p.websiteUrl)}" target="_blank" rel="noopener noreferrer">Site</a>` : '',
+    p.menuUrl ? `<a class="ps-btn site" href="${escapeAttr(p.menuUrl)}" target="_blank" rel="noopener noreferrer">Carte</a>` : '',
+    p.instagramUrl ? `<a class="ps-btn site" href="${escapeAttr(p.instagramUrl)}" target="_blank" rel="noopener noreferrer">Instagram</a>` : '',
+    p.email ? `<a class="ps-btn site" href="mailto:${escapeAttr(p.email)}">E-mail</a>` : ''
+  ].filter(Boolean).join('');
   content.innerHTML=`
-    <div class="ps-hero" id="psHero">
-      <img class="ps-photo" id="psHeroPhoto" data-place-id="${escapeAttr(t.id)}" src="${escapeAttr(initialPhoto)}" alt="${escapeAttr(t.nom)}" decoding="async" onerror="markPhotoError(this)">
-    </div>
+    <div class="ps-hero" id="psHero"><img class="ps-photo" id="psHeroPhoto" data-place-id="${escapeAttr(t.id)}" src="${escapeAttr(p.photo)}" alt="${escapeAttr(t.nom)}" decoding="async" onerror="markPhotoError(this)"></div>
     <div class="ps-body">
-      ${badge}
+      ${featured?`<div class="ps-badge">Sélection Soleilenterrasse</div>`:''}
       <div class="ps-name">${escapeHTML(t.nom)}</div>
-      <div class="ps-sub">${escapeHTML(typeLine)}${priceLine}${dist?' · '+escapeHTML(dist):''}${t.adresse?' · '+escapeHTML(t.adresse):''}</div>
-      ${desc}
-      ${facts}
-      <div class="ps-meta" id="psMeta">${happy}</div>
-      <div class="ps-btns" id="psBtns">
-        <button class="ps-btn fav ${favActive?'active':''}" id="psFavBtn">${favActive?'Favori enregistré':'Ajouter aux favoris'}</button>
-        ${reservationUrl ? `<a class="ps-btn reserve" id="psReserveBtn" href="${escapeAttr(reservationUrl)}" target="_blank" rel="noopener noreferrer">Réserver</a>` : ''}
-        <a class="ps-btn maps" id="psDirectionsBtn" href="${escapeAttr(directionUrl)}" target="_blank" rel="noopener noreferrer">Itinéraire</a>
-        <a class="ps-btn maps" id="psGoogleBtn" href="${escapeAttr(mapsUrl)}" target="_blank" rel="noopener noreferrer">Fiche Google</a>
-        <a class="ps-btn reviews" id="psReviewsBtn" href="${escapeAttr(reviewsUrl)}" target="_blank" rel="noopener noreferrer">Avis Google</a>
-        <a class="ps-btn events" id="psEventsBtn" href="${escapeAttr(eventsUrl)}" target="_blank" rel="noopener noreferrer">Événements</a>
-        <a class="ps-btn site" id="psSiteBtn" href="${escapeAttr(siteUrl||'#')}" target="_blank" rel="noopener noreferrer" style="${siteUrl?'display:block':'display:none'}">Site</a>
-        <a class="ps-btn tel" id="psTelBtn" href="${initialTel?`tel:${escapeAttr(initialTel)}`:'#'}" style="${initialTel?'display:block':'display:none'}">Appeler</a>
-      </div>
+      <div class="ps-sub">${escapeHTML(p.type)}${p.priceLevel?` · ${escapeHTML(p.priceLevel)}`:''}${dist?` · ${escapeHTML(dist)}`:''}</div>
+      <div class="ps-primary-actions">${bookingAction}${phoneAction}<a class="ps-btn icon-action" href="${escapeAttr(p.directionsUrl)}" target="_blank" rel="noopener noreferrer">Y aller</a></div>
+      ${p.bookingNote?`<div class="ps-inline-note">${escapeHTML(p.bookingNote)}</div>`:''}
+      ${p.description?`<div class="ps-desc">${escapeHTML(p.description)}</div>`:''}
+      ${tags}
+      <section class="ps-detail-section"><div class="ps-section-title">Infos pratiques</div><div class="ps-info-rows">${practical||infoRow('i','Informations','Les informations détaillées arrivent bientôt.')}</div></section>
+      <section class="ps-detail-section"><div class="ps-section-title">Terrasse aujourd’hui</div><div class="ps-insight"><div class="ps-insight-title">Ensoleillement estimé</div>${buildSunTimeline(t)}</div><div class="ps-insight" id="psWeatherBox"><div class="weather-line"><span>Météo…</span></div></div></section>
+      <div class="ps-meta" id="psMeta">${meta}</div>
+      <div class="ps-secondary-actions">${secondary}</div>
     </div>`;
-  document.getElementById('placeSheet').classList.add('open');
-  document.getElementById('psOverlay').classList.add('open');
-
   const favBtn=document.getElementById('psFavBtn');
   if(favBtn) favBtn.onclick=()=>{
     const active=toggleFavorite(t);
@@ -2082,21 +2112,18 @@ async function showPlaceSheet(t){
     favBtn.textContent=active?'Favori enregistré':'Ajouter aux favoris';
     renderList(currentHeure,searchQuery);
   };
-  const reserveBtn=document.getElementById('psReserveBtn');
-  const googleBtn=document.getElementById('psGoogleBtn');
-
+  hydrateWeatherForPlace(t);
+}
+async function showPlaceSheet(t){
+  if(navigator.vibrate) navigator.vibrate(10);
+  activePlaceId=String(t.id);
+  const ref=findReferenced(t);
+  renderPlaceSheetContent(t,ref,ref||{});
+  document.getElementById('placeSheet').classList.add('open');
+  document.getElementById('psOverlay').classList.add('open');
   const details=await fetchPlaceDetails(t);
-  applyGooglePhoto(t,details);
   if(activePlaceId!==String(t.id)) return;
-  if(details.rating){ const meta=document.getElementById('psMeta'); if(meta) meta.insertAdjacentHTML('afterbegin', `<span class="ps-rating">⭐ ${details.rating} / 5</span>`); }
-  if(details.googleMapsUrl && googleBtn) googleBtn.href=details.googleMapsUrl;
-  if(details.googleMapsUrl && reserveBtn) reserveBtn.href=details.reservationUrl||reservationUrl||details.googleMapsUrl;
-  const detailsDirections=googleDirectionsUrl(t,details);
-  const directionsBtn=document.getElementById('psDirectionsBtn'); if(directionsBtn) directionsBtn.href=detailsDirections;
-  const reviewsBtn=document.getElementById('psReviewsBtn'); if(reviewsBtn) reviewsBtn.href=googleReviewsUrl(t,details);
-  if(details.websiteUrl){ const b=document.getElementById('psSiteBtn'); if(b){ b.style.display='block'; b.href=details.websiteUrl; } }
-  const tel=details.tel||initialTel;
-  if(tel){ const b=document.getElementById('psTelBtn'); if(b){ b.style.display='block'; b.href='tel:'+tel; } }
+  renderPlaceSheetContent(t,ref,details);
 }
 
 function normalize(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
@@ -2254,68 +2281,8 @@ function renderList(h,query){
 }
 
 const searchInput=document.getElementById('searchInput'),searchClear=document.getElementById('searchClear');
-const searchSuggestions=document.getElementById('searchSuggestions');
-let citySearchTimer=null, citySearchVersion=0, citySuggestions=[];
-
-function hideCitySuggestions(){
-  citySuggestions=[];
-  searchSuggestions.innerHTML='';
-  searchSuggestions.classList.remove('visible');
-}
-function renderCitySuggestions(cities){
-  citySuggestions=cities;
-  if(!cities.length){ hideCitySuggestions(); return; }
-  searchSuggestions.innerHTML='';
-  cities.slice(0,6).forEach(city=>{
-    const button=document.createElement('button');
-    button.type='button'; button.className='city-suggestion'; button.setAttribute('role','option');
-    button.innerHTML=`<span class="city-suggestion-icon">⌖</span><span><span class="city-suggestion-name">${escapeHTML(city.nom)}</span><span class="city-suggestion-sub">${escapeHTML(city.sousTitre||'France')}</span></span>`;
-    button.addEventListener('click',()=>switchToSearchedCity(city));
-    searchSuggestions.appendChild(button);
-  });
-  searchSuggestions.classList.add('visible');
-}
-async function searchFrenchCities(value){
-  const q=String(value||'').trim();
-  const token=++citySearchVersion;
-  if(q.length<2){ hideCitySuggestions(); return; }
-  const normalized=normalize(q);
-  const known=CITIES.filter(city=>normalize(city.nom).includes(normalized)).map(city=>({nom:city.nom,sousTitre:'Ville proposée',lat:city.lat,lng:city.lng}));
-  renderCitySuggestions(known);
-  if(q.length<3) return;
-  try{
-    const url=`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=fr&featuretype=city&q=${encodeURIComponent(q)}`;
-    const response=await fetchWithTimeout(url,{headers:{Accept:'application/json','Accept-Language':'fr'}},5000);
-    if(!response.ok || token!==citySearchVersion) return;
-    const data=await response.json();
-    const remote=(data||[]).map(item=>{
-      const a=item.address||{};
-      const nom=a.city||a.town||a.village||a.municipality||item.display_name.split(',')[0];
-      const sousTitre=[a.county||a.state,'France'].filter(Boolean).join(' · ');
-      return {nom,sousTitre,lat:parseFloat(item.lat),lng:parseFloat(item.lon)};
-    }).filter(city=>city.nom&&Number.isFinite(city.lat)&&Number.isFinite(city.lng));
-    const merged=[];
-    [...known,...remote].forEach(city=>{
-      const key=`${normalize(city.nom)}-${city.lat.toFixed(2)}-${city.lng.toFixed(2)}`;
-      if(!merged.some(other=>`${normalize(other.nom)}-${other.lat.toFixed(2)}-${other.lng.toFixed(2)}`===key)) merged.push(city);
-    });
-    if(token===citySearchVersion) renderCitySuggestions(merged);
-  }catch(e){}
-}
-function handleMainSearch(value){
-  searchQuery=value;
-  document.getElementById('drawerSearch').value=value;
-  searchClear.classList.toggle('visible',value.length>0);
-  renderList(currentHeure,value);
-  if(value.length>0){ openDrawer(); clearTimeout(citySearchTimer); citySearchTimer=setTimeout(()=>searchFrenchCities(value),300); }
-  else { clearTimeout(citySearchTimer); hideCitySuggestions(); }
-}
-searchInput.addEventListener('input',e=>handleMainSearch(e.target.value));
-searchInput.addEventListener('keydown',e=>{
-  if(e.key==='Enter' && citySuggestions[0]){ e.preventDefault(); switchToSearchedCity(citySuggestions[0]); }
-  if(e.key==='Escape') hideCitySuggestions();
-});
-searchClear.addEventListener('click',()=>{searchInput.value='';searchQuery='';document.getElementById('drawerSearch').value='';searchClear.classList.remove('visible');hideCitySuggestions();renderList(currentHeure,'');});
+searchInput.addEventListener('input',e=>{searchQuery=e.target.value;document.getElementById('drawerSearch').value=searchQuery;searchClear.classList.toggle('visible',searchQuery.length>0);renderList(currentHeure,searchQuery);if(searchQuery.length>0)openDrawer();});
+searchClear.addEventListener('click',()=>{searchInput.value='';searchQuery='';document.getElementById('drawerSearch').value='';searchClear.classList.remove('visible');renderList(currentHeure,'');});
 document.getElementById('drawerSearch').addEventListener('input',e=>{searchQuery=e.target.value;searchInput.value=searchQuery;searchClear.classList.toggle('visible',searchQuery.length>0);renderList(currentHeure,searchQuery);});
 document.getElementById('filterChips').addEventListener('click',e=>{
   const chip=e.target.closest('.filter-chip');
@@ -2507,16 +2474,11 @@ async function loadTerrasses(){
     if(version===terraceLoadVersion && signature===areaSignature()) renderList(currentHeure,searchQuery);
   }).catch(()=>{});
 
-  // Les données OSM arrivent en priorité. Google, si activé plus tard, complète
-  // la zone sans bloquer ni vider les résultats déjà visibles.
-  setTimeout(()=>hydrateNearbyInBackground(signature), 900);
   fetchTerrasses().then(data=>{
     if(version!==terraceLoadVersion || signature!==areaSignature()) return;
-    if(data.length){
-      const merged=mergeFeaturedPlaces(mergePlacesByIdentity([...terrasses,...data])).slice(0,MAX_TERRASSES);
-      paintTerrasses(merged);
-    }
+    paintTerrasses(data);
     setTimeout(()=>hydrateUtilitiesInBackground(signature), 700);
+    setTimeout(()=>hydrateNearbyInBackground(signature), 3500);
   }).catch(()=>{
     if(version!==terraceLoadVersion || terrasses.length) return;
     document.getElementById('loadingState').style.display='none';
