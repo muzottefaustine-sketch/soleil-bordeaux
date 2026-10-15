@@ -215,7 +215,7 @@
     .ps-photo { width: 100%; height: 230px; object-fit: cover; display: block; background: var(--bg); }
     .ps-hero::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(5,10,18,0.02) 18%,rgba(5,10,18,0.5) 100%); pointer-events:none; }
     .ps-photo-placeholder { width: 100%; height: 210px; background: linear-gradient(135deg,#FFF7D6,#DCEBFA); display: flex; align-items: center; justify-content: center; font-size: 48px; }
-    .photo-credit { display:none !important; }
+    .photo-credit { position:absolute; z-index:2; right:8px; bottom:8px; max-width:72%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:4px 7px; border-radius:8px; background:rgba(0,0,0,.56); color:#fff; font-size:9px; line-height:1.2; pointer-events:none; }
     .ps-body { padding: 16px 20px 20px; }
     .ps-badge { display:inline-flex; align-items:center; gap:5px; background:linear-gradient(135deg,var(--yellow),var(--yellow-2)); color:#775400; font-size:11px; font-weight:800; padding:5px 10px; border-radius:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px; }
     .ps-sun { font-size: 13px; padding:7px 11px; margin-bottom: 10px; font-family: inherit; }
@@ -406,7 +406,7 @@
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
   <div class="tt-sun" id="ttSun"></div>
-  <a id="ttMaps" href="#" target="_blank" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;">Ouvrir dans Maps</a>
+  <a id="ttMaps" href="#" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;">Ouvrir dans Maps</a>
 </div>
 
 <!-- Fiche lieu (Foursquare + partenaires) -->
@@ -1593,12 +1593,22 @@ function fallbackPhotoForPlace(t){
   const pool=PHOTO_FALLBACKS[kind]||PHOTO_FALLBACKS.restaurant;
   return pool[hashString(`${currentCity.id}-${t.nom}-${t.type}`)%pool.length];
 }
+function neutralPhotoForPlace(t){
+  // Une image illustrative peut faire croire qu'il s'agit de la vraie terrasse.
+  // On préfère un fond neutre pendant que Places récupère la photo du lieu.
+  const label=String(t.nom||'Restaurant').slice(0,32).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="760" viewBox="0 0 1100 760"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F8F4E9"/><stop offset="1" stop-color="#E6EEF7"/></linearGradient></defs><rect width="1100" height="760" fill="url(#g)"/><circle cx="550" cy="312" r="74" fill="#FFFFFF" fill-opacity=".72"/><path d="M510 334h80v18h-80zM525 286h50l-7 39h-36z" fill="#C38C25"/><text x="550" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#4A4A4A">${label}</text><text x="550" y="491" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#777">Photo du lieu en chargement</text></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
 function cachedDetailsForPlace(t){
   return t?.googleDetails || googlePlaceCache[t?.id] || googlePlaceCache[placeKey(t)] || {};
 }
 function placePhotoUrl(t, ref, details){
   const cached=cachedDetailsForPlace(t);
-  return (details&&details.photo) || (cached&&cached.photo) || (ref&&ref.photo) || fallbackPhotoForPlace(t);
+  // Les anciennes photos Unsplash des partenaires étaient seulement illustratives
+  // et pouvaient montrer un autre restaurant. Elles ne sont jamais affichées
+  // à la place d'une photo Google Places.
+  return (details&&details.photo) || (cached&&cached.photo) || neutralPhotoForPlace(t);
 }
 function escapeHTML(value){
   return String(value||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1625,6 +1635,9 @@ function loadGooglePlacesLibrary(){
       if(done) return;
       done=true;
       delete window[callbackName];
+      // Un chargement lent ou un réseau temporairement indisponible ne doit pas
+      // désactiver Places pour toute la session : le prochain affichage réessaie.
+      if(!value) googlePlacesLoaderPromise=null;
       resolve(value);
     };
     window[callbackName] = () => {
@@ -1638,7 +1651,7 @@ function loadGooglePlacesLibrary(){
       finish(false);
     };
     document.head.appendChild(script);
-    setTimeout(()=>finish(!!window.google?.maps?.places), 4500);
+    setTimeout(()=>finish(!!window.google?.maps?.places), 12000);
   });
   return googlePlacesLoaderPromise;
 }
@@ -1715,9 +1728,13 @@ async function findGooglePlaceInBrowser(t){
       }, (place, detailsStatus) => {
         if(!googleStatusOk(detailsStatus)) { resolve({}); return; }
         const coords = latLngFromGoogle(place);
-        const closeEnough = coords ? metersBetween(t.lat,t.lng,coords.lat,coords.lng) < 1500 : true;
-        const similarName = normalize(place?.name || '').includes(normalize(t.nom).slice(0, 8)) || normalize(t.nom).includes(normalize(place?.name || '').slice(0, 8));
-        resolve(closeEnough || similarName ? normalizeGoogleJsPlace(place) : {});
+        const expected=normalize(t.nom||'').replace(/[^a-z0-9]/g,'');
+        const received=normalize(place?.name||'').replace(/[^a-z0-9]/g,'');
+        // On demande une photo uniquement au vrai établissement : avant, un lieu
+        // voisin pouvait être accepté simplement parce qu'il était dans un rayon trop large.
+        const similarName=expected===received || (Math.min(expected.length,received.length)>=6 && (expected.includes(received)||received.includes(expected)));
+        const closeEnough=coords ? metersBetween(t.lat,t.lng,coords.lat,coords.lng) < 1000 : true;
+        resolve(similarName && closeEnough ? normalizeGoogleJsPlace(place) : {});
       });
     });
   });
@@ -1895,7 +1912,15 @@ function applyGooglePhoto(t,details){
   document.querySelectorAll(selector).forEach(img=>{
     img.src=details.photo;
     img.closest('.photo-error')?.classList.remove('photo-error');
-    img.parentElement?.querySelector('.photo-credit')?.remove();
+    const holder=img.parentElement;
+    if(!holder) return;
+    let credit=holder.querySelector('.photo-credit');
+    if(!credit){
+      credit=document.createElement('span');
+      credit.className='photo-credit';
+      holder.appendChild(credit);
+    }
+    credit.textContent=details.photoAttribution ? `Photo : ${details.photoAttribution}` : 'Photo : Google';
   });
 }
 
@@ -2002,6 +2027,7 @@ function hidePlaceSheet(){
 (()=>{
   const handle=document.getElementById('psHandle');
   const close=document.getElementById('psClose');
+  const sheet=document.getElementById('placeSheet');
   let dragStartY=null;
   close.addEventListener('click',hidePlaceSheet);
   handle.addEventListener('click',hidePlaceSheet);
@@ -2015,6 +2041,15 @@ function hidePlaceSheet(){
   },{passive:true});
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape') hidePlaceSheet();
+  });
+  sheet.addEventListener('click',e=>{
+    const link=e.target.closest('a[data-sheet-link]');
+    if(!link) return;
+    const href=link.getAttribute('href');
+    if(!href) return;
+    // Même onglet = navigation visible dans l'aperçu local comme sur mobile.
+    e.preventDefault();
+    window.location.assign(href);
   });
 })();
 
@@ -2030,12 +2065,22 @@ function directReservationUrl(value){
     return /^https?:$/.test(url.protocol) && !isGoogleMaps ? url.href : '';
   }catch(e){ return ''; }
 }
+function sheetLink(className, href, label, ariaLabel=''){
+  const safeHref=String(href||'').trim();
+  if(!safeHref) return '';
+  const labelAttr=ariaLabel ? ` aria-label="${escapeAttr(ariaLabel)}"` : '';
+  // Les liens s'ouvrent dans l'onglet courant. Dans l'aperçu de l'app,
+  // target=_blank créait parfois un onglet invisible et donnait l'impression
+  // que le bouton ne faisait rien.
+  return `<a class="${className}" href="${escapeAttr(safeHref)}" data-sheet-link="true"${labelAttr}>${escapeHTML(label)}</a>`;
+}
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
   return `<div class="ps-info-row"><div class="ps-row-icon">${icon}</div><div><div class="ps-row-label">${escapeHTML(label)}</div><div class="ps-row-value ${extraClass}">${escapeHTML(value)}</div></div></div>`;
 }
 function getPlaceProfile(t,ref,details={}){
   const info={...(ref||{}),...(details||{})};
+  const cached=cachedDetailsForPlace(t);
   const address=info.address||info.adresse||t.adresse||currentCity.nom;
   const websiteUrl=info.websiteUrl||'';
   const bookingUrl=directReservationUrl(info.reservationUrl);
@@ -2051,6 +2096,7 @@ function getPlaceProfile(t,ref,details={}){
     rating:info.rating||'', ratingCount:info.userRatingCount||'',
     bookingNote:info.bookingNote||'', openNow:info.openNow,
     photo:placePhotoUrl(t,ref,details),
+    photoCredit:(details?.photo || cached?.photo) ? (info.photoAttribution ? `Photo : ${info.photoAttribution}` : 'Photo : Google') : '',
     mapsUrl:info.googleMapsUrl||googleMapsSearchUrl(t),
     directionsUrl:googleDirectionsUrl(t,info),
     reviewsUrl:googleReviewsUrl(t,info), eventsUrl:googleEventsUrl(t)
@@ -2062,11 +2108,14 @@ function renderPlaceSheetContent(t,ref,details={}){
   const dist=distKm(t.lat,t.lng);
   const featured=!!ref;
   const bookingAction=p.bookingUrl
-    ? `<a class="ps-btn reserve" href="${escapeAttr(p.bookingUrl)}" target="_blank" rel="noopener noreferrer">Réserver</a>`
-    : `<a class="ps-btn contact" href="${escapeAttr(p.contactUrl)}" target="_blank" rel="noopener noreferrer">Voir le restaurant</a>`;
+    ? sheetLink('ps-btn reserve',p.bookingUrl,'Réserver')
+    // Tous les bars de la sélection ont le même bouton Réserver. Quand le
+    // restaurant ne donne pas encore son propre lien, on ouvre sa fiche Google
+    // plutôt que de faire croire qu'une table a déjà été réservée.
+    : sheetLink('ps-btn reserve',p.mapsUrl,'Réserver');
   const phoneAction=p.tel
-    ? `<a class="ps-btn icon-action" href="tel:${escapeAttr(p.tel)}" aria-label="Appeler">Appeler</a>`
-    : `<a class="ps-btn icon-action" href="${escapeAttr(p.mapsUrl)}" target="_blank" rel="noopener noreferrer">Infos</a>`;
+    ? sheetLink('ps-btn icon-action',`tel:${p.tel}`,'Appeler','Appeler le restaurant')
+    : sheetLink('ps-btn icon-action',p.mapsUrl,'Infos','Voir les informations du lieu');
   const practical=[
     infoRow('€','Budget',p.price),
     infoRow('◷','Horaires',p.hours.join('\n'),'multiline'),
@@ -2082,22 +2131,22 @@ function renderPlaceSheetContent(t,ref,details={}){
   ].filter(Boolean).join('');
   const secondary=[
     `<button class="ps-btn fav ${isFavorite(t)?'active':''}" id="psFavBtn">${isFavorite(t)?'Favori enregistré':'Ajouter aux favoris'}</button>`,
-    `<a class="ps-btn maps" href="${escapeAttr(p.mapsUrl)}" target="_blank" rel="noopener noreferrer">Fiche Google</a>`,
-    `<a class="ps-btn maps" href="${escapeAttr(p.reviewsUrl)}" target="_blank" rel="noopener noreferrer">Avis</a>`,
-    `<a class="ps-btn maps" href="${escapeAttr(p.eventsUrl)}" target="_blank" rel="noopener noreferrer">Événements</a>`,
-    p.websiteUrl ? `<a class="ps-btn site" href="${escapeAttr(p.websiteUrl)}" target="_blank" rel="noopener noreferrer">Site</a>` : '',
-    p.menuUrl ? `<a class="ps-btn site" href="${escapeAttr(p.menuUrl)}" target="_blank" rel="noopener noreferrer">Carte</a>` : '',
-    p.instagramUrl ? `<a class="ps-btn site" href="${escapeAttr(p.instagramUrl)}" target="_blank" rel="noopener noreferrer">Instagram</a>` : '',
-    p.email ? `<a class="ps-btn site" href="mailto:${escapeAttr(p.email)}">E-mail</a>` : ''
+    sheetLink('ps-btn maps',p.mapsUrl,'Fiche Google'),
+    sheetLink('ps-btn maps',p.reviewsUrl,'Avis'),
+    sheetLink('ps-btn maps',p.eventsUrl,'Événements'),
+    p.websiteUrl ? sheetLink('ps-btn site',p.websiteUrl,'Site') : '',
+    p.menuUrl ? sheetLink('ps-btn site',p.menuUrl,'Carte') : '',
+    p.instagramUrl ? sheetLink('ps-btn site',p.instagramUrl,'Instagram') : '',
+    p.email ? sheetLink('ps-btn site',`mailto:${p.email}`,'E-mail',`Envoyer un e-mail à ${t.nom}`) : ''
   ].filter(Boolean).join('');
   content.innerHTML=`
-    <div class="ps-hero" id="psHero"><img class="ps-photo" id="psHeroPhoto" data-place-id="${escapeAttr(t.id)}" src="${escapeAttr(p.photo)}" alt="${escapeAttr(t.nom)}" decoding="async" onerror="markPhotoError(this)"></div>
+    <div class="ps-hero" id="psHero"><img class="ps-photo" id="psHeroPhoto" data-place-id="${escapeAttr(t.id)}" src="${escapeAttr(p.photo)}" alt="${escapeAttr(t.nom)}" decoding="async" onerror="markPhotoError(this)">${p.photoCredit?`<span class="photo-credit">${escapeHTML(p.photoCredit)}</span>`:''}</div>
     <div class="ps-body">
       ${featured?`<div class="ps-badge">Sélection Soleilenterrasse</div>`:''}
       <div class="ps-name">${escapeHTML(t.nom)}</div>
       <div class="ps-sub">${escapeHTML(p.type)}${p.priceLevel?` · ${escapeHTML(p.priceLevel)}`:''}${dist?` · ${escapeHTML(dist)}`:''}</div>
-      <div class="ps-primary-actions">${bookingAction}${phoneAction}<a class="ps-btn icon-action" href="${escapeAttr(p.directionsUrl)}" target="_blank" rel="noopener noreferrer">Y aller</a></div>
-      ${p.bookingNote?`<div class="ps-inline-note">${escapeHTML(p.bookingNote)}</div>`:''}
+      <div class="ps-primary-actions">${bookingAction}${phoneAction}${sheetLink('ps-btn icon-action',p.directionsUrl,'Y aller','Ouvrir l’itinéraire')}</div>
+      ${(p.bookingNote||featured)?`<div class="ps-inline-note">${escapeHTML(p.bookingNote||'Réservation et coordonnées disponibles sur la fiche Google du lieu.')}</div>`:''}
       ${p.description?`<div class="ps-desc">${escapeHTML(p.description)}</div>`:''}
       ${tags}
       <section class="ps-detail-section"><div class="ps-section-title">Infos pratiques</div><div class="ps-info-rows">${practical||infoRow('i','Informations','Les informations détaillées arrivent bientôt.')}</div></section>
