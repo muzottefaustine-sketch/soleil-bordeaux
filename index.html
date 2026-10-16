@@ -345,6 +345,19 @@
     .ps-secondary-actions .ps-btn { display:grid; place-items:center; min-height:44px; padding:8px; text-decoration:none; }
     .ps-btn { position:relative; z-index:2; touch-action:manipulation; }
     @media (max-width:699px) { #placeSheet { max-height:72dvh; } }
+
+    /* Navigateur intégré : le lien se charge sans faire quitter la carte. */
+    #siteViewer { position:fixed; inset:0; z-index:90; display:flex; flex-direction:column; background:#F2F2F7; opacity:0; pointer-events:none; transform:translateY(12px); transition:opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
+    #siteViewer.open { opacity:1; pointer-events:auto; transform:translateY(0); }
+    .site-viewer-bar { min-height:calc(56px + env(safe-area-inset-top, 0px)); padding:env(safe-area-inset-top, 0px) 14px 0; display:grid; grid-template-columns:44px minmax(0,1fr) 44px; align-items:center; gap:6px; background:rgba(255,255,255,.94); border-bottom:1px solid rgba(60,60,67,.14); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); }
+    .site-viewer-close, .site-viewer-external { width:38px; height:38px; border:0; border-radius:50%; display:grid; place-items:center; text-decoration:none; background:#E9E9ED; color:#1D1D1F; font:700 20px/1 -apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; cursor:pointer; }
+    .site-viewer-external { font-size:17px; }
+    .site-viewer-title { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; color:#1D1D1F; font:750 14px/1.2 -apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; }
+    .site-viewer-body { position:relative; flex:1; min-height:0; background:#fff; }
+    #siteViewerFrame { position:absolute; inset:0; width:100%; height:100%; border:0; background:#fff; }
+    .site-viewer-loading { position:absolute; inset:0; z-index:1; display:grid; place-content:center; gap:10px; justify-items:center; color:#6E6E73; font:600 13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif; background:#fff; }
+    .site-viewer-loading::before { content:''; width:22px; height:22px; border:3px solid #E5E5EA; border-top-color:#1D1D1F; border-radius:50%; animation:spin .75s linear infinite; }
+    #siteViewer.loaded .site-viewer-loading { opacity:0; visibility:hidden; transition:opacity .18s ease, visibility .18s step-end; }
   </style>
 </head>
 <body>
@@ -416,6 +429,18 @@
   <button class="ps-close" id="psClose" type="button" aria-label="Fermer la fiche" title="Fermer la fiche">×</button>
   <div id="psContent"></div>
 </div>
+
+<section id="siteViewer" role="dialog" aria-modal="true" aria-label="Site du lieu" aria-hidden="true">
+  <div class="site-viewer-bar">
+    <button class="site-viewer-close" id="siteViewerClose" type="button" aria-label="Retour à l’application" title="Retour à l’application">×</button>
+    <div class="site-viewer-title" id="siteViewerTitle">Site du lieu</div>
+    <a class="site-viewer-external" id="siteViewerExternal" href="#" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir dans le navigateur" title="Ouvrir dans le navigateur">↗</a>
+  </div>
+  <div class="site-viewer-body">
+    <div class="site-viewer-loading">Ouverture du site…</div>
+    <iframe id="siteViewerFrame" title="Site du lieu" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  </div>
+</section>
 
 <div id="drawer">
   <div class="drawer-handle" id="drawerHandle"><div class="drawer-bar"></div></div>
@@ -2040,7 +2065,38 @@ function hidePlaceSheet(){
     dragStartY=null;
   },{passive:true});
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape') hidePlaceSheet();
+    if(e.key==='Escape'){
+      if(document.getElementById('siteViewer').classList.contains('open')) hideExternalSite();
+      else hidePlaceSheet();
+    }
+  });
+  const viewer=document.getElementById('siteViewer');
+  const viewerFrame=document.getElementById('siteViewerFrame');
+  const viewerTitle=document.getElementById('siteViewerTitle');
+  const viewerExternal=document.getElementById('siteViewerExternal');
+  function hideExternalSite(){
+    viewer.classList.remove('open','loaded');
+    viewer.setAttribute('aria-hidden','true');
+    window.setTimeout(()=>{ if(!viewer.classList.contains('open')) viewerFrame.removeAttribute('src'); },220);
+  }
+  function showExternalSite(href,label){
+    viewerTitle.textContent=label||'Site du lieu';
+    viewerExternal.href=href;
+    viewer.classList.remove('loaded');
+    viewer.setAttribute('aria-hidden','false');
+    viewer.classList.add('open');
+    viewerFrame.src=href;
+  }
+  window.hideExternalSite=hideExternalSite;
+  document.getElementById('siteViewerClose').addEventListener('click',hideExternalSite);
+  viewerFrame.addEventListener('load',()=>viewer.classList.add('loaded'));
+  sheet.addEventListener('click',e=>{
+    const link=e.target.closest('a[data-sheet-link]');
+    if(!link) return;
+    const href=link.getAttribute('href');
+    if(!href) return;
+    e.preventDefault();
+    showExternalSite(href,link.textContent.trim());
   });
 })();
 
@@ -2060,9 +2116,10 @@ function sheetLink(className, href, label, ariaLabel=''){
   const safeHref=String(href||'').trim();
   if(!safeHref) return '';
   const labelAttr=ariaLabel ? ` aria-label="${escapeAttr(ariaLabel)}"` : '';
-  // Chaque lien s'ouvre immédiatement dans un nouvel onglet : la carte reste
-  // ouverte, au même endroit, et l'on revient à l'app en fermant cet onglet.
-  return `<a class="${className}" href="${escapeAttr(safeHref)}" target="_blank" rel="noopener noreferrer"${labelAttr}>${escapeHTML(label)}</a>`;
+  const webLink=/^https?:\/\//i.test(safeHref);
+  // Les sites s’affichent dans un navigateur intégré, avec un retour immédiat
+  // vers la carte. Téléphone et e-mail conservent le comportement natif.
+  return `<a class="${className}" href="${escapeAttr(safeHref)}"${webLink?' data-sheet-link="true"':''}${labelAttr}>${escapeHTML(label)}</a>`;
 }
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
