@@ -2042,15 +2042,6 @@ function hidePlaceSheet(){
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape') hidePlaceSheet();
   });
-  sheet.addEventListener('click',e=>{
-    const link=e.target.closest('a[data-sheet-link]');
-    if(!link) return;
-    const href=link.getAttribute('href');
-    if(!href) return;
-    // Même onglet = navigation visible dans l'aperçu local comme sur mobile.
-    e.preventDefault();
-    window.location.assign(href);
-  });
 })();
 
 function isFeaturedOrFavorite(t){
@@ -2069,10 +2060,9 @@ function sheetLink(className, href, label, ariaLabel=''){
   const safeHref=String(href||'').trim();
   if(!safeHref) return '';
   const labelAttr=ariaLabel ? ` aria-label="${escapeAttr(ariaLabel)}"` : '';
-  // Les liens s'ouvrent dans l'onglet courant. Dans l'aperçu de l'app,
-  // target=_blank créait parfois un onglet invisible et donnait l'impression
-  // que le bouton ne faisait rien.
-  return `<a class="${className}" href="${escapeAttr(safeHref)}" data-sheet-link="true"${labelAttr}>${escapeHTML(label)}</a>`;
+  // Chaque lien s'ouvre immédiatement dans un nouvel onglet : la carte reste
+  // ouverte, au même endroit, et l'on revient à l'app en fermant cet onglet.
+  return `<a class="${className}" href="${escapeAttr(safeHref)}" target="_blank" rel="noopener noreferrer"${labelAttr}>${escapeHTML(label)}</a>`;
 }
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
