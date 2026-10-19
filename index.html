@@ -355,6 +355,12 @@
     @media (min-width:700px) { #placeSheet { height:min(76dvh,720px); } }
     @media (max-width:699px) { #placeSheet { height:min(84dvh,760px); } }
 
+    /* Mobile : le contenu, et non le panneau, porte le défilement iOS. */
+    #placeSheet { display:flex !important; flex-direction:column; overflow:hidden !important; overscroll-behavior:contain; }
+    #psContent { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; scroll-behavior:smooth; scrollbar-width:none; }
+    #psContent::-webkit-scrollbar { display:none; }
+    .ps-handle { position:relative !important; flex:0 0 auto; }
+
     /* Navigateur intégré : le lien se charge sans faire quitter la carte. */
     #siteViewer { position:fixed; inset:0; z-index:90; display:flex; flex-direction:column; background:#F2F2F7; opacity:0; pointer-events:none; transform:translateY(12px); transition:opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
     #siteViewer.open { opacity:1; pointer-events:auto; transform:translateY(0); }
@@ -517,7 +523,7 @@ const PERFORMANCE_MODE = false;
 const ENABLE_GOOGLE_3D_TEST = false;
 const ENABLE_SHADOW_RAYCASTS = false;
 const MAX_RENDERED_LIST_ITEMS = 280;
-const MAX_MARKERS_ON_MAP = 950;
+const MAX_MARKERS_ON_MAP = 220;
 const MARKER_RENDER_BATCH = 180;
 const PHOTO_HYDRATE_LIMIT = 6;
 const LOCAL_CITY_RADIUS_METERS = 30000;
@@ -1321,8 +1327,8 @@ function markerImageForPlace(t){
   return s===true?DOT_SUN:s===false?DOT_SHADE:DOT_UNKNOWN;
 }
 function markerSizeForPlace(t){
-  if(findReferenced(t)) return 34;
-  return isFoodPlace(t) ? 18 : 26;
+  const base=findReferenced(t) ? 34 : (isFoodPlace(t) ? 18 : 26);
+  return String(t.id)===String(activePlaceId) ? base+8 : base;
 }
 
 let markerRenderToken=0;
@@ -2053,9 +2059,11 @@ async function hydrateWeatherForPlace(t){
   }
 }
 function hidePlaceSheet(){
+  const hadActivePlace=activePlaceId!==null;
   activePlaceId=null;
   document.getElementById('placeSheet').classList.remove('open');
   document.getElementById('psOverlay').classList.remove('open');
+  if(hadActivePlace) syncDots();
 }
 
 (()=>{
@@ -2163,8 +2171,7 @@ function getPlaceProfile(t,ref,details={}){
 function renderPlaceSheetContent(t,ref,details={}){
   const p=getPlaceProfile(t,ref,details);
   const content=document.getElementById('psContent');
-  const sheet=document.getElementById('placeSheet');
-  const preservedScroll=sheet ? sheet.scrollTop : 0;
+  const preservedScroll=content ? content.scrollTop : 0;
   const dist=distKm(t.lat,t.lng);
   const featured=!!ref;
   const bookingAction=p.bookingUrl
@@ -2221,14 +2228,15 @@ function renderPlaceSheetContent(t,ref,details={}){
     favBtn.textContent=active?'Favori enregistré':'Ajouter aux favoris';
     renderList(currentHeure,searchQuery);
   };
-  if(preservedScroll) requestAnimationFrame(()=>{ sheet.scrollTop=preservedScroll; });
+  if(preservedScroll) requestAnimationFrame(()=>{ content.scrollTop=preservedScroll; });
   hydrateWeatherForPlace(t);
 }
 async function showPlaceSheet(t){
   if(navigator.vibrate) navigator.vibrate(10);
   activePlaceId=String(t.id);
   const ref=findReferenced(t);
-  document.getElementById('placeSheet').scrollTop=0;
+  document.getElementById('psContent').scrollTop=0;
+  syncDots([t]);
   renderPlaceSheetContent(t,ref,ref||{});
   document.getElementById('placeSheet').classList.add('open');
   document.getElementById('psOverlay').classList.add('open');
@@ -2305,7 +2313,6 @@ function selectTerrasse(t,card){
   document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
   if(card) card.classList.add('active');
   closeDrawer();
-  focusPlace(t);
   if(isFeaturedOrFavorite(t)) showPlaceSheet(t);
   else hidePlaceSheet();
 }
@@ -2350,7 +2357,7 @@ function renderList(h,query){
       const happy=ref.happyHours?`<span class="sel-happy">🍹 ${escapeHTML(ref.happyHours)}</span>`:'';
       const c=document.createElement('div'); c.className='sel-card partner';
       c.innerHTML=`${photo}<div class="sel-info"><div class="sel-name">${escapeHTML(t.nom)}</div><div class="sel-sub">${escapeHTML(preferredPlaceType(t,ref))}${ref.priceLevel?' · '+escapeHTML(ref.priceLevel):''}${dist?' · '+escapeHTML(dist):''}</div>${happy}</div>`;
-      c.addEventListener('click',()=>{ closeDrawer(); focusPlace(t); showPlaceSheet(t); });
+      c.addEventListener('click',()=>{ closeDrawer(); showPlaceSheet(t); });
       scroll.appendChild(c);
     });
     wrap.appendChild(scroll);
