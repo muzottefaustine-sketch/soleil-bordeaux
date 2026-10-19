@@ -346,6 +346,15 @@
     .ps-btn { position:relative; z-index:2; touch-action:manipulation; }
     @media (max-width:699px) { #placeSheet { max-height:72dvh; } }
 
+    /* Fiche façon Apple : toute la fiche défile, la fermeture reste visible. */
+    #placeSheet { height:min(84dvh,760px); max-height:calc(100dvh - max(12px, env(safe-area-inset-top, 0px))); padding-bottom:0; overflow-y:scroll; overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; scroll-behavior:smooth; scrollbar-width:none; }
+    #placeSheet::-webkit-scrollbar { display:none; }
+    .ps-handle { position:sticky; top:0; z-index:8; min-height:50px; padding:10px 0 6px; background:rgba(255,255,255,0.96); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border-radius:28px 28px 0 0; }
+    .ps-close { z-index:9; width:38px; height:38px; top:6px; right:12px; background:rgba(118,118,128,0.14); }
+    .ps-body { padding-bottom:calc(34px + env(safe-area-inset-bottom, 16px)); }
+    @media (min-width:700px) { #placeSheet { height:min(76dvh,720px); } }
+    @media (max-width:699px) { #placeSheet { height:min(84dvh,760px); } }
+
     /* Navigateur intégré : le lien se charge sans faire quitter la carte. */
     #siteViewer { position:fixed; inset:0; z-index:90; display:flex; flex-direction:column; background:#F2F2F7; opacity:0; pointer-events:none; transform:translateY(12px); transition:opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
     #siteViewer.open { opacity:1; pointer-events:auto; transform:translateY(0); }
@@ -2117,9 +2126,11 @@ function sheetLink(className, href, label, ariaLabel=''){
   if(!safeHref) return '';
   const labelAttr=ariaLabel ? ` aria-label="${escapeAttr(ariaLabel)}"` : '';
   const webLink=/^https?:\/\//i.test(safeHref);
+  const googleLink=/^https?:\/\/(?:[^/]+\.)?google\.[^/]+/i.test(safeHref);
   // Les sites s’affichent dans un navigateur intégré, avec un retour immédiat
-  // vers la carte. Téléphone et e-mail conservent le comportement natif.
-  return `<a class="${className}" href="${escapeAttr(safeHref)}"${webLink?' data-sheet-link="true"':''}${labelAttr}>${escapeHTML(label)}</a>`;
+  // vers la carte. Google Maps interdit cet affichage : il s’ouvre donc dans
+  // un nouvel onglet, en laissant l’application intacte derrière.
+  return `<a class="${className}" href="${escapeAttr(safeHref)}"${webLink&&!googleLink?' data-sheet-link="true"':''}${googleLink?' target="_blank" rel="noopener noreferrer"':''}${labelAttr}>${escapeHTML(label)}</a>`;
 }
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
@@ -2152,6 +2163,8 @@ function getPlaceProfile(t,ref,details={}){
 function renderPlaceSheetContent(t,ref,details={}){
   const p=getPlaceProfile(t,ref,details);
   const content=document.getElementById('psContent');
+  const sheet=document.getElementById('placeSheet');
+  const preservedScroll=sheet ? sheet.scrollTop : 0;
   const dist=distKm(t.lat,t.lng);
   const featured=!!ref;
   const bookingAction=p.bookingUrl
@@ -2208,12 +2221,14 @@ function renderPlaceSheetContent(t,ref,details={}){
     favBtn.textContent=active?'Favori enregistré':'Ajouter aux favoris';
     renderList(currentHeure,searchQuery);
   };
+  if(preservedScroll) requestAnimationFrame(()=>{ sheet.scrollTop=preservedScroll; });
   hydrateWeatherForPlace(t);
 }
 async function showPlaceSheet(t){
   if(navigator.vibrate) navigator.vibrate(10);
   activePlaceId=String(t.id);
   const ref=findReferenced(t);
+  document.getElementById('placeSheet').scrollTop=0;
   renderPlaceSheetContent(t,ref,ref||{});
   document.getElementById('placeSheet').classList.add('open');
   document.getElementById('psOverlay').classList.add('open');
