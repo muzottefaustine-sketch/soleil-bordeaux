@@ -2,8 +2,9 @@
 
 <head>
   <meta charset="UTF-8">
-  <!-- Les cartes et les photos peuvent rester en cache : c'est ce qui évite
-       de tout recharger à chaque ouverture de l'application. -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -44,7 +45,7 @@
     .splash-progress-bar { height: 100%; border-radius: 2px; background: var(--yellow); width: 0%; transition: width 0.25s ease; }
     .splash-status { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--text-3); white-space: nowrap; }
 
-    #cesiumContainer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; background:#EDF2F4; }
+    #cesiumContainer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
     .cesium-widget canvas { outline: none !important; }
     .cesium-selection-wrapper, .cesium-infoBox { display: none !important; }
     .cesium-widget-credits { display: none !important; }
@@ -163,10 +164,7 @@
     @keyframes spin { to { transform:rotate(360deg); } }
     .list { flex:1; overflow-y:auto; padding:0 12px 32px; -webkit-overflow-scrolling:touch; scrollbar-width:none; scroll-behavior:smooth; }
     .list::-webkit-scrollbar { display:none; }
-    .list-cards { min-height:1px; }
-    .list-load-more { padding:14px 8px 4px; text-align:center; color:var(--text-3); font-size:12px; font-weight:700; }
     .card { display:flex; align-items:center; gap:12px; padding:10px; border-radius:var(--radius-md); cursor:pointer; transition: transform 0.16s ease, background 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; border:1px solid rgba(226,232,240,0.78); background:rgba(255,255,255,0.86); margin-bottom:9px; box-shadow:0 5px 18px rgba(15,23,42,0.055); }
-    @supports (content-visibility:auto) { .card.compact { content-visibility:auto; contain-intrinsic-size:70px; } }
     .card:last-child { margin-bottom:0; }
     .card:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); }
     .card:active, .card.active { transform: scale(0.985); background:var(--white); border-color:rgba(248,200,62,0.75); box-shadow:0 10px 28px rgba(248,200,62,0.16); }
@@ -346,33 +344,54 @@
     .ps-secondary-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
     .ps-secondary-actions .ps-btn { display:grid; place-items:center; min-height:44px; padding:8px; text-decoration:none; }
     .ps-btn { position:relative; z-index:2; touch-action:manipulation; }
-    @media (max-width:699px) { #placeSheet { max-height:72dvh; } }
-
-    /* Fiche iPhone : une vraie zone de défilement native, séparée de l’en-tête.
-       Cette grille évite le bug Safari des panneaux fixed + flex qui ne défilent pas. */
-    #placeSheet { display:grid !important; grid-template-rows:52px minmax(0,1fr); height:min(84vh,760px); height:min(84svh,760px); max-height:calc(100vh - max(12px, env(safe-area-inset-top, 0px))); max-height:calc(100svh - max(12px, env(safe-area-inset-top, 0px))); padding:0; overflow:hidden !important; overscroll-behavior:contain; touch-action:auto; }
-    .ps-sheet-head { position:relative; z-index:8; min-height:52px; background:rgba(255,255,255,0.96); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border-radius:28px 28px 0 0; }
-    .ps-sheet-head .ps-handle { position:relative !important; display:grid; place-items:center; width:100%; height:52px; min-height:0; padding:0; touch-action:pan-y; }
-    .ps-sheet-head .ps-close { z-index:9; width:38px; height:38px; top:6px; right:12px; background:rgba(118,118,128,0.14); }
-    #psScroll { min-height:0; overflow-x:hidden; overflow-y:scroll; overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; scrollbar-width:none; }
+    /* Fiche téléphone : l'en-tête ne bouge jamais et seul le contenu défile.
+       C'est plus fiable dans Safari iPhone qu'une feuille fixe directement scrollable. */
+    #placeSheet { display:grid; grid-template-rows:52px minmax(0,1fr); height:min(78vh,680px); height:min(78svh,680px); max-height:calc(100vh - 18px); max-height:calc(100svh - 18px); padding:0; overflow:hidden !important; }
+    .ps-sheet-head { position:relative; min-height:52px; border-bottom:1px solid rgba(60,60,67,0.08); background:rgba(255,255,255,0.98); z-index:2; }
+    .ps-sheet-head .ps-handle { position:absolute; inset:0; min-height:52px; padding:0; }
+    .ps-sheet-head .ps-close { z-index:3; }
+    #psScroll { min-height:0; overflow-x:hidden; overflow-y:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; touch-action:pan-y; padding-bottom:max(16px, env(safe-area-inset-bottom, 16px)); scrollbar-width:none; }
     #psScroll::-webkit-scrollbar { display:none; }
-    #psContent { min-height:100%; overflow:visible; }
-    .ps-body { padding-bottom:calc(34px + env(safe-area-inset-bottom, 16px)); }
-    @media (min-width:700px) { #placeSheet { height:min(76vh,720px); height:min(76svh,720px); } }
-    @media (max-width:699px) { #placeSheet { height:min(84vh,760px); height:min(84svh,760px); } }
+    #psContent { min-height:min-content; }
+    @media (max-width:699px) {
+      #placeSheet { left:8px; right:8px; bottom:max(8px, env(safe-area-inset-bottom, 8px)); height:min(82vh,720px); height:min(82svh,720px); max-height:calc(100vh - 16px); max-height:calc(100svh - 16px); border-radius:28px; transform:translateY(calc(100% + 28px)); }
+      #placeSheet.open { transform:translateY(0); }
+      .ps-hero, .ps-photo, .ps-photo-placeholder { min-height:154px; height:154px; }
+      .ps-body { padding:18px 16px 22px; }
+      .ps-name { font-size:24px; }
+      .ps-primary-actions { margin-bottom:12px; }
+    }
 
-    /* Navigateur intégré : le lien se charge sans faire quitter la carte. */
-    #siteViewer { position:fixed; inset:0; z-index:90; display:flex; flex-direction:column; background:#F2F2F7; opacity:0; pointer-events:none; transform:translateY(12px); transition:opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
-    #siteViewer.open { opacity:1; pointer-events:auto; transform:translateY(0); }
-    .site-viewer-bar { min-height:calc(56px + env(safe-area-inset-top, 0px)); padding:env(safe-area-inset-top, 0px) 14px 0; display:grid; grid-template-columns:44px minmax(0,1fr) 44px; align-items:center; gap:6px; background:rgba(255,255,255,.94); border-bottom:1px solid rgba(60,60,67,.14); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); }
-    .site-viewer-close, .site-viewer-external { width:38px; height:38px; border:0; border-radius:50%; display:grid; place-items:center; text-decoration:none; background:#E9E9ED; color:#1D1D1F; font:700 20px/1 -apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; cursor:pointer; }
-    .site-viewer-external { font-size:17px; }
-    .site-viewer-title { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; color:#1D1D1F; font:750 14px/1.2 -apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; }
-    .site-viewer-body { position:relative; flex:1; min-height:0; background:#fff; }
-    #siteViewerFrame { position:absolute; inset:0; width:100%; height:100%; border:0; background:#fff; }
-    .site-viewer-loading { position:absolute; inset:0; z-index:1; display:grid; place-content:center; gap:10px; justify-items:center; color:#6E6E73; font:600 13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif; background:#fff; }
-    .site-viewer-loading::before { content:''; width:22px; height:22px; border:3px solid #E5E5EA; border-top-color:#1D1D1F; border-radius:50%; animation:spin .75s linear infinite; }
-    #siteViewer.loaded .site-viewer-loading { opacity:0; visibility:hidden; transition:opacity .18s ease, visibility .18s step-end; }
+    /* Nouvelle fiche courte : une carte d'action, pas un écran entier. */
+    #placeSheet.compact-sheet { grid-template-rows:48px auto; height:auto; max-height:calc(100vh - 16px); max-height:calc(100svh - 16px); }
+    #placeSheet.compact-sheet .ps-sheet-head { min-height:48px; }
+    #placeSheet.compact-sheet .ps-sheet-head .ps-handle { min-height:48px; }
+    #placeSheet.compact-sheet #psScroll { max-height:none; overflow:hidden; }
+    .ps-compact-card { padding:0 14px max(14px, env(safe-area-inset-bottom, 14px)); color:#1D1D1F; }
+    .ps-compact-summary { display:grid; grid-template-columns:72px minmax(0,1fr); gap:11px; align-items:center; margin:1px 0 9px; }
+    .ps-compact-photo-wrap { width:72px; height:72px; overflow:hidden; border-radius:16px; background:#F2F2F7; }
+    .ps-compact-photo { width:100%; height:100%; display:block; object-fit:cover; }
+    .ps-compact-kicker { display:block; margin:0 0 3px; color:#8E8E93; font-size:10px; font-weight:850; letter-spacing:.52px; text-transform:uppercase; }
+    .ps-compact-name { margin:0; overflow:hidden; color:#1D1D1F; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif; font-size:20px; font-weight:760; line-height:1.08; letter-spacing:-.45px; text-overflow:ellipsis; white-space:nowrap; }
+    .ps-compact-sub { margin:3px 0 0; overflow:hidden; color:#6E6E73; font-size:12px; font-weight:650; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+    .ps-compact-meta { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+    .ps-compact-pill { border-radius:999px; background:#F2F2F7; color:#48484A; padding:3px 6px; font-size:10px; font-weight:760; }
+    .ps-compact-address { display:flex; align-items:center; gap:7px; min-height:34px; margin:0 0 7px; padding:7px 9px; overflow:hidden; border-radius:12px; background:#F2F2F7; color:#48484A; font-size:11px; font-weight:680; white-space:nowrap; text-overflow:ellipsis; }
+    .ps-compact-address span:last-child { overflow:hidden; text-overflow:ellipsis; }
+    .ps-compact-sun { margin:0 0 7px; color:#795800; font-size:11px; font-weight:760; }
+    .ps-compact-card .ps-primary-actions { grid-template-columns:minmax(0,1fr) 68px 48px; margin:0 0 7px; }
+    .ps-compact-card .ps-primary-actions .ps-btn { min-height:44px; }
+    .ps-compact-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .ps-compact-actions .ps-btn { display:grid; min-height:38px; place-items:center; padding:7px; overflow:hidden; border-radius:12px; background:#F2F2F7; color:#1D1D1F; font-size:11px; font-weight:760; text-decoration:none; text-overflow:ellipsis; white-space:nowrap; }
+    .ps-compact-actions .ps-btn.fav { background:#FFF3B8; color:#795800; }
+    .ps-compact-actions .ps-btn.fav.active { background:#FFE06B; color:#624800; }
+    .ps-compact-extra { margin:9px 0 0; border-radius:14px; background:#F7F7F9; }
+    .ps-compact-extra summary { display:flex; align-items:center; min-height:42px; padding:0 13px; cursor:pointer; color:#48484A; font-size:12px; font-weight:780; list-style:none; }
+    .ps-compact-extra summary::-webkit-details-marker { display:none; }
+    .ps-compact-extra summary::after { content:'⌄'; margin-left:auto; color:#8E8E93; font-size:16px; }
+    .ps-compact-extra[open] summary::after { transform:rotate(180deg); }
+    .ps-compact-extra-body { padding:0 13px 13px; }
+    .ps-compact-extra .ps-btn.site { display:grid; }
   </style>
 </head>
 <body>
@@ -410,7 +429,7 @@
 <div id="topBar">
   <div class="search-glass">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#1C1C1E" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <input type="text" id="searchInput" placeholder="Cherche une terrasse…">
+    <input type="text" id="searchInput" placeholder="Cherche ta ville ou une terrasse…" aria-label="Chercher une ville ou une terrasse. Valide une ville avec la touche Entrée.">
     <button class="search-clear-btn" id="searchClear">✕</button>
   </div>
   <button class="icon-btn" id="btnListe" onclick="openDrawer()" title="Liste">
@@ -444,20 +463,8 @@
     <div class="ps-handle" id="psHandle" role="button" tabindex="0" aria-label="Fermer la fiche"><div class="ps-bar"></div></div>
     <button class="ps-close" id="psClose" type="button" aria-label="Fermer la fiche" title="Fermer la fiche">×</button>
   </div>
-  <div id="psScroll" tabindex="0" aria-label="Détails du lieu"><div id="psContent"></div></div>
+  <div id="psScroll" aria-label="Détails du lieu"><div id="psContent"></div></div>
 </div>
-
-<section id="siteViewer" role="dialog" aria-modal="true" aria-label="Site du lieu" aria-hidden="true">
-  <div class="site-viewer-bar">
-    <button class="site-viewer-close" id="siteViewerClose" type="button" aria-label="Retour à l’application" title="Retour à l’application">×</button>
-    <div class="site-viewer-title" id="siteViewerTitle">Site du lieu</div>
-    <a class="site-viewer-external" id="siteViewerExternal" href="#" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir dans le navigateur" title="Ouvrir dans le navigateur">↗</a>
-  </div>
-  <div class="site-viewer-body">
-    <div class="site-viewer-loading">Ouverture du site…</div>
-    <iframe id="siteViewerFrame" title="Site du lieu" referrerpolicy="strict-origin-when-cross-origin"></iframe>
-  </div>
-</section>
 
 <div id="drawer">
   <div class="drawer-handle" id="drawerHandle"><div class="drawer-bar"></div></div>
@@ -524,12 +531,9 @@ const GOOGLE_NEARBY_TYPES = ['restaurant', 'cafe', 'bar'];
 const PERFORMANCE_MODE = false;
 const ENABLE_GOOGLE_3D_TEST = false;
 const ENABLE_SHADOW_RAYCASTS = false;
-// La liste garde tous les lieux, mais les ajoute par petites séries : sur un
-// téléphone, 1 200 cartes d'un coup rendrait le défilement moins fluide.
-const LIST_INITIAL_RENDER_BATCH = 120;
-const LIST_RENDER_BATCH = 120;
-const MAX_MARKERS_ON_MAP = 220;
-const MARKER_RENDER_BATCH = 72;
+const MAX_RENDERED_LIST_ITEMS = 280;
+const MAX_MARKERS_ON_MAP = 950;
+const MARKER_RENDER_BATCH = 180;
 const PHOTO_HYDRATE_LIMIT = 6;
 const LOCAL_CITY_RADIUS_METERS = 30000;
 let currentCity = {...CITIES[0], localDataIds: localDataCandidateIds(CITIES[0].id, CITIES[0].nom)};
@@ -658,6 +662,64 @@ async function switchCity(cityId){
   await loadTerrasses();
 }
 
+// La barre principale sert à la fois pour les lieux et les villes. La recherche
+// d'une ville ne se fait qu'après validation avec Entrée : aucune requête réseau
+// n'est lancée pendant la frappe.
+async function switchToSearchedCity(rawQuery){
+  const query=(rawQuery||'').trim();
+  if(query.length<2) return false;
+  const normalized=normalize(query);
+  const knownCity=CITIES.find(city=>{
+    const name=normalize(city.nom);
+    return name===normalized || name.startsWith(normalized) || normalized===normalize(city.id);
+  });
+  if(knownCity){
+    await switchCity(knownCity.id);
+    return true;
+  }
+
+  const previousAreaId=currentCity.id;
+  showAreaPill(`Recherche de ${query}…`);
+  try{
+    const url=`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&featureType=city&countrycodes=fr&accept-language=fr&q=${encodeURIComponent(query)}`;
+    const response=await fetchWithTimeout(url,{headers:{Accept:'application/json'}},6500);
+    if(!response.ok) throw new Error('city-search');
+    const [result]=await response.json();
+    const lat=Number(result?.lat), lng=Number(result?.lon);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)) throw new Error('city-not-found');
+    const address=result.address||{};
+    const cityName=address.city||address.town||address.village||address.municipality||result.name||result.display_name?.split(',')[0]||query;
+    currentCity={
+      id:`city-${slugifyCityName(cityName)||Date.now()}`,
+      nom:cityName,
+      lat,lng,
+      dynamic:true,
+      gps:false,
+      localDataIds:localDataCandidateIds(cityName)
+    };
+    userLat=null;
+    userLng=null;
+    lastLoadedArea=null;
+    searchQuery='';
+    activeFilter='all';
+    document.getElementById('searchInput').value='';
+    document.getElementById('drawerSearch').value='';
+    document.getElementById('searchClear').classList.remove('visible');
+    document.querySelectorAll('[data-filter]').forEach(chip=>chip.classList.toggle('active',chip.dataset.filter==='all'));
+    showAreaPill(cityName);
+    clearPlaces();
+    frameArea(lng,lat,{animate:true});
+    await loadTerrasses();
+    return true;
+  }catch(error){
+    showAreaPill('Ville introuvable');
+    setTimeout(()=>{
+      if(currentCity.id===previousAreaId) showAreaPill(currentCity.nom);
+    },1800);
+    return false;
+  }
+}
+
 const drawer = document.getElementById('drawer');
 function openDrawer()  { drawer.classList.add('open'); }
 function closeDrawer() { drawer.classList.remove('open'); }
@@ -677,32 +739,28 @@ function completeSplash() {
   if (splashDone) return; splashDone = true; setProgress(100, 'Prêt !');
   setTimeout(() => { document.getElementById('splash').classList.add('out'); setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 650); }, 300);
 }
-// Démarrage éprouvé par la dernière version stable : l'interface apparaît
-// immédiatement, puis la 3D détaillée arrive après. Elle ne peut donc jamais
-// bloquer l'ouverture de l'application.
-setTimeout(completeSplash, 1200);
+// On garde l'écran d'accueil tant que la première vraie vue 3D n'est pas prête.
+// Ainsi, on ne découvre jamais un écran noir ou une carte à moitié chargée.
+setTimeout(()=>{
+  if(!splashDone) setProgress(92, 'La 3D se prépare…');
+}, 4500);
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwM2M0Njk1Yi1iYzI1LTQ3MzAtOGU1MS1iNzU4MTRiNWVkY2QiLCJpZCI6Mzk5MDg5LCJpYXQiOjE3NzI3ODI3NTh9.aGJt8zcDKPwk-pJsAcp0egE1wgJ5Vg41y_yQKNfUtYw';
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
-  // Le terrain réseau est volontairement différé : aucun écran noir ni attente
-  // du réseau avant de pouvoir utiliser l'app.
-  terrainProvider: new Cesium.EllipsoidTerrainProvider(), skyBox: false, skyAtmosphere: false,
+  terrainProvider: Cesium.createWorldTerrain(), skyBox: false, skyAtmosphere: false,
   baseLayerPicker: false, homeButton: false, infoBox: false, selectionIndicator: false,
   navigationHelpButton: false, sceneModePicker: false, animation: false, timeline: false,
   fullscreenButton: false, geocoder: false, scene3DOnly: true,
 });
-viewer.scene.globe.maximumScreenSpaceError = 3;
-viewer.scene.globe.tileCacheSize = 120;
-viewer.scene.globe.preloadAncestors = false;
+viewer.scene.globe.maximumScreenSpaceError = 1;
+viewer.scene.globe.tileCacheSize = 500;
+viewer.scene.globe.preloadAncestors = true;
 viewer.scene.globe.preloadSiblings = false;
 viewer.scene.globe.enableLighting = true;
-viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#EDF2F4');
 viewer.scene.fog.enabled = false;
-viewer.shadows = false;
-viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 1.5);
-viewer.scene.requestRenderMode = true;
-viewer.scene.maximumRenderTimeChange = Infinity;
+viewer.shadows = true;
+viewer.resolutionScale = window.devicePixelRatio || 1;
 viewer.scene.globe.showWaterEffect = false;
 viewer.scene.postProcessStages.fxaa.enabled = false;
 viewer.scene.screenSpaceCameraController.inertiaSpin = 0.9;
@@ -745,13 +803,14 @@ function frameArea(lng, lat, {animate=true, range=AREA_CAMERA_RANGE, pitch=AREA_
 frameArea(currentCity.lng, currentCity.lat, {animate:false});
 
 setProgress(10, 'Chargement…');
-let osmBuildings = null;
+const osmBuildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
+osmBuildings.maximumScreenSpaceError = 2;
 
 viewer.scene.globe.tileLoadProgressEvent.addEventListener(remaining => {
   setProgress(Math.min(60, 10 + (1 - Math.min(remaining, 50) / 50) * 50), remaining === 0 ? 'Bâtiments…' : 'Chargement…');
   if (remaining === 0 && terrasses.length > 0 && !computing && ENABLE_SHADOW_RAYCASTS) { scheduleShadow(); }
 });
-let globeOk = false, buildingsOk = true, splashReadyQueued = false;
+let globeOk = false, buildingsOk = false, splashReadyQueued = false;
 function tryOpen() {
   if (!globeOk || !buildingsOk || splashReadyQueued) return;
   splashReadyQueued = true;
@@ -764,26 +823,7 @@ function tryOpen() {
 viewer.scene.postRender.addEventListener(function watchGlobe() {
   if (viewer.scene.globe.tilesLoaded && !globeOk) { globeOk = true; setProgress(70, 'Bâtiments…'); viewer.scene.postRender.removeEventListener(watchGlobe); tryOpen(); }
 });
-function loadMapDetailWhenIdle() {
-  const load = () => {
-    try {
-      // Même chargement progressif que la dernière version fluide validée.
-      viewer.terrainProvider = Cesium.createWorldTerrain();
-      osmBuildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
-      osmBuildings.maximumScreenSpaceError = 6;
-      osmBuildings.readyPromise
-        .then(() => { setProgress(85, 'Finalisation…'); viewer.scene.requestRender(); })
-        .catch(() => {});
-      viewer.scene.requestRender();
-    } catch (error) {
-      // La liste et les fiches restent utilisables même si la 3D détaillée
-      // n'est pas disponible sur ce réseau.
-      console.warn('Détails 3D indisponibles', error);
-    }
-  };
-  (window.requestIdleCallback || ((callback) => setTimeout(callback, 1800)))(load, { timeout: 3500 });
-}
-setTimeout(loadMapDetailWhenIdle, 1600);
+osmBuildings.readyPromise.then(() => { buildingsOk = true; setProgress(85, 'Finalisation…'); tryOpen(); }).catch(() => { buildingsOk = true; tryOpen(); });
 
 let userDot = null, userHalo = null, userPulse = null, pulseT = 0, pulseStarted = false;
 function makeUserDot() {
@@ -1042,31 +1082,61 @@ function osmDataToTerrasses(data, source='osm'){
 }
 
 const cityDataCache = {};
-// Ce fichier HTML est livré seul : il n'embarque pas de dossier data/. Éviter
-// de tester une longue liste de fichiers absents est essentiel sur file://,
-// où Safari peut laisser une requête locale en attente. Si un jeu local est
-// ajouté un jour, renseigner ici son unique fichier JSON.
-const BUNDLED_CITY_DATA_FILES = Object.freeze({});
+const cityScriptPromises = {};
+function localDataPaths(id, ext){
+  const variants = uniq([
+    id,
+    id.replace(/-/g,''),
+    `restaurants-${id}`,
+    `${id}-restaurants`,
+    `restos-${id}`,
+    `${id}-restos`,
+    `terrasses-${id}`,
+    `${id}-terrasses`
+  ]);
+  const names = variants.flatMap(name=>[`data/${name}.${ext}`, `${name}.${ext}`, `outputs/data/${name}.${ext}`]);
+  if(location.protocol === 'file:') return names;
+  return [...variants.flatMap(name=>[`/data/${name}.${ext}`, `/outputs/data/${name}.${ext}`]), ...names];
+}
+async function loadCityDataScript(id){
+  if(window.LOCAL_OSM_DATA?.[id]) return window.LOCAL_OSM_DATA[id];
+  if(cityScriptPromises[id]) return cityScriptPromises[id];
+  cityScriptPromises[id] = new Promise(resolve => {
+    const paths = localDataPaths(id, 'js');
+    let index = 0;
+    const tryNext = () => {
+      if(index >= paths.length){ resolve(null); return; }
+      const script = document.createElement('script');
+      script.src = paths[index++];
+      script.async = true;
+      script.onload = () => resolve(window.LOCAL_OSM_DATA?.[id] || null);
+      script.onerror = () => { script.remove(); tryNext(); };
+      document.head.appendChild(script);
+    };
+    tryNext();
+  });
+  return cityScriptPromises[id];
+}
 async function fetchLocalCityData(id){
   if(cityDataCache[id] !== undefined) return cityDataCache[id];
   if(window.LOCAL_OSM_DATA?.[id]){
     cityDataCache[id] = window.LOCAL_OSM_DATA[id];
     return cityDataCache[id];
   }
-  const bundledFile=BUNDLED_CITY_DATA_FILES[id];
-  if(!bundledFile){
-    cityDataCache[id]=null;
-    return null;
+  if(location.protocol === 'file:'){
+    cityDataCache[id] = await loadCityDataScript(id);
+    if(cityDataCache[id]) return cityDataCache[id];
   }
-  try{
-    const response=await fetchWithTimeout(bundledFile,{cache:'force-cache'},1800);
-    if(!response.ok) throw new Error('local data unavailable');
-    cityDataCache[id]=await response.json();
-    return cityDataCache[id];
-  }catch(e){
-    cityDataCache[id]=null;
-    return null;
+  for(const path of localDataPaths(id, 'json')){
+    try{
+      const res = await fetch(path, {cache:'force-cache'});
+      if(!res.ok) throw new Error();
+      cityDataCache[id] = await res.json();
+      return cityDataCache[id];
+    }catch(e){}
   }
+  cityDataCache[id] = await loadCityDataScript(id);
+  return cityDataCache[id];
 }
 
 async function localTerrassesForCurrentArea(){
@@ -1177,7 +1247,7 @@ function getSunDir(jd){
   const d=new Cesium.Cartesian3(); Cesium.Matrix3.multiplyByVector(m,s,d); return Cesium.Cartesian3.normalize(d,d);
 }
 function sceneReadyForShadows(relaxed=false){
-  return !cameraMoving && viewer.scene.globe.tilesLoaded && (relaxed || !osmBuildings || osmBuildings.tilesLoaded) && typeof viewer.scene.pickFromRay==='function';
+  return !cameraMoving && viewer.scene.globe.tilesLoaded && (relaxed || osmBuildings.tilesLoaded) && typeof viewer.scene.pickFromRay==='function';
 }
 function sunAboveHorizon(lng,lat,sunDir){
   if(!sunDir) return null;
@@ -1221,20 +1291,8 @@ function checkSunny(t,sunDir,relaxed=false){
 }
 
 let cameraMoving=false;
-let markerViewportTimer=null;
-viewer.camera.moveStart.addEventListener(()=>{
-  cameraMoving=true;
-  clearTimeout(markerViewportTimer);
-});
-viewer.camera.moveEnd.addEventListener(()=>{
-  cameraMoving=false;
-  clearTimeout(markerViewportTimer);
-  // On ne recalcule les soleils qu'une fois le geste terminé. Les repères
-  // restent donc stables pendant le déplacement, puis s'adaptent au quartier.
-  markerViewportTimer=setTimeout(()=>{
-    syncDots();
-  },125);
-});
+viewer.camera.moveStart.addEventListener(()=>{cameraMoving=true;});
+viewer.camera.moveEnd.addEventListener(()=>{cameraMoving=false;});
 
 let shadowDebounce=null,computing=false,shadowVersion=0,shadowPending=false;
 function computeFastSunStates(){
@@ -1336,73 +1394,26 @@ function markerImageForPlace(t){
   return s===true?DOT_SUN:s===false?DOT_SHADE:DOT_UNKNOWN;
 }
 function markerSizeForPlace(t){
-  const base=findReferenced(t) ? 34 : (isFoodPlace(t) ? 18 : 26);
-  return String(t.id)===String(activePlaceId) ? base+8 : base;
+  if(findReferenced(t)) return 34;
+  return isFoodPlace(t) ? 18 : 26;
 }
 
-const MARKER_VIEWPORT_PAD_RATIO=0.16;
-const MARKER_VIEWPORT_MIN_PAD=Cesium.Math.toRadians(0.002);
-const MARKER_VIEWPORT_MAX_PAD=Cesium.Math.toRadians(0.10);
-let lastMarkerSector=null;
 let markerRenderToken=0;
-
-function wrappedLonDelta(a,b){ return Cesium.Math.negativePiToPi(a-b); }
-function markerCameraSector(){
-  try{
-    const rect=viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
-    if(!rect || ![rect.west,rect.east,rect.south,rect.north].every(Number.isFinite)) return lastMarkerSector;
-    let lonSpan=rect.east-rect.west;
-    if(lonSpan<0) lonSpan+=Cesium.Math.TWO_PI;
-    if(lonSpan<1e-6) lonSpan=Cesium.Math.TWO_PI;
-    const latSpan=Math.max(0,rect.north-rect.south);
-    lastMarkerSector={
-      lon:Cesium.Math.negativePiToPi(rect.west+lonSpan/2),
-      lat:(rect.south+rect.north)/2,
-      halfLon:lonSpan/2,
-      halfLat:latSpan/2,
-      padLon:Math.min(Math.max(lonSpan*MARKER_VIEWPORT_PAD_RATIO,MARKER_VIEWPORT_MIN_PAD),MARKER_VIEWPORT_MAX_PAD),
-      padLat:Math.min(Math.max(latSpan*MARKER_VIEWPORT_PAD_RATIO,MARKER_VIEWPORT_MIN_PAD),MARKER_VIEWPORT_MAX_PAD),
-      allLongitudes:lonSpan>=Cesium.Math.TWO_PI-1e-6
-    };
-    return lastMarkerSector;
-  }catch(e){
-    return lastMarkerSector;
-  }
-}
-function markerIsInSector(t,sector){
-  if(!sector) return true;
-  const lat=Cesium.Math.toRadians(t.lat), lon=Cesium.Math.toRadians(t.lng);
-  if(lat<sector.lat-sector.halfLat-sector.padLat || lat>sector.lat+sector.halfLat+sector.padLat) return false;
-  return sector.allLongitudes || Math.abs(wrappedLonDelta(lon,sector.lon))<=sector.halfLon+sector.padLon;
-}
-function markerSectorDistance(t,sector){
-  if(!sector) return userLat!==null
-    ? distMeters(t.lat,t.lng)
-    : metersBetween(currentCity.lat,currentCity.lng,t.lat,t.lng);
-  const dx=wrappedLonDelta(Cesium.Math.toRadians(t.lng),sector.lon)*Math.cos(sector.lat);
-  const dy=Cesium.Math.toRadians(t.lat)-sector.lat;
-  return dx*dx+dy*dy;
-}
 function prioritizedMarkerItems(items=terrasses){
-  const source=Array.isArray(items)?items:terrasses;
-  const sector=markerCameraSector();
-  const targets=source.filter(t=>markerIsInSector(t,sector)).sort((a,b)=>{
-    const selectedA=String(a.id)===String(activePlaceId);
-    const selectedB=String(b.id)===String(activePlaceId);
-    if(selectedA!==selectedB) return selectedA?-1:1;
-    const featuredA=findReferenced(a)?0:1, featuredB=findReferenced(b)?0:1;
-    if(featuredA!==featuredB) return featuredA-featuredB;
-    return markerSectorDistance(a,sector)-markerSectorDistance(b,sector);
-  }).slice(0,MAX_MARKERS_ON_MAP);
-  return targets;
+  const source = Array.isArray(items) ? items : terrasses;
+  const sorted = [...source].sort((a,b)=>{
+    const ra=findReferenced(a)?0:(isFoodPlace(a)?2:1);
+    const rb=findReferenced(b)?0:(isFoodPlace(b)?2:1);
+    if(ra!==rb) return ra-rb;
+    if(userLat!==null) return distMeters(a.lat,a.lng)-distMeters(b.lat,b.lng);
+    return metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng);
+  });
+  return sorted.slice(0, MAX_MARKERS_ON_MAP);
 }
 
 function syncDots(items=terrasses){
   const token=++markerRenderToken;
   const fullRefresh = !items || items===terrasses || items.length===terrasses.length;
-  if(fullRefresh && cameraMoving){
-    return;
-  }
   // La carte 3D reste dédiée aux terrasses. Les lieux Canicule vivent dans
   // leur liste, sans transformer la carte en série d'emojis.
   const mapItems = fullRefresh
@@ -2115,11 +2126,9 @@ async function hydrateWeatherForPlace(t){
   }
 }
 function hidePlaceSheet(){
-  const hadActivePlace=activePlaceId!==null;
   activePlaceId=null;
   document.getElementById('placeSheet').classList.remove('open');
   document.getElementById('psOverlay').classList.remove('open');
-  if(hadActivePlace) syncDots();
 }
 
 (()=>{
@@ -2138,38 +2147,16 @@ function hidePlaceSheet(){
     dragStartY=null;
   },{passive:true});
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){
-      if(document.getElementById('siteViewer').classList.contains('open')) hideExternalSite();
-      else hidePlaceSheet();
-    }
+    if(e.key==='Escape') hidePlaceSheet();
   });
-  const viewer=document.getElementById('siteViewer');
-  const viewerFrame=document.getElementById('siteViewerFrame');
-  const viewerTitle=document.getElementById('siteViewerTitle');
-  const viewerExternal=document.getElementById('siteViewerExternal');
-  function hideExternalSite(){
-    viewer.classList.remove('open','loaded');
-    viewer.setAttribute('aria-hidden','true');
-    window.setTimeout(()=>{ if(!viewer.classList.contains('open')) viewerFrame.removeAttribute('src'); },220);
-  }
-  function showExternalSite(href,label){
-    viewerTitle.textContent=label||'Site du lieu';
-    viewerExternal.href=href;
-    viewer.classList.remove('loaded');
-    viewer.setAttribute('aria-hidden','false');
-    viewer.classList.add('open');
-    viewerFrame.src=href;
-  }
-  window.hideExternalSite=hideExternalSite;
-  document.getElementById('siteViewerClose').addEventListener('click',hideExternalSite);
-  viewerFrame.addEventListener('load',()=>viewer.classList.add('loaded'));
   sheet.addEventListener('click',e=>{
     const link=e.target.closest('a[data-sheet-link]');
     if(!link) return;
     const href=link.getAttribute('href');
     if(!href) return;
+    // Même onglet = navigation visible dans l'aperçu local comme sur mobile.
     e.preventDefault();
-    showExternalSite(href,link.textContent.trim());
+    window.location.assign(href);
   });
 })();
 
@@ -2189,12 +2176,10 @@ function sheetLink(className, href, label, ariaLabel=''){
   const safeHref=String(href||'').trim();
   if(!safeHref) return '';
   const labelAttr=ariaLabel ? ` aria-label="${escapeAttr(ariaLabel)}"` : '';
-  const webLink=/^https?:\/\//i.test(safeHref);
-  const googleLink=/^https?:\/\/(?:[^/]+\.)?google\.[^/]+/i.test(safeHref);
-  // Les sites s’affichent dans un navigateur intégré, avec un retour immédiat
-  // vers la carte. Google Maps interdit cet affichage : il s’ouvre donc dans
-  // un nouvel onglet, en laissant l’application intacte derrière.
-  return `<a class="${className}" href="${escapeAttr(safeHref)}"${webLink&&!googleLink?' data-sheet-link="true"':''}${googleLink?' target="_blank" rel="noopener noreferrer"':''}${labelAttr}>${escapeHTML(label)}</a>`;
+  // Les liens s'ouvrent dans l'onglet courant. Dans l'aperçu de l'app,
+  // target=_blank créait parfois un onglet invisible et donnait l'impression
+  // que le bouton ne faisait rien.
+  return `<a class="${className}" href="${escapeAttr(safeHref)}" data-sheet-link="true"${labelAttr}>${escapeHTML(label)}</a>`;
 }
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
@@ -2227,8 +2212,6 @@ function getPlaceProfile(t,ref,details={}){
 function renderPlaceSheetContent(t,ref,details={}){
   const p=getPlaceProfile(t,ref,details);
   const content=document.getElementById('psContent');
-  const scroll=document.getElementById('psScroll');
-  const preservedScroll=scroll ? scroll.scrollTop : 0;
   const dist=distKm(t.lat,t.lng);
   const featured=!!ref;
   const bookingAction=p.bookingUrl
@@ -2263,6 +2246,44 @@ function renderPlaceSheetContent(t,ref,details={}){
     p.instagramUrl ? sheetLink('ps-btn site',p.instagramUrl,'Instagram') : '',
     p.email ? sheetLink('ps-btn site',`mailto:${p.email}`,'E-mail',`Envoyer un e-mail à ${t.nom}`) : ''
   ].filter(Boolean).join('');
+
+  // La fiche est volontairement courte : toutes les actions utiles tiennent
+  // dans l'écran du téléphone, sans aucune zone à faire défiler.
+  const compactMeta=[
+    p.rating ? `<span class="ps-compact-pill">★ ${escapeHTML(p.rating)}${p.ratingCount?` · ${escapeHTML(p.ratingCount)} avis`:''}</span>` : '',
+    p.openNow===true ? '<span class="ps-compact-pill">Ouvert</span>' : '',
+    p.openNow===false ? '<span class="ps-compact-pill">Fermé</span>' : ''
+  ].filter(Boolean).join('');
+  content.innerHTML=`
+    <article class="ps-compact-card">
+      <div class="ps-compact-summary">
+        <div class="ps-compact-photo-wrap"><img class="ps-compact-photo" id="psHeroPhoto" data-place-id="${escapeAttr(t.id)}" src="${escapeAttr(p.photo)}" alt="${escapeAttr(t.nom)}" decoding="async" onerror="markPhotoError(this)"></div>
+        <div>
+          <span class="ps-compact-kicker">${featured?'Sélection Soleilenterrasse':escapeHTML(p.type)}</span>
+          <h2 class="ps-compact-name">${escapeHTML(t.nom)}</h2>
+          <p class="ps-compact-sub">${escapeHTML(p.type)}${p.priceLevel?` · ${escapeHTML(p.priceLevel)}`:''}${dist?` · ${escapeHTML(dist)}`:''}</p>
+          <div class="ps-compact-meta">${compactMeta}</div>
+        </div>
+      </div>
+      <div class="ps-compact-address"><span>⌖</span><span>${escapeHTML(p.address)}</span></div>
+      <div class="ps-compact-sun">☀️ Terrasse · soleil calculé selon l'heure choisie</div>
+      <div class="ps-primary-actions">${bookingAction}${phoneAction}${sheetLink('ps-btn icon-action',p.directionsUrl,'↗','Ouvrir l’itinéraire')}</div>
+      <div class="ps-compact-actions">
+        <button class="ps-btn fav ${isFavorite(t)?'active':''}" id="psFavBtn">${isFavorite(t)?'Favori':'Favori'}</button>
+        ${sheetLink('ps-btn maps',p.mapsUrl,'Fiche Google')}
+        ${sheetLink('ps-btn maps',p.reviewsUrl,'Avis')}
+        ${sheetLink('ps-btn maps',p.eventsUrl,'Événements')}
+      </div>
+    </article>`;
+  const compactFavBtn=document.getElementById('psFavBtn');
+  if(compactFavBtn) compactFavBtn.onclick=()=>{
+    const active=toggleFavorite(t);
+    compactFavBtn.classList.toggle('active',active);
+    compactFavBtn.textContent='Favori';
+    renderList(currentHeure,searchQuery);
+  };
+  return;
+
   content.innerHTML=`
     <div class="ps-hero" id="psHero"><img class="ps-photo" id="psHeroPhoto" data-place-id="${escapeAttr(t.id)}" src="${escapeAttr(p.photo)}" alt="${escapeAttr(t.nom)}" decoding="async" onerror="markPhotoError(this)">${p.photoCredit?`<span class="photo-credit">${escapeHTML(p.photoCredit)}</span>`:''}</div>
     <div class="ps-body">
@@ -2285,24 +2306,23 @@ function renderPlaceSheetContent(t,ref,details={}){
     favBtn.textContent=active?'Favori enregistré':'Ajouter aux favoris';
     renderList(currentHeure,searchQuery);
   };
-  if(preservedScroll) requestAnimationFrame(()=>{ scroll.scrollTop=preservedScroll; });
   hydrateWeatherForPlace(t);
 }
 async function showPlaceSheet(t){
   if(navigator.vibrate) navigator.vibrate(10);
   activePlaceId=String(t.id);
   const ref=findReferenced(t);
-  document.getElementById('psScroll').scrollTop=0;
-  // Le lieu sélectionné est mis en avant s'il se trouve dans le secteur déjà
-  // affiché. On ne déplace jamais la caméra et on ne fait pas apparaître un
-  // soleil hors écran : les repères restent fixés à leurs vraies coordonnées.
-  syncDots();
+  document.getElementById('placeSheet').classList.add('compact-sheet');
+  const scroll=document.getElementById('psScroll');
+  if(scroll) scroll.scrollTop=0;
   renderPlaceSheetContent(t,ref,ref||{});
   document.getElementById('placeSheet').classList.add('open');
   document.getElementById('psOverlay').classList.add('open');
   const details=await fetchPlaceDetails(t);
   if(activePlaceId!==String(t.id)) return;
+  const previousScrollTop=scroll?.scrollTop||0;
   renderPlaceSheetContent(t,ref,details);
+  if(scroll) scroll.scrollTop=previousScrollTop;
 }
 
 function normalize(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
@@ -2373,38 +2393,12 @@ function selectTerrasse(t,card){
   document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
   if(card) card.classList.add('active');
   closeDrawer();
-  if(isFeaturedOrFavorite(t)) showPlaceSheet(t);
-  else hidePlaceSheet();
-}
-
-let listRenderVersion=0;
-let listScrollCleanup=null;
-function createListCard(t,query){
-  const ref=findReferenced(t);
-  const card=document.createElement('div');
-  card.className='card'+(ref?' partner':(!isFoodPlace(t)?' utility compact':' compact'));
-  card.dataset.id=t.id;
-  const dist=distKm(t.lat,t.lng);
-  const tag=ref?`<span class="partner-tag">Sélection</span>`:'';
-  if(ref){
-    const photo=placePhotoUrl(t,ref,null);
-    card.innerHTML=`<div class="card-photo-wrap"><img class="card-photo" data-place-id="${escapeAttr(t.id)}" src="${escapeAttr(photo)}" alt="${escapeAttr(t.nom)}" loading="lazy" decoding="async" onerror="markPhotoError(this)"><span class="partner-sun">☀️</span></div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}${tag}</div><div class="card-sub">${escapeHTML(preferredPlaceType(t,ref))}${t.adresse?' · '+escapeHTML(t.adresse):''}${dist?' · '+escapeHTML(dist):''}</div></div>`;
-  }else if(!isFoodPlace(t)){
-    const category=placeCategory(t);
-    card.innerHTML=`<div class="category-icon ${escapeAttr(category)}">${escapeHTML(placeIcon(t))}</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${escapeHTML(t.type)}${t.adresse?' · '+escapeHTML(t.adresse):''}${dist?' · '+escapeHTML(dist):''}</div><div class="card-meta"><span class="utility-tag heat">${escapeHTML(utilityHeatNote(t))}</span></div></div>`;
-  }else{
-    card.innerHTML=`<div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${escapeHTML(t.type)}${t.adresse?' · '+escapeHTML(t.adresse):''}${dist?' · '+escapeHTML(dist):''}</div></div>`;
-  }
-  card.addEventListener('click',()=>selectTerrasse(t,card));
-  return card;
+  // Ouvrir une fiche ne doit jamais déplacer la carte : on garde strictement
+  // le quartier et le zoom choisis par la personne.
+  showPlaceSheet(t);
 }
 
 function renderList(h,query){
-  const renderVersion=++listRenderVersion;
-  if(listScrollCleanup){
-    listScrollCleanup();
-    listScrollCleanup=null;
-  }
   const list=document.getElementById('terrasseList');
   const q=normalize(query||'');
   let filtered=terrasses.filter(matchesActiveFilter);
@@ -2453,62 +2447,47 @@ function renderList(h,query){
     fragment.appendChild(divider);
   }
 
-  // Toutes les terrasses restent dans allListItems. Elles sont ajoutées à la
-  // liste à mesure du défilement, afin que l'ouverture et les fiches restent
-  // instantanées, même lorsqu'une ville en contient plus de 1 200.
   const allListItems = (!q && refTerrasses.length) ? sorted.filter(t=>!findReferenced(t)) : sorted;
+  const renderLimit = q ? Math.max(MAX_RENDERED_LIST_ITEMS, 900) : Math.min(allListItems.length, 900);
+  const listItems = allListItems.slice(0, renderLimit);
   if(!allListItems.length){const nr=document.createElement('div');nr.className='no-results';nr.innerHTML=`Aucun résultat${query?' pour <strong>"'+escapeHTML(query)+'"</strong>':''}`;fragment.appendChild(nr);list.appendChild(fragment);return;}
-  const cardsHost=document.createElement('div');
-  cardsHost.className='list-cards';
-  const loadStatus=document.createElement('div');
-  loadStatus.className='list-load-more';
-  cardsHost.appendChild(loadStatus);
-  fragment.appendChild(cardsHost);
-  list.appendChild(fragment);
-
-  let nextIndex=0;
-  let appendFrame=0;
-  const appendCards=()=>{
-    if(renderVersion!==listRenderVersion) return;
-    const size=nextIndex===0 ? LIST_INITIAL_RENDER_BATCH : LIST_RENDER_BATCH;
-    const end=Math.min(nextIndex+size,allListItems.length);
-    const batch=document.createDocumentFragment();
-    for(;nextIndex<end;nextIndex++) batch.appendChild(createListCard(allListItems[nextIndex],query));
-    cardsHost.insertBefore(batch,loadStatus);
-    const remaining=allListItems.length-nextIndex;
-    if(!remaining){
-      loadStatus.remove();
-      return;
+  listItems.forEach(t=>{
+    const ref=findReferenced(t);
+    const card=document.createElement('div'); card.className='card'+(ref?' partner':(!isFoodPlace(t)?' utility compact':' compact')); card.dataset.id=t.id;
+    const dist=distKm(t.lat,t.lng);
+    const tag=ref?`<span class="partner-tag">Sélection</span>`:'';
+    if(ref){
+      const photo=placePhotoUrl(t,ref,null);
+      card.innerHTML=`<div class="card-photo-wrap"><img class="card-photo" data-place-id="${escapeAttr(t.id)}" src="${escapeAttr(photo)}" alt="${escapeAttr(t.nom)}" loading="lazy" decoding="async" onerror="markPhotoError(this)"><span class="partner-sun">☀️</span></div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}${tag}</div><div class="card-sub">${escapeHTML(preferredPlaceType(t,ref))}${t.adresse?' · '+escapeHTML(t.adresse):''}${dist?' · '+escapeHTML(dist):''}</div></div>`;
+    }else if(!isFoodPlace(t)){
+      const category=placeCategory(t);
+      card.innerHTML=`<div class="category-icon ${escapeAttr(category)}">${escapeHTML(placeIcon(t))}</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${escapeHTML(t.type)}${t.adresse?' · '+escapeHTML(t.adresse):''}${dist?' · '+escapeHTML(dist):''}</div><div class="card-meta"><span class="utility-tag heat">${escapeHTML(utilityHeatNote(t))}</span></div></div>`;
+    }else{
+      card.innerHTML=`<div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${escapeHTML(t.type)}${t.adresse?' · '+escapeHTML(t.adresse):''}${dist?' · '+escapeHTML(dist):''}</div></div>`;
     }
-    loadStatus.textContent=`Encore ${remaining} terrasse${remaining>1?'s':''} dans la liste`;
-    requestAnimationFrame(()=>{
-      if(renderVersion!==listRenderVersion || nextIndex>=allListItems.length) return;
-      if(list.scrollHeight<=list.clientHeight+120) scheduleAppend();
-    });
-  };
-  const scheduleAppend=()=>{
-    if(renderVersion!==listRenderVersion || appendFrame || nextIndex>=allListItems.length) return;
-    appendFrame=requestAnimationFrame(()=>{
-      appendFrame=0;
-      appendCards();
-    });
-  };
-  const onListScroll=()=>{
-    if(list.scrollTop+list.clientHeight>=list.scrollHeight-Math.max(280,list.clientHeight*0.35)) scheduleAppend();
-  };
-  list.addEventListener('scroll',onListScroll,{passive:true});
-  listScrollCleanup=()=>{
-    if(appendFrame) cancelAnimationFrame(appendFrame);
-    list.removeEventListener('scroll',onListScroll);
-  };
-  appendCards();
-  const initialListItems=allListItems.slice(0,LIST_INITIAL_RENDER_BATCH);
-  const hydrateTargets=[...refTerrasses,...initialListItems.filter(t=>findReferenced(t))].filter((item,index,self)=>self.findIndex(other=>String(other.id)===String(item.id))===index);
-  setTimeout(()=>hydrateVisiblePhotos(hydrateTargets),80);
+    card.addEventListener('click',()=>selectTerrasse(t,card));
+    fragment.appendChild(card);
+  });
+  if(allListItems.length>listItems.length){
+    const more=document.createElement('div');
+    more.className='no-results';
+    more.innerHTML=`${allListItems.length-listItems.length} autres résultats disponibles. Utilise la recherche pour les retrouver instantanément.`;
+    fragment.appendChild(more);
+  }
+  list.appendChild(fragment);
+  const hydrateTargets=[...refTerrasses,...listItems.filter(t=>findReferenced(t))].filter((item,index,self)=>self.findIndex(other=>String(other.id)===String(item.id))===index);
+  setTimeout(()=>hydrateVisiblePhotos(hydrateTargets), 80);
 }
 
 const searchInput=document.getElementById('searchInput'),searchClear=document.getElementById('searchClear');
 searchInput.addEventListener('input',e=>{searchQuery=e.target.value;document.getElementById('drawerSearch').value=searchQuery;searchClear.classList.toggle('visible',searchQuery.length>0);renderList(currentHeure,searchQuery);if(searchQuery.length>0)openDrawer();});
+searchInput.addEventListener('keydown',async e=>{
+  if(e.key!=='Enter'||e.isComposing) return;
+  const query=e.currentTarget.value.trim();
+  if(!query) return;
+  e.preventDefault();
+  await switchToSearchedCity(query);
+});
 searchClear.addEventListener('click',()=>{searchInput.value='';searchQuery='';document.getElementById('drawerSearch').value='';searchClear.classList.remove('visible');renderList(currentHeure,'');});
 document.getElementById('drawerSearch').addEventListener('input',e=>{searchQuery=e.target.value;searchInput.value=searchQuery;searchClear.classList.toggle('visible',searchQuery.length>0);renderList(currentHeure,searchQuery);});
 document.getElementById('filterChips').addEventListener('click',e=>{
@@ -2609,8 +2588,7 @@ handler.setInputAction(click=>{
     const id=picked.id.properties?.id?.getValue();
     const t=terrasses.find(x=>String(x.id)===String(id));
     if(t){
-      if(isFeaturedOrFavorite(t)) showPlaceSheet(t);
-      else showTooltip(t,click.position.x,click.position.y);
+      showPlaceSheet(t);
       return;
     }
   }
@@ -2682,14 +2660,6 @@ async function loadTerrasses(){
   document.getElementById('terrasseList').style.display='none';
   const signature=areaSignature();
   const version=++terraceLoadVersion;
-  // On ouvre toujours la liste immédiatement avec les lieux fiables déjà
-  // embarqués. Les centaines d'autres terrasses sont ajoutées dès que les
-  // données OpenStreetMap/Google arrivent, sans laisser l'app sur un spinner.
-  const quick=mergeFeaturedPlaces(mergePlacesByIdentity([...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
-  paintTerrasses(quick,' · chargement…');
-  preloadGooglePhotosForFeatured(quick, 1200).then(()=>{
-    if(version===terraceLoadVersion && signature===areaSignature()) renderList(currentHeure,searchQuery);
-  }).catch(()=>{});
   const local = await localTerrassesForCurrentArea();
   if(version!==terraceLoadVersion || signature!==areaSignature()) return;
   if(local.length > 80){
@@ -2703,6 +2673,12 @@ async function loadTerrasses(){
     setTimeout(()=>hydrateNearbyInBackground(signature), 3500);
     return;
   }
+  const quick=mergeFeaturedPlaces(mergePlacesByIdentity([...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
+  paintTerrasses(quick,' · chargement…');
+  preloadGooglePhotosForFeatured(quick, 1200).then(()=>{
+    if(version===terraceLoadVersion && signature===areaSignature()) renderList(currentHeure,searchQuery);
+  }).catch(()=>{});
+
   fetchTerrasses().then(data=>{
     if(version!==terraceLoadVersion || signature!==areaSignature()) return;
     paintTerrasses(data);
