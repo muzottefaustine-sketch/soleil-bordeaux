@@ -43,6 +43,7 @@
     .splash-progress-bar { height: 100%; border-radius: 2px; background: var(--yellow); width: 0%; transition: width 0.25s ease; }
     .splash-status { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--text-3); white-space: nowrap; }
     #cesiumContainer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
+    #cesiumContainer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; background:#EDF2F4; }
     .cesium-widget canvas { outline: none !important; }
     .cesium-selection-wrapper, .cesium-infoBox { display: none !important; }
     .cesium-widget-credits { display: none !important; }
@@ -660,6 +661,13 @@ function completeSplash() {
 setTimeout(()=>{
   if(!splashDone) setProgress(92, 'La 3D se prépare…');
 }, 4500);
+// La carte 3D ne doit jamais bloquer l'application. Certaines ouvertures
+// depuis un fichier HTML (file://) ne renvoient pas correctement l'état des
+// tuiles Cesium : on révèle donc toujours l'app rapidement, même si la 3D
+// finit tranquillement de se préciser juste après.
+setTimeout(()=>{
+  if(!splashDone) completeSplash();
+}, 3200);
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwM2M0Njk1Yi1iYzI1LTQ3MzAtOGU1MS1iNzU4MTRiNWVkY2QiLCJpZCI6Mzk5MDg5LCJpYXQiOjE3NzI3ODI3NTh9.aGJt8zcDKPwk-pJsAcp0egE1wgJ5Vg41y_yQKNfUtYw';
 const viewer = new Cesium.Viewer('cesiumContainer', {
   terrainProvider: Cesium.createWorldTerrain(), skyBox: false, skyAtmosphere: false,
@@ -672,6 +680,7 @@ viewer.scene.globe.tileCacheSize = 500;
 viewer.scene.globe.preloadAncestors = true;
 viewer.scene.globe.preloadSiblings = false;
 viewer.scene.globe.enableLighting = true;
+viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#EDF2F4');
 viewer.scene.fog.enabled = false;
 viewer.shadows = true;
 viewer.resolutionScale = window.devicePixelRatio || 1;
@@ -1014,6 +1023,11 @@ async function loadCityDataScript(id){
   });
   return cityScriptPromises[id];
 }
+// Ce fichier HTML est livré seul : il n'embarque pas de dossier data/. Éviter
+// de tester une longue liste de fichiers absents est essentiel sur file://,
+// où Safari peut laisser une requête locale en attente. Si un jeu local est
+// ajouté un jour, renseigner ici son unique fichier JSON.
+const BUNDLED_CITY_DATA_FILES = Object.freeze({});
 async function fetchLocalCityData(id){
   if(cityDataCache[id] !== undefined) return cityDataCache[id];
   if(window.LOCAL_OSM_DATA?.[id]){
@@ -1023,6 +1037,10 @@ async function fetchLocalCityData(id){
   if(location.protocol === 'file:'){
     cityDataCache[id] = await loadCityDataScript(id);
     if(cityDataCache[id]) return cityDataCache[id];
+  const bundledFile=BUNDLED_CITY_DATA_FILES[id];
+  if(!bundledFile){
+    cityDataCache[id]=null;
+    return null;
   }
   for(const path of localDataPaths(id, 'json')){
     try{
@@ -1031,6 +1049,14 @@ async function fetchLocalCityData(id){
       cityDataCache[id] = await res.json();
       return cityDataCache[id];
     }catch(e){}
+  try{
+    const response=await fetchWithTimeout(bundledFile,{cache:'force-cache'},1800);
+    if(!response.ok) throw new Error('local data unavailable');
+    cityDataCache[id]=await response.json();
+    return cityDataCache[id];
+  }catch(e){
+    cityDataCache[id]=null;
+    return null;
   }
   cityDataCache[id] = await loadCityDataScript(id);
   return cityDataCache[id];
@@ -2624,6 +2650,14 @@ async function loadTerrasses(){
   document.getElementById('terrasseList').style.display='none';
   const signature=areaSignature();
   const version=++terraceLoadVersion;
+  // On ouvre toujours la liste immédiatement avec les lieux fiables déjà
+  // embarqués. Les centaines d'autres terrasses sont ajoutées dès que les
+  // données OpenStreetMap/Google arrivent, sans laisser l'app sur un spinner.
+  const quick=mergeFeaturedPlaces(mergePlacesByIdentity([...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
+  paintTerrasses(quick,' · chargement…');
+  preloadGooglePhotosForFeatured(quick, 1200).then(()=>{
+    if(version===terraceLoadVersion && signature===areaSignature()) renderList(currentHeure,searchQuery);
+  }).catch(()=>{});
   const local = await localTerrassesForCurrentArea();
   if(version!==terraceLoadVersion || signature!==areaSignature()) return;
   if(local.length > 80){
