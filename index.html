@@ -1,4 +1,5 @@
 <!DOCTYPE html><html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -29,6 +30,7 @@
     .panel-map input[type=range] { touch-action: pan-x; }
     #cesiumContainer { touch-action: none; }
     html, body { height: 100%; width: 100%; overflow: hidden; font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif; background: #000; position: fixed; inset: 0; color: var(--text); }
+
     #splash { position: fixed; inset: 0; z-index: 1000; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
     #splash.out { opacity: 0; pointer-events: none; }
     .splash-sun { width: 90px; height: 90px; margin-bottom: 24px; animation: splash-pulse 2.5s ease-in-out infinite; }
@@ -42,11 +44,12 @@
     .splash-progress-track { width: 100%; height: 2px; background: #E5E5EA; border-radius: 2px; overflow: hidden; }
     .splash-progress-bar { height: 100%; border-radius: 2px; background: var(--yellow); width: 0%; transition: width 0.25s ease; }
     .splash-status { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+
     #cesiumContainer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
-    #cesiumContainer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; background:#EDF2F4; }
     .cesium-widget canvas { outline: none !important; }
     .cesium-selection-wrapper, .cesium-infoBox { display: none !important; }
     .cesium-widget-credits { display: none !important; }
+
     #topBar {
       position: fixed; top: calc(env(safe-area-inset-top, 44px) + 12px); left: 50%;
       transform: translate3d(-50%, 0, 0); -webkit-transform: translate3d(-50%, 0, 0);
@@ -76,6 +79,7 @@
     }
     .icon-btn:hover { transform: translateY(-1px); }
     .icon-btn:active { transform: scale(0.94); background: rgba(255,255,255,0.98); }
+
     /* Bouton géoloc flottant en bas à droite */
     #btnGeo {
       position: fixed; bottom: calc(env(safe-area-inset-bottom,34px) + 140px); right: 16px;
@@ -107,6 +111,7 @@
       backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); font-size: 11px; font-weight: 800; text-align: center;
       box-shadow: 0 8px 24px rgba(15,23,42,0.18);
     }
+
     .panel-map {
       position: fixed; bottom: calc(env(safe-area-inset-bottom, 34px) + 16px); left: 50%;
       transform: translateX(-50%); background: var(--glass);
@@ -120,6 +125,7 @@
     .panel-map input[type=range] { width: 100%; cursor: pointer; -webkit-appearance: none; height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--yellow) var(--pct,46%), rgba(0,0,0,0.1) var(--pct,46%)); outline: none; }
     .panel-map input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: white; border: 3px solid var(--yellow); box-shadow: 0 4px 16px rgba(0,0,0,0.18); cursor: pointer; }
     .panel-labels { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-3); font-weight: 500; }
+
     #tooltip { position: fixed; z-index: 50; background: rgba(20,20,22,0.93); color: white; padding: 12px 18px; border-radius: 16px; font-size: 15px; font-weight: 600; pointer-events: none; opacity: 0; transform: translateY(6px); transition: opacity 0.18s, transform 0.18s; backdrop-filter: blur(12px); max-width: 260px; text-align: center; border: 1px solid rgba(255,255,255,0.08); }
     #tooltip.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
     #tooltip .tt-type { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; font-weight: 400; font-family: Arial, sans-serif; }
@@ -127,6 +133,7 @@
     #tooltip .tt-sun.sun { color: var(--yellow); }
     #tooltip .tt-sun.shade { color: #90CAF9; }
     #tooltip .tt-sun.utility { color: #B8F7D4; }
+
     #drawer { position: fixed; z-index: 40; background: linear-gradient(180deg, rgba(255,255,255,0.98), #F8FAFC 46%, #F5F7FA); display: flex; flex-direction: column; transition: transform 0.42s cubic-bezier(0.22,0.9,0.18,1); box-shadow: -22px 0 48px rgba(15,23,42,0.16); }
     @media (min-width: 641px) { #drawer { top:0; right:0; width:var(--panel-w); height:100vh; border-left:1px solid rgba(255,255,255,0.6); transform:translateX(110%); } #drawer.open { transform:translateX(0); } }
     @media (max-width: 640px) { #drawer { left:0; bottom:0; width:100%; height:84vh; border-radius:20px 20px 0 0; border-top:1px solid rgba(255,255,255,0.75); box-shadow:0 -18px 52px rgba(15,23,42,0.2); transform:translateY(110%); } #drawer.open { transform:translateY(0); } }
@@ -157,10 +164,7 @@
     @keyframes spin { to { transform:rotate(360deg); } }
     .list { flex:1; overflow-y:auto; padding:0 12px 32px; -webkit-overflow-scrolling:touch; scrollbar-width:none; scroll-behavior:smooth; }
     .list::-webkit-scrollbar { display:none; }
-    .list-cards { min-height:1px; }
-    .list-load-more { padding:14px 8px 4px; text-align:center; color:var(--text-3); font-size:12px; font-weight:700; }
     .card { display:flex; align-items:center; gap:12px; padding:10px; border-radius:var(--radius-md); cursor:pointer; transition: transform 0.16s ease, background 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; border:1px solid rgba(226,232,240,0.78); background:rgba(255,255,255,0.86); margin-bottom:9px; box-shadow:0 5px 18px rgba(15,23,42,0.055); }
-    @supports (content-visibility:auto) { .card.compact { content-visibility:auto; contain-intrinsic-size:70px; } }
     .card:last-child { margin-bottom:0; }
     .card:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); }
     .card:active, .card.active { transform: scale(0.985); background:var(--white); border-color:rgba(248,200,62,0.75); box-shadow:0 10px 28px rgba(248,200,62,0.16); }
@@ -196,6 +200,7 @@
     .live-dot { width:6px; height:6px; border-radius:50%; background:#30D158; animation:blink 2s ease-in-out infinite; flex-shrink:0; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
     .privacy-link { margin-left:auto; font-size:10px; color:var(--text-3); cursor:pointer; text-decoration:none; }
+
     /* ══ FICHE LIEU (bottom sheet) ══ */
     #psOverlay { position: fixed; inset: 0; z-index: 49; background: rgba(10,14,20,0.48); opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
     #psOverlay.open { opacity: 1; pointer-events: auto; }
@@ -243,12 +248,14 @@
     .ps-btn.fav { background:#FFF3B8; color:#7A5200; border:1px solid rgba(242,203,69,0.7); }
     .ps-btn.fav.active { background:linear-gradient(135deg,var(--yellow),var(--yellow-2)); color:#6B4A00; }
     .ps-spinner-wrap { display: flex; align-items: center; justify-content: center; height: 210px; background:linear-gradient(135deg,#FFF7D6,#DCEBFA); }
+
     /* Carte partenaire dans la liste */
     .card.partner { background:linear-gradient(135deg,#FFFFFF,#FFF9E8); border-color:#F6D86B; }
     .card.partner .card-photo-wrap { width:86px; height:86px; border:2px solid rgba(248,200,62,0.75); }
     .card.partner .card-name::after { content:'⭐'; margin-left:5px; font-size:15px; }
     .partner-tag { font-size:11px; font-weight:850; color:#7A5200; background:#FFE58A; padding:3px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
     .partner-sun { position:absolute; right:5px; bottom:5px; z-index:2; width:31px; height:31px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--yellow),var(--yellow-2)); box-shadow:0 6px 14px rgba(154,114,0,0.25); font-size:16px; border:2px solid #fff; }
+
     /* Section "Sélection" — carrousel horizontal de cafés référencés */
     .sel-wrap { padding: 6px 0 12px; }
     .sel-head { padding: 6px 20px 10px; display:flex; align-items:center; gap:7px; }
@@ -268,6 +275,7 @@
     .sel-sub { font-size:11px; color:var(--text-3); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .sel-happy { display:inline-block; margin-top:6px; font-size:10px; font-weight:600; color:#9A6B00; background:#FFF3D6; padding:2px 7px; border-radius:8px; }
     .list-divider { padding: 10px 20px 6px; font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.8px; }
+
     .ps-desc { font-size:14px; color:var(--text-2); line-height:1.55; margin-bottom:16px; }
     @media (max-width: 699px) {
       .ps-hero { min-height:170px; }
@@ -281,6 +289,7 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:0.01ms !important; }
     }
+
     /* Fiche restaurant — finition inspirée d'iOS, plus calme et lisible */
     #psOverlay { background:rgba(15,23,42,0.28); backdrop-filter:blur(10px) saturate(118%); -webkit-backdrop-filter:blur(10px) saturate(118%); }
     #placeSheet { background:rgba(255,255,255,0.96); border:1px solid rgba(255,255,255,0.76); border-bottom:0; border-radius:28px 28px 0 0; box-shadow:0 -12px 48px rgba(15,23,42,0.20); max-height:min(78dvh,680px); }
@@ -313,6 +322,7 @@
       #placeSheet { max-height:80dvh; }
       .ps-hero, .ps-photo, .ps-photo-placeholder { min-height:190px; height:190px; }
     }
+
     /* Fiche Sélection : compacte, actionnable et inspirée d'une fiche iOS. */
     #placeSheet { max-height:min(70dvh,600px); }
     .ps-close { width:36px; height:36px; top:6px; right:12px; font-size:22px; font-weight:500; }
@@ -335,30 +345,7 @@
     .ps-secondary-actions .ps-btn { display:grid; place-items:center; min-height:44px; padding:8px; text-decoration:none; }
     .ps-btn { position:relative; z-index:2; touch-action:manipulation; }
     @media (max-width:699px) { #placeSheet { max-height:72dvh; } }
-    /* Fiche façon Apple : toute la fiche défile, la fermeture reste visible. */
-    #placeSheet { height:min(84dvh,760px); max-height:calc(100dvh - max(12px, env(safe-area-inset-top, 0px))); padding-bottom:0; overflow-y:scroll; overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; scroll-behavior:smooth; scrollbar-width:none; }
-    #placeSheet::-webkit-scrollbar { display:none; }
-    .ps-handle { position:sticky; top:0; z-index:8; min-height:50px; padding:10px 0 6px; background:rgba(255,255,255,0.96); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border-radius:28px 28px 0 0; }
-    .ps-close { z-index:9; width:38px; height:38px; top:6px; right:12px; background:rgba(118,118,128,0.14); }
-    /* Fiche iPhone : une vraie zone de défilement native, séparée de l’en-tête.
-       Cette grille évite le bug Safari des panneaux fixed + flex qui ne défilent pas. */
-    #placeSheet { display:grid !important; grid-template-rows:52px minmax(0,1fr); height:min(84vh,760px); height:min(84svh,760px); max-height:calc(100vh - max(12px, env(safe-area-inset-top, 0px))); max-height:calc(100svh - max(12px, env(safe-area-inset-top, 0px))); padding:0; overflow:hidden !important; overscroll-behavior:contain; touch-action:auto; }
-    .ps-sheet-head { position:relative; z-index:8; min-height:52px; background:rgba(255,255,255,0.96); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border-radius:28px 28px 0 0; }
-    .ps-sheet-head .ps-handle { position:relative !important; display:grid; place-items:center; width:100%; height:52px; min-height:0; padding:0; touch-action:pan-y; }
-    .ps-sheet-head .ps-close { z-index:9; width:38px; height:38px; top:6px; right:12px; background:rgba(118,118,128,0.14); }
-    #psScroll { min-height:0; overflow-x:hidden; overflow-y:scroll; overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; scrollbar-width:none; }
-    #psScroll::-webkit-scrollbar { display:none; }
-    #psContent { min-height:100%; overflow:visible; }
-    .ps-body { padding-bottom:calc(34px + env(safe-area-inset-bottom, 16px)); }
-    @media (min-width:700px) { #placeSheet { height:min(76dvh,720px); } }
-    @media (max-width:699px) { #placeSheet { height:min(84dvh,760px); } }
-    @media (min-width:700px) { #placeSheet { height:min(76vh,720px); height:min(76svh,720px); } }
-    @media (max-width:699px) { #placeSheet { height:min(84vh,760px); height:min(84svh,760px); } }
-    /* Mobile : le contenu, et non le panneau, porte le défilement iOS. */
-    #placeSheet { display:flex !important; flex-direction:column; overflow:hidden !important; overscroll-behavior:contain; }
-    #psContent { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; scroll-behavior:smooth; scrollbar-width:none; }
-    #psContent::-webkit-scrollbar { display:none; }
-    .ps-handle { position:relative !important; flex:0 0 auto; }
+
     /* Navigateur intégré : le lien se charge sans faire quitter la carte. */
     #siteViewer { position:fixed; inset:0; z-index:90; display:flex; flex-direction:column; background:#F2F2F7; opacity:0; pointer-events:none; transform:translateY(12px); transition:opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
     #siteViewer.open { opacity:1; pointer-events:auto; transform:translateY(0); }
@@ -374,6 +361,7 @@
   </style>
 </head>
 <body>
+
 <div id="splash">
   <div class="splash-sun">
     <svg viewBox="0 0 100 100" width="90" height="90" xmlns="http://www.w3.org/2000/svg">
@@ -401,7 +389,9 @@
   </div>
   <div class="splash-status" id="splashStatus">Chargement…</div>
 </div>
+
 <div id="cesiumContainer"></div>
+
 <div id="topBar">
   <div class="search-glass">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#1C1C1E" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -412,34 +402,34 @@
     <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><rect width="18" height="2" rx="1" fill="#1C1C1E"/><rect y="6" width="18" height="2" rx="1" fill="#1C1C1E"/><rect y="12" width="18" height="2" rx="1" fill="#1C1C1E"/></svg>
   </button>
 </div>
+
 <button id="btnGeo" ontouchend="geolocate(event)" onclick="geolocate(event)" title="Ma position">
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3.5" fill="#007AFF"/><circle cx="10" cy="10" r="6" stroke="#007AFF" stroke-width="1.2" fill="none" opacity="0.35"/><path d="M10 2V4.5M10 15.5V18M2 10H4.5M15.5 10H18" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round"/></svg>
 </button>
 <div id="locationPill"><span class="location-dot"></span><span id="locationPillText">Position détectée</span></div>
 <div id="mode3dPill">Test 3D: clé Map Tiles non renseignée</div>
+
 <div class="panel-map">
   <h3>☀️ <span class="heure" id="heureAffichee">14h00</span></h3>
   <input type="range" id="timeSlider" min="6" max="21" value="14" step="0.25">
   <div class="panel-labels"><span>6h</span><span>20h</span></div>
 </div>
+
 <div id="tooltip">
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
   <div class="tt-sun" id="ttSun"></div>
   <a id="ttMaps" href="#" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;">Ouvrir dans Maps</a>
 </div>
+
 <!-- Fiche lieu (Foursquare + partenaires) -->
 <div id="psOverlay" onclick="hidePlaceSheet()"></div>
 <div id="placeSheet" role="dialog" aria-modal="true" aria-label="Fiche du lieu">
-  <div class="ps-sheet-head">
   <div class="ps-handle" id="psHandle" role="button" tabindex="0" aria-label="Fermer la fiche"><div class="ps-bar"></div></div>
   <button class="ps-close" id="psClose" type="button" aria-label="Fermer la fiche" title="Fermer la fiche">×</button>
   <div id="psContent"></div>
-    <div class="ps-handle" id="psHandle" role="button" tabindex="0" aria-label="Fermer la fiche"><div class="ps-bar"></div></div>
-    <button class="ps-close" id="psClose" type="button" aria-label="Fermer la fiche" title="Fermer la fiche">×</button>
-  </div>
-  <div id="psScroll" tabindex="0" aria-label="Détails du lieu"><div id="psContent"></div></div>
 </div>
+
 <section id="siteViewer" role="dialog" aria-modal="true" aria-label="Site du lieu" aria-hidden="true">
   <div class="site-viewer-bar">
     <button class="site-viewer-close" id="siteViewerClose" type="button" aria-label="Retour à l’application" title="Retour à l’application">×</button>
@@ -451,6 +441,7 @@
     <iframe id="siteViewerFrame" title="Site du lieu" referrerpolicy="strict-origin-when-cross-origin"></iframe>
   </div>
 </section>
+
 <div id="drawer">
   <div class="drawer-handle" id="drawerHandle"><div class="drawer-bar"></div></div>
   <div class="drawer-header">
@@ -479,6 +470,7 @@
     <a class="privacy-link" href="https://soleil-bordeaux.vercel.app/privacy.html" target="_blank">Confidentialité</a>
   </div>
 </div>
+
 <script>
 const CITIES = [
   {id:'bordeaux',   nom:'Bordeaux',    lat:44.837789, lng:-0.57918 },
@@ -516,18 +508,14 @@ const PERFORMANCE_MODE = false;
 const ENABLE_GOOGLE_3D_TEST = false;
 const ENABLE_SHADOW_RAYCASTS = false;
 const MAX_RENDERED_LIST_ITEMS = 280;
-// La liste garde tous les lieux, mais les ajoute par petites séries : sur un
-// téléphone, 1 200 cartes d'un coup rendrait le défilement moins fluide.
-const LIST_INITIAL_RENDER_BATCH = 120;
-const LIST_RENDER_BATCH = 120;
-const MAX_MARKERS_ON_MAP = 220;
+const MAX_MARKERS_ON_MAP = 950;
 const MARKER_RENDER_BATCH = 180;
-const MARKER_RENDER_BATCH = 72;
 const PHOTO_HYDRATE_LIMIT = 6;
 const LOCAL_CITY_RADIUS_METERS = 30000;
 let currentCity = {...CITIES[0], localDataIds: localDataCandidateIds(CITIES[0].id, CITIES[0].nom)};
 let userLat = null, userLng = null;
 let lastLoadedArea = null;
+
 async function fetchWithTimeout(url, options={}, timeout=10000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
@@ -537,6 +525,7 @@ async function fetchWithTimeout(url, options={}, timeout=10000) {
     clearTimeout(timer);
   }
 }
+
 async function setCurrentArea(lat, lng) {
   const nearbyCity = nearestKnownCity(lat, lng);
   currentCity = nearbyCity
@@ -554,6 +543,7 @@ async function setCurrentArea(lat, lng) {
   fetchAreaName(lat,lng,expectedId);
   return currentCity;
 }
+
 async function fetchAreaName(lat,lng,expectedId){
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lng}&accept-language=fr`;
@@ -573,6 +563,7 @@ async function fetchAreaName(lat,lng,expectedId){
     }
   } catch (e) {}
 }
+
 function updateLocationPill(accuracy){
   const pill = document.getElementById('locationPill');
   const text = document.getElementById('locationPillText');
@@ -581,6 +572,7 @@ function updateLocationPill(accuracy){
   text.textContent = `${currentCity?.nom || 'Position detectee'}${acc}`;
   pill.classList.add('visible');
 }
+
 function showAreaPill(label){
   const pill = document.getElementById('locationPill');
   const text = document.getElementById('locationPillText');
@@ -588,9 +580,11 @@ function showAreaPill(label){
   text.textContent = label;
   pill.classList.add('visible');
 }
+
 function metersBetween(lat1,lng1,lat2,lng2){
   return Math.hypot((lat1-lat2)*111320,(lng1-lng2)*111320*Math.cos(((lat1+lat2)/2)*Math.PI/180));
 }
+
 function nearestKnownCity(lat,lng,maxMeters=LOCAL_CITY_RADIUS_METERS){
   let best=null;
   CITIES.forEach(city=>{
@@ -599,15 +593,18 @@ function nearestKnownCity(lat,lng,maxMeters=LOCAL_CITY_RADIUS_METERS){
   });
   return best;
 }
+
 function slugifyCityName(value){
   return normalize(value)
     .replace(/['’]/g,'')
     .replace(/[^a-z0-9]+/g,'-')
     .replace(/^-+|-+$/g,'');
 }
+
 function uniq(values){
   return [...new Set(values.filter(Boolean))];
 }
+
 function localDataCandidateIds(...values){
   const slugs = values.flatMap(value=>{
     const slug=slugifyCityName(value);
@@ -615,11 +612,13 @@ function localDataCandidateIds(...values){
   });
   return uniq(slugs);
 }
+
 function clearPlaces(){
   Object.keys(markerEntities).forEach(k => { viewer.entities.remove(markerEntities[k]); delete markerEntities[k]; });
   terrasses = [];
   sunStates = {};
 }
+
 async function switchCity(cityId){
   const city = CITIES.find(c => c.id === cityId);
   if(!city) return;
@@ -638,6 +637,7 @@ async function switchCity(cityId){
   frameArea(city.lng, city.lat, {animate:true});
   await loadTerrasses();
 }
+
 const drawer = document.getElementById('drawer');
 function openDrawer()  { drawer.classList.add('open'); }
 function closeDrawer() { drawer.classList.remove('open'); }
@@ -645,6 +645,7 @@ const dhandle = document.getElementById('drawerHandle');
 let ty0 = 0;
 dhandle.addEventListener('touchstart', e => { ty0 = e.touches[0].clientY; }, { passive:true });
 dhandle.addEventListener('touchend',   e => { if (e.changedTouches[0].clientY - ty0 > 50) closeDrawer(); }, { passive:true });
+
 const progressBar = document.getElementById('progressBar');
 let splashDone = false, loadProgress = 0;
 function setProgress(pct, label) {
@@ -661,14 +662,9 @@ function completeSplash() {
 setTimeout(()=>{
   if(!splashDone) setProgress(92, 'La 3D se prépare…');
 }, 4500);
-// La carte 3D ne doit jamais bloquer l'application. Certaines ouvertures
-// depuis un fichier HTML (file://) ne renvoient pas correctement l'état des
-// tuiles Cesium : on révèle donc toujours l'app rapidement, même si la 3D
-// finit tranquillement de se préciser juste après.
-setTimeout(()=>{
-  if(!splashDone) completeSplash();
-}, 3200);
+
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwM2M0Njk1Yi1iYzI1LTQ3MzAtOGU1MS1iNzU4MTRiNWVkY2QiLCJpZCI6Mzk5MDg5LCJpYXQiOjE3NzI3ODI3NTh9.aGJt8zcDKPwk-pJsAcp0egE1wgJ5Vg41y_yQKNfUtYw';
+
 const viewer = new Cesium.Viewer('cesiumContainer', {
   terrainProvider: Cesium.createWorldTerrain(), skyBox: false, skyAtmosphere: false,
   baseLayerPicker: false, homeButton: false, infoBox: false, selectionIndicator: false,
@@ -680,7 +676,6 @@ viewer.scene.globe.tileCacheSize = 500;
 viewer.scene.globe.preloadAncestors = true;
 viewer.scene.globe.preloadSiblings = false;
 viewer.scene.globe.enableLighting = true;
-viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#EDF2F4');
 viewer.scene.fog.enabled = false;
 viewer.shadows = true;
 viewer.resolutionScale = window.devicePixelRatio || 1;
@@ -689,6 +684,7 @@ viewer.scene.postProcessStages.fxaa.enabled = false;
 viewer.scene.screenSpaceCameraController.inertiaSpin = 0.9;
 viewer.scene.screenSpaceCameraController.inertiaTranslate = 0.9;
 viewer.scene.screenSpaceCameraController.inertiaZoom = 0.8;
+
 // Même cadrage dans toute la France : la hauteur est calculée au-dessus du sol,
 // pas au-dessus du niveau de la mer. Cela évite les vues trop basses ou trop hautes
 // quand on passe de Bordeaux à Paris, à une ville en pente ou à la géolocalisation.
@@ -723,9 +719,11 @@ function frameArea(lng, lat, {animate=true, range=AREA_CAMERA_RANGE, pitch=AREA_
     .catch(() => {});
 }
 frameArea(currentCity.lng, currentCity.lat, {animate:false});
+
 setProgress(10, 'Chargement…');
 const osmBuildings = viewer.scene.primitives.add(Cesium.createOsmBuildings());
 osmBuildings.maximumScreenSpaceError = 2;
+
 viewer.scene.globe.tileLoadProgressEvent.addEventListener(remaining => {
   setProgress(Math.min(60, 10 + (1 - Math.min(remaining, 50) / 50) * 50), remaining === 0 ? 'Bâtiments…' : 'Chargement…');
   if (remaining === 0 && terrasses.length > 0 && !computing && ENABLE_SHADOW_RAYCASTS) { scheduleShadow(); }
@@ -744,6 +742,7 @@ viewer.scene.postRender.addEventListener(function watchGlobe() {
   if (viewer.scene.globe.tilesLoaded && !globeOk) { globeOk = true; setProgress(70, 'Bâtiments…'); viewer.scene.postRender.removeEventListener(watchGlobe); tryOpen(); }
 });
 osmBuildings.readyPromise.then(() => { buildingsOk = true; setProgress(85, 'Finalisation…'); tryOpen(); }).catch(() => { buildingsOk = true; tryOpen(); });
+
 let userDot = null, userHalo = null, userPulse = null, pulseT = 0, pulseStarted = false;
 function makeUserDot() {
   const c = document.createElement('canvas'); c.width = 32; c.height = 32; const ctx = c.getContext('2d');
@@ -758,6 +757,7 @@ function placeUserDot(lng, lat, accuracy) {
   if (userHalo) viewer.entities.remove(userHalo);
   if (userPulse) viewer.entities.remove(userPulse);
   const pos = Cesium.Cartesian3.fromDegrees(lng, lat, 1);
+
   // Rond bleu de précision (taille = précision GPS réelle, comme Apple Plans)
   const radius = Math.min(Math.max(accuracy || 35, 20), 200);
   userHalo = viewer.entities.add({
@@ -769,6 +769,7 @@ function placeUserDot(lng, lat, accuracy) {
       heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
     }
   });
+
   // Anneau pulsant
   userPulse = viewer.entities.add({
     position: pos,
@@ -782,6 +783,7 @@ function placeUserDot(lng, lat, accuracy) {
     }
   });
   if (!pulseStarted) { pulseStarted = true; viewer.clock.onTick.addEventListener(() => { pulseT += 0.012; }); }
+
   // Point bleu central
   userDot = viewer.entities.add({
     position: Cesium.Cartesian3.fromDegrees(lng, lat, 3),
@@ -790,11 +792,13 @@ function placeUserDot(lng, lat, accuracy) {
   userLat = lat; userLng = lng;
   updateLocationPill(accuracy);
 }
+
 // Centre la caméra EXACTEMENT sur la position (le rond bleu au centre de l'écran)
 // flyToBoundingSphere cale le centre de la sphère au centre de l'écran, même avec la vue inclinée
 function focusUser(lng, lat, animate) {
   frameArea(lng, lat, {animate, range:AREA_CAMERA_RANGE, pitch:Cesium.Math.toRadians(-55)});
 }
+
 // Géolocalisation manuelle (bouton) — recentre sur la position réelle
 function geolocate(e) {
   if(e) e.preventDefault();
@@ -813,8 +817,10 @@ function geolocate(e) {
     alert("Position introuvable. Vérifiez que la localisation est autorisée.");
   }, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
 }
+
 let terrasses=[], sunStates={}, searchQuery='', activeFilter='all', currentHeure=14, currentDate=new Date();
 const markerEntities={};
+
 const FOOD_AMENITIES = new Set(['bar','cafe','restaurant','pub','biergarten']);
 const AMENITY_VALIDES = new Set([...FOOD_AMENITIES,'drinking_water','fountain','parking','bicycle_parking','library','cinema']);
 const PLACE_CATEGORY_META = {
@@ -893,6 +899,7 @@ function osmFeatureToPlace(f,index,source='osm'){
     source
   };
 }
+
 const BORDEAUX_FALLBACK_TERRASSES = [
   ['Le Bistrot du Musée','Restaurant','37 Place Pey Berland',44.83715,-0.57765],
   ['Café Rohan','Brasserie','Place Pey Berland',44.83795,-0.57720],
@@ -930,6 +937,7 @@ const BORDEAUX_FALLBACK_TERRASSES = [
   ['Mampuku','Restaurant','9 Rue Ausone',44.83868,-0.56870],
   ['Soif','Bar à vin','35 Rue du Cancera',44.83988,-0.57107]
 ];
+
 const FALLBACK_UTILITY_PLACES = [
   ['Jardin Public','Parc','Cours de Verdun','park',44.84872,-0.57444],
   ['Parc Bordelais','Parc','Rue du Bocage','park',44.85539,-0.60443],
@@ -945,6 +953,7 @@ const FALLBACK_UTILITY_PLACES = [
   ['Jetée Bélisaire','Point d’eau','Cap Ferret','water',44.65035,-1.24448],
   ['Parking Bélisaire','Parking','Cap Ferret','parking',44.65072,-1.24518]
 ];
+
 function localFallbackTerrasses(){
   const bordeaux={lat:44.837789,lng:-0.57918};
   if(metersBetween(currentCity.lat,currentCity.lng,bordeaux.lat,bordeaux.lng)>18000) return [];
@@ -959,6 +968,7 @@ function localFallbackTerrasses(){
     source:'fallback'
   }));
 }
+
 function localFallbackUtilities(){
   return FALLBACK_UTILITY_PLACES
     .filter(p=>p[3]!=='parking' && metersBetween(currentCity.lat,currentCity.lng,p[4],p[5])<=18000)
@@ -973,6 +983,7 @@ function localFallbackUtilities(){
       source:'fallback-utility'
     }));
 }
+
 function osmDataToTerrasses(data, source='osm'){
   const seen = new Set();
   return (data?.features || data?.elements || [])
@@ -987,6 +998,7 @@ function osmDataToTerrasses(data, source='osm'){
       return true;
     })
 }
+
 const cityDataCache = {};
 const cityScriptPromises = {};
 function localDataPaths(id, ext){
@@ -1023,11 +1035,6 @@ async function loadCityDataScript(id){
   });
   return cityScriptPromises[id];
 }
-// Ce fichier HTML est livré seul : il n'embarque pas de dossier data/. Éviter
-// de tester une longue liste de fichiers absents est essentiel sur file://,
-// où Safari peut laisser une requête locale en attente. Si un jeu local est
-// ajouté un jour, renseigner ici son unique fichier JSON.
-const BUNDLED_CITY_DATA_FILES = Object.freeze({});
 async function fetchLocalCityData(id){
   if(cityDataCache[id] !== undefined) return cityDataCache[id];
   if(window.LOCAL_OSM_DATA?.[id]){
@@ -1037,10 +1044,6 @@ async function fetchLocalCityData(id){
   if(location.protocol === 'file:'){
     cityDataCache[id] = await loadCityDataScript(id);
     if(cityDataCache[id]) return cityDataCache[id];
-  const bundledFile=BUNDLED_CITY_DATA_FILES[id];
-  if(!bundledFile){
-    cityDataCache[id]=null;
-    return null;
   }
   for(const path of localDataPaths(id, 'json')){
     try{
@@ -1049,18 +1052,11 @@ async function fetchLocalCityData(id){
       cityDataCache[id] = await res.json();
       return cityDataCache[id];
     }catch(e){}
-  try{
-    const response=await fetchWithTimeout(bundledFile,{cache:'force-cache'},1800);
-    if(!response.ok) throw new Error('local data unavailable');
-    cityDataCache[id]=await response.json();
-    return cityDataCache[id];
-  }catch(e){
-    cityDataCache[id]=null;
-    return null;
   }
   cityDataCache[id] = await loadCityDataScript(id);
   return cityDataCache[id];
 }
+
 async function localTerrassesForCurrentArea(){
   const localCity = currentCity.dynamic
     ? nearestKnownCity(currentCity.lat,currentCity.lng)
@@ -1078,6 +1074,7 @@ async function localTerrassesForCurrentArea(){
   }
   return [];
 }
+
 const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.openstreetmap.ru/api/interpreter'];
 const OVERPASS_RADIUS_METERS = 18000;
 const OVERPASS_TIMEOUT_MS = 24000;
@@ -1131,6 +1128,7 @@ async function fetchFoodPlacesFromOverpass(){
   const q=`[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];nwr["amenity"~"^(bar|cafe|restaurant|pub|biergarten)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});out center tags;`;
   return fetchOverpassPlaces(q,'osm').then(items=>items.filter(isFoodPlace));
 }
+
 async function fetchTerrasses(){
   let local = await localTerrassesForCurrentArea();
   const fallback = [...localFallbackTerrasses(), ...localFallbackUtilities()];
@@ -1138,6 +1136,7 @@ async function fetchTerrasses(){
     const merged = mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...fallback]));
     return merged.slice(0, MAX_TERRASSES);
   }
+
   try{
     const overpassPlaces = await fetchFoodPlacesFromOverpass();
     const merged = mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...overpassPlaces, ...fallback]));
@@ -1147,6 +1146,7 @@ async function fetchTerrasses(){
     return merged.slice(0, MAX_TERRASSES);
   }
 }
+
 async function fetchUtilityPlacesFromOverpass(){
   const q=`[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];(
     nwr["amenity"~"^(drinking_water|fountain|library|cinema)$"](around:${OVERPASS_RADIUS_METERS},${currentCity.lat},${currentCity.lng});
@@ -1158,6 +1158,7 @@ async function fetchUtilityPlacesFromOverpass(){
   );out center tags;`;
   return fetchOverpassPlaces(q,'utility-osm').then(items=>items.filter(t=>!isFoodPlace(t) && placeCategory(t)!=='parking'));
 }
+
 function getSunDir(jd){
   const s=Cesium.Simon1994PlanetaryPositions.computeSunPositionInEarthInertialFrame(jd);
   const m=Cesium.Transforms.computeIcrfToFixedMatrix(jd); if(!m) return null;
@@ -1206,23 +1207,11 @@ function checkSunny(t,sunDir,relaxed=false){
   if(valid<3) return sunAboveHorizon(t.lng,t.lat,sunDir);
   return sunny>0;
 }
+
 let cameraMoving=false;
 viewer.camera.moveStart.addEventListener(()=>{cameraMoving=true;});
 viewer.camera.moveEnd.addEventListener(()=>{cameraMoving=false;});
-let markerViewportTimer=null;
-viewer.camera.moveStart.addEventListener(()=>{
-  cameraMoving=true;
-  clearTimeout(markerViewportTimer);
-});
-viewer.camera.moveEnd.addEventListener(()=>{
-  cameraMoving=false;
-  clearTimeout(markerViewportTimer);
-  // On ne recalcule les soleils qu'une fois le geste terminé. Les repères
-  // restent donc stables pendant le déplacement, puis s'adaptent au quartier.
-  markerViewportTimer=setTimeout(()=>{
-    syncDots();
-  },125);
-});
+
 let shadowDebounce=null,computing=false,shadowVersion=0,shadowPending=false;
 function computeFastSunStates(){
   const sunDir=getSunDir(viewer.clock.currentTime);
@@ -1269,6 +1258,7 @@ async function runShadow(){
   computing=false;
   if(shadowPending) scheduleShadow();
 }
+
 function makeSunIcon(sunny){
   const c=document.createElement('canvas'); c.width=20; c.height=20; const ctx=c.getContext('2d');
   if(sunny===true){
@@ -1322,51 +1312,11 @@ function markerImageForPlace(t){
   return s===true?DOT_SUN:s===false?DOT_SHADE:DOT_UNKNOWN;
 }
 function markerSizeForPlace(t){
-  const base=findReferenced(t) ? 34 : (isFoodPlace(t) ? 18 : 26);
-  return String(t.id)===String(activePlaceId) ? base+8 : base;
+  if(findReferenced(t)) return 34;
+  return isFoodPlace(t) ? 18 : 26;
 }
-const MARKER_VIEWPORT_PAD_RATIO=0.16;
-const MARKER_VIEWPORT_MIN_PAD=Cesium.Math.toRadians(0.002);
-const MARKER_VIEWPORT_MAX_PAD=Cesium.Math.toRadians(0.10);
-let lastMarkerSector=null;
+
 let markerRenderToken=0;
-function wrappedLonDelta(a,b){ return Cesium.Math.negativePiToPi(a-b); }
-function markerCameraSector(){
-  try{
-    const rect=viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
-    if(!rect || ![rect.west,rect.east,rect.south,rect.north].every(Number.isFinite)) return lastMarkerSector;
-    let lonSpan=rect.east-rect.west;
-    if(lonSpan<0) lonSpan+=Cesium.Math.TWO_PI;
-    if(lonSpan<1e-6) lonSpan=Cesium.Math.TWO_PI;
-    const latSpan=Math.max(0,rect.north-rect.south);
-    lastMarkerSector={
-      lon:Cesium.Math.negativePiToPi(rect.west+lonSpan/2),
-      lat:(rect.south+rect.north)/2,
-      halfLon:lonSpan/2,
-      halfLat:latSpan/2,
-      padLon:Math.min(Math.max(lonSpan*MARKER_VIEWPORT_PAD_RATIO,MARKER_VIEWPORT_MIN_PAD),MARKER_VIEWPORT_MAX_PAD),
-      padLat:Math.min(Math.max(latSpan*MARKER_VIEWPORT_PAD_RATIO,MARKER_VIEWPORT_MIN_PAD),MARKER_VIEWPORT_MAX_PAD),
-      allLongitudes:lonSpan>=Cesium.Math.TWO_PI-1e-6
-    };
-    return lastMarkerSector;
-  }catch(e){
-    return lastMarkerSector;
-  }
-}
-function markerIsInSector(t,sector){
-  if(!sector) return true;
-  const lat=Cesium.Math.toRadians(t.lat), lon=Cesium.Math.toRadians(t.lng);
-  if(lat<sector.lat-sector.halfLat-sector.padLat || lat>sector.lat+sector.halfLat+sector.padLat) return false;
-  return sector.allLongitudes || Math.abs(wrappedLonDelta(lon,sector.lon))<=sector.halfLon+sector.padLon;
-}
-function markerSectorDistance(t,sector){
-  if(!sector) return userLat!==null
-    ? distMeters(t.lat,t.lng)
-    : metersBetween(currentCity.lat,currentCity.lng,t.lat,t.lng);
-  const dx=wrappedLonDelta(Cesium.Math.toRadians(t.lng),sector.lon)*Math.cos(sector.lat);
-  const dy=Cesium.Math.toRadians(t.lat)-sector.lat;
-  return dx*dx+dy*dy;
-}
 function prioritizedMarkerItems(items=terrasses){
   const source = Array.isArray(items) ? items : terrasses;
   const sorted = [...source].sort((a,b)=>{
@@ -1377,24 +1327,11 @@ function prioritizedMarkerItems(items=terrasses){
     return metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng);
   });
   return sorted.slice(0, MAX_MARKERS_ON_MAP);
-  const source=Array.isArray(items)?items:terrasses;
-  const sector=markerCameraSector();
-  const targets=source.filter(t=>markerIsInSector(t,sector)).sort((a,b)=>{
-    const selectedA=String(a.id)===String(activePlaceId);
-    const selectedB=String(b.id)===String(activePlaceId);
-    if(selectedA!==selectedB) return selectedA?-1:1;
-    const featuredA=findReferenced(a)?0:1, featuredB=findReferenced(b)?0:1;
-    if(featuredA!==featuredB) return featuredA-featuredB;
-    return markerSectorDistance(a,sector)-markerSectorDistance(b,sector);
-  }).slice(0,MAX_MARKERS_ON_MAP);
-  return targets;
 }
+
 function syncDots(items=terrasses){
   const token=++markerRenderToken;
   const fullRefresh = !items || items===terrasses || items.length===terrasses.length;
-  if(fullRefresh && cameraMoving){
-    return;
-  }
   // La carte 3D reste dédiée aux terrasses. Les lieux Canicule vivent dans
   // leur liste, sans transformer la carte en série d'emojis.
   const mapItems = fullRefresh
@@ -1428,6 +1365,7 @@ function syncDots(items=terrasses){
   };
   requestAnimationFrame(renderBatch);
 }
+
 const tooltip=document.getElementById('tooltip'); let ttTimeout=null;
 function showTooltip(t,x,y){
   document.getElementById('ttName').textContent=t.nom;
@@ -1448,6 +1386,7 @@ function showTooltip(t,x,y){
   clearTimeout(ttTimeout); ttTimeout=setTimeout(()=>tooltip.classList.remove('visible'),6000);
 }
 function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');}
+
 // ══════════════════════════════════════════════
 // CAFÉS RÉFÉRENCÉS — ta sélection mise en avant
 // Remplis un bloc par café. Seuls ceux listés ici apparaissent dans la
@@ -1612,6 +1551,7 @@ function referencedRank(nom){
   const ref=findReferenced(nom);
   return ref ? REFERENCED.indexOf(ref) : 999;
 }
+
 function referencedToPlace(ref){
   return {
     id:`featured-${normalize(ref.match).replace(/[^a-z0-9]+/g,'-')}`,
@@ -1623,10 +1563,12 @@ function referencedToPlace(ref){
     featured:true
   };
 }
+
 function preferredPlaceType(t,ref){
   const type=(ref?.type || '').trim();
   return !type || normalize(type)==='terrasse' ? (t.type || 'Adresse référencée') : type;
 }
+
 function mergeFeaturedPlaces(items){
   const places=[...items];
   const existing=new Set(places.map(t=>normalize(t.nom)));
@@ -1640,6 +1582,7 @@ function mergeFeaturedPlaces(items){
   });
   return places;
 }
+
 const PHOTO_FALLBACKS = {
   restaurant: [
     "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80",
@@ -1658,6 +1601,7 @@ const PHOTO_FALLBACKS = {
     "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80"
   ]
 };
+
 function hashString(str){
   let h=0;
   for(let i=0;i<str.length;i++) h=((h<<5)-h+str.charCodeAt(i))|0;
@@ -1696,11 +1640,13 @@ function escapeHTML(value){
 }
 function escapeAttr(value){ return escapeHTML(value); }
 function markPhotoError(img){ if(img&&img.parentElement) img.parentElement.classList.add('photo-error'); }
+
 // ══ GOOGLE PLACES (cle HTML en local + proxy Vercel en production) ══
 function hasGoogleMapsKey(){
   const key = (GOOGLE_MAPS_API_KEY || '').trim();
   return key.length > 8 && !/^AIzaSyA_REMPLACER/i.test(key);
 }
+
 let googlePlacesLoaderPromise = null;
 let googlePlacesService = null;
 function loadGooglePlacesLibrary(){
@@ -1734,15 +1680,18 @@ function loadGooglePlacesLibrary(){
   });
   return googlePlacesLoaderPromise;
 }
+
 async function getGooglePlacesService(){
   const ready = await loadGooglePlacesLibrary();
   if(!ready) return null;
   if(!googlePlacesService) googlePlacesService = new google.maps.places.PlacesService(document.createElement('div'));
   return googlePlacesService;
 }
+
 function googleStatusOk(status){
   return window.google?.maps?.places && status === google.maps.places.PlacesServiceStatus.OK;
 }
+
 function latLngFromGoogle(place){
   const loc = place?.geometry?.location;
   if(!loc) return null;
@@ -1751,6 +1700,7 @@ function latLngFromGoogle(place){
   if(!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
   return {lat,lng};
 }
+
 function googlePhotoFromPlace(place, maxWidth=1100){
   try {
     return place?.photos?.[0]?.getUrl({maxWidth, maxHeight:760}) || '';
@@ -1758,13 +1708,16 @@ function googlePhotoFromPlace(place, maxWidth=1100){
     return '';
   }
 }
+
 function stripAttribution(attrs){
   const raw = (attrs || []).join(' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
   return raw.slice(0, 90);
 }
+
 function googlePriceLabel(level){
   return Number.isInteger(level) && level>=0 && level<=4 ? ['Gratuit','€','€€','€€€','€€€€'][level] : '';
 }
+
 function normalizeGoogleJsPlace(place){
   if(!place) return {};
   const coords = latLngFromGoogle(place);
@@ -1786,6 +1739,7 @@ function normalizeGoogleJsPlace(place){
     lng: coords?.lng
   };
 }
+
 async function findGooglePlaceInBrowser(t){
   const service = await getGooglePlacesService();
   if(!service) return {};
@@ -1810,6 +1764,7 @@ async function findGooglePlaceInBrowser(t){
     });
   });
 }
+
 function googlePlaceTypeLabel(place, fallbackType){
   const types = place?.types || [];
   if(types.includes('cafe')) return 'Café';
@@ -1817,6 +1772,7 @@ function googlePlaceTypeLabel(place, fallbackType){
   if(types.includes('restaurant')) return 'Restaurant';
   return fallbackType === 'cafe' ? 'Café' : fallbackType === 'bar' ? 'Bar' : 'Restaurant';
 }
+
 function googlePlaceToTerrasse(place, fallbackType){
   const coords = latLngFromGoogle(place);
   if(!coords || !place?.name || !place?.place_id) return null;
@@ -1833,6 +1789,7 @@ function googlePlaceToTerrasse(place, fallbackType){
     googleDetails:normalizeGoogleJsPlace(place)
   };
 }
+
 function googleNearbySearch(service, type){
   return new Promise(resolve => {
     const found = [];
@@ -1859,12 +1816,14 @@ function googleNearbySearch(service, type){
     service.nearbySearch(request, collect);
   });
 }
+
 async function fetchGoogleNearbyTerrasses(){
   const service = await getGooglePlacesService();
   if(!service) return [];
   const groups = await Promise.all(GOOGLE_NEARBY_TYPES.map(type => googleNearbySearch(service, type)));
   return mergePlacesByIdentity(groups.flat());
 }
+
 function mergePlacesByIdentity(items){
   const clean = (items || []).filter(t => t && t.nom && Number.isFinite(t.lat) && Number.isFinite(t.lng));
   const out = [];
@@ -1883,6 +1842,7 @@ function mergePlacesByIdentity(items){
   });
   return out.sort((a,b)=>metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng));
 }
+
 const googlePlaceCache={};
 async function fetchGooglePlace(t){
   if(Object.prototype.hasOwnProperty.call(googlePlaceCache,t.id)) return googlePlaceCache[t.id];
@@ -1917,6 +1877,7 @@ async function fetchGooglePlace(t){
     return {};
   }
 }
+
 // Foursquare reste un secours si Google ne renvoie pas encore le lieu.
 const fsqCache={};
 async function fetchFoursquare(t){
@@ -1929,6 +1890,7 @@ async function fetchFoursquare(t){
     return data;
   }catch(e){ fsqCache[t.id]={}; return {}; }
 }
+
 function combinePlaceDetails(ref, details, source){
   if(!ref) return {...details,source};
   return {
@@ -1952,6 +1914,7 @@ async function fetchPlaceDetails(t){
   if(fsq.photo||fsq.rating||fsq.tel) return combinePlaceDetails(ref,fsq,'foursquare');
   return ref ? {...ref,source:'referenced'} : {};
 }
+
 function googleMapsSearchUrl(t){
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.nom+', '+(currentCity.nom||'France'))}`;
 }
@@ -1967,6 +1930,7 @@ function googleReviewsUrl(t,details={}){
 function googleEventsUrl(t){
   return `https://www.google.com/search?q=${encodeURIComponent(`${t.nom} ${currentCity.nom||''} événements`)}`;
 }
+
 function applyGooglePhoto(t,details){
   if(!details?.photo) return;
   const selector=`img[data-place-id="${CSS.escape(String(t.id))}"]`;
@@ -1984,6 +1948,7 @@ function applyGooglePhoto(t,details){
     credit.textContent=details.photoAttribution ? `Photo : ${details.photoAttribution}` : 'Photo : Google';
   });
 }
+
 let photoHydrationVersion=0;
 async function hydrateVisiblePhotos(items){
   const version=++photoHydrationVersion;
@@ -1995,9 +1960,11 @@ async function hydrateVisiblePhotos(items){
     results.forEach(([t,details])=>applyGooglePhoto(t,details));
   }
 }
+
 function timeoutAfter(ms){
   return new Promise(resolve=>setTimeout(resolve,ms));
 }
+
 async function preloadGooglePhotosForFeatured(items, timeoutMs=2200){
   const targets=(items||[]).filter(t=>findReferenced(t)).slice(0,10);
   if(!targets.length || !hasGoogleMapsKey()) return;
@@ -2012,6 +1979,7 @@ async function preloadGooglePhotosForFeatured(items, timeoutMs=2200){
     timeoutAfter(timeoutMs)
   ]);
 }
+
 let activePlaceId=null;
 const FAVORITES_KEY='soleilenterrasse:favorites:v1';
 let favoriteIds=new Set(JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]'));
@@ -2027,6 +1995,7 @@ function toggleFavorite(t){
   saveFavorites();
   return favoriteIds.has(key);
 }
+
 function buildSunTimeline(t){
   const hours=[8,10,12,14,16,18,20];
   return `<div class="sun-hours">${hours.map(hour=>{
@@ -2036,6 +2005,7 @@ function buildSunTimeline(t){
     return `<div class="sun-hour ${sunny?'sun':'shade'}"><div>${hour}h</div><div>${sunny?'☀️':'•'}</div></div>`;
   }).join('')}</div>`;
 }
+
 function weatherLabel(code){
   if([0,1].includes(code)) return 'Ciel dégagé';
   if([2,3].includes(code)) return 'Nuageux';
@@ -2074,12 +2044,11 @@ async function hydrateWeatherForPlace(t){
   }
 }
 function hidePlaceSheet(){
-  const hadActivePlace=activePlaceId!==null;
   activePlaceId=null;
   document.getElementById('placeSheet').classList.remove('open');
   document.getElementById('psOverlay').classList.remove('open');
-  if(hadActivePlace) syncDots();
 }
+
 (()=>{
   const handle=document.getElementById('psHandle');
   const close=document.getElementById('psClose');
@@ -2130,9 +2099,11 @@ function hidePlaceSheet(){
     showExternalSite(href,link.textContent.trim());
   });
 })();
+
 function isFeaturedOrFavorite(t){
   return !!findReferenced(t) || isFavorite(t);
 }
+
 function directReservationUrl(value){
   if(!value) return '';
   try{
@@ -2146,11 +2117,9 @@ function sheetLink(className, href, label, ariaLabel=''){
   if(!safeHref) return '';
   const labelAttr=ariaLabel ? ` aria-label="${escapeAttr(ariaLabel)}"` : '';
   const webLink=/^https?:\/\//i.test(safeHref);
-  const googleLink=/^https?:\/\/(?:[^/]+\.)?google\.[^/]+/i.test(safeHref);
   // Les sites s’affichent dans un navigateur intégré, avec un retour immédiat
-  // vers la carte. Google Maps interdit cet affichage : il s’ouvre donc dans
-  // un nouvel onglet, en laissant l’application intacte derrière.
-  return `<a class="${className}" href="${escapeAttr(safeHref)}"${webLink&&!googleLink?' data-sheet-link="true"':''}${googleLink?' target="_blank" rel="noopener noreferrer"':''}${labelAttr}>${escapeHTML(label)}</a>`;
+  // vers la carte. Téléphone et e-mail conservent le comportement natif.
+  return `<a class="${className}" href="${escapeAttr(safeHref)}"${webLink?' data-sheet-link="true"':''}${labelAttr}>${escapeHTML(label)}</a>`;
 }
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
@@ -2183,9 +2152,6 @@ function getPlaceProfile(t,ref,details={}){
 function renderPlaceSheetContent(t,ref,details={}){
   const p=getPlaceProfile(t,ref,details);
   const content=document.getElementById('psContent');
-  const scroll=document.getElementById('psScroll');
-  const preservedScroll=content ? content.scrollTop : 0;
-  const preservedScroll=scroll ? scroll.scrollTop : 0;
   const dist=distKm(t.lat,t.lng);
   const featured=!!ref;
   const bookingAction=p.bookingUrl
@@ -2242,21 +2208,12 @@ function renderPlaceSheetContent(t,ref,details={}){
     favBtn.textContent=active?'Favori enregistré':'Ajouter aux favoris';
     renderList(currentHeure,searchQuery);
   };
-  if(preservedScroll) requestAnimationFrame(()=>{ content.scrollTop=preservedScroll; });
-  if(preservedScroll) requestAnimationFrame(()=>{ scroll.scrollTop=preservedScroll; });
   hydrateWeatherForPlace(t);
 }
 async function showPlaceSheet(t){
   if(navigator.vibrate) navigator.vibrate(10);
   activePlaceId=String(t.id);
   const ref=findReferenced(t);
-  document.getElementById('psContent').scrollTop=0;
-  syncDots([t]);
-  document.getElementById('psScroll').scrollTop=0;
-  // Le lieu sélectionné est mis en avant s'il se trouve dans le secteur déjà
-  // affiché. On ne déplace jamais la caméra et on ne fait pas apparaître un
-  // soleil hors écran : les repères restent fixés à leurs vraies coordonnées.
-  syncDots();
   renderPlaceSheetContent(t,ref,ref||{});
   document.getElementById('placeSheet').classList.add('open');
   document.getElementById('psOverlay').classList.add('open');
@@ -2264,6 +2221,7 @@ async function showPlaceSheet(t){
   if(activePlaceId!==String(t.id)) return;
   renderPlaceSheetContent(t,ref,details);
 }
+
 function normalize(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function distMeters(lat,lng){if(userLat===null)return Infinity;return Math.hypot((lat-userLat)*111320,(lng-userLng)*111320*Math.cos(userLat*Math.PI/180));}
 function distKm(lat,lng){if(userLat===null)return '';const d=distMeters(lat,lng)/1000;return d<1?`à ${Math.round(d*1000)} m`:`à ${d.toFixed(1)} km`;}
@@ -2297,6 +2255,7 @@ function highlight(text,q){
   const escaped=escapeHTML(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   return safe.replace(new RegExp(`(${escaped})`,'gi'),'<mark style="background:#FFF7D6;color:#8A6400;border-radius:4px;padding:0 2px">$1</mark>');
 }
+
 function matchesActiveFilter(t){
   const type=normalize(t.type);
   const category=placeCategory(t);
@@ -2313,6 +2272,7 @@ function matchesActiveFilter(t){
   if(activeFilter==='bar') return isFoodPlace(t) && (type.includes('bar')||type.includes('pub'));
   return isFoodPlace(t);
 }
+
 function focusPlace(t,duration=0.75){
   // On recentre sur le lieu sans entrer trop près : les autres terrasses
   // restent visibles autour au lieu de donner l'impression de disparaître.
@@ -2325,40 +2285,17 @@ function focusPlace(t,duration=0.75){
     easingFunction: Cesium.EasingFunction.CUBIC_OUT
   });
 }
+
 function selectTerrasse(t,card){
   document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
   if(card) card.classList.add('active');
   closeDrawer();
+  focusPlace(t);
   if(isFeaturedOrFavorite(t)) showPlaceSheet(t);
   else hidePlaceSheet();
 }
-let listRenderVersion=0;
-let listScrollCleanup=null;
-function createListCard(t,query){
-  const ref=findReferenced(t);
-  const card=document.createElement('div');
-  card.className='card'+(ref?' partner':(!isFoodPlace(t)?' utility compact':' compact'));
-  card.dataset.id=t.id;
-  const dist=distKm(t.lat,t.lng);
-  const tag=ref?`<span class="partner-tag">Sélection</span>`:'';
-  if(ref){
-    const photo=placePhotoUrl(t,ref,null);
-    card.innerHTML=`<div class="card-photo-wrap"><img class="card-photo" data-place-id="${escapeAttr(t.id)}" src="${escapeAttr(photo)}" alt="${escapeAttr(t.nom)}" loading="lazy" decoding="async" onerror="markPhotoError(this)"><span class="partner-sun">☀️</span></div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}${tag}</div><div class="card-sub">${escapeHTML(preferredPlaceType(t,ref))}${t.adresse?' · '+escapeHTML(t.adresse):''}${dist?' · '+escapeHTML(dist):''}</div></div>`;
-  }else if(!isFoodPlace(t)){
-    const category=placeCategory(t);
-    card.innerHTML=`<div class="category-icon ${escapeAttr(category)}">${escapeHTML(placeIcon(t))}</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${escapeHTML(t.type)}${t.adresse?' · '+escapeHTML(t.adresse):''}${dist?' · '+escapeHTML(dist):''}</div><div class="card-meta"><span class="utility-tag heat">${escapeHTML(utilityHeatNote(t))}</span></div></div>`;
-  }else{
-    card.innerHTML=`<div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${escapeHTML(t.type)}${t.adresse?' · '+escapeHTML(t.adresse):''}${dist?' · '+escapeHTML(dist):''}</div></div>`;
-  }
-  card.addEventListener('click',()=>selectTerrasse(t,card));
-  return card;
-}
+
 function renderList(h,query){
-  const renderVersion=++listRenderVersion;
-  if(listScrollCleanup){
-    listScrollCleanup();
-    listScrollCleanup=null;
-  }
   const list=document.getElementById('terrasseList');
   const q=normalize(query||'');
   let filtered=terrasses.filter(matchesActiveFilter);
@@ -2383,6 +2320,7 @@ function renderList(h,query){
   if(counter) counter.textContent=String(sorted.length);
   list.innerHTML='';
   const fragment=document.createDocumentFragment();
+
   // ── Section "Sélection" : uniquement les cafés référencés (avec photo) ──
   const showSelection = activeFilter !== 'heatwave';
   const refTerrasses = showSelection ? terrasses.filter(t=>findReferenced(t)&&matchesActiveFilter(t)).sort((a,b)=>referencedRank(a.nom)-referencedRank(b.nom)) : [];
@@ -2397,7 +2335,7 @@ function renderList(h,query){
       const happy=ref.happyHours?`<span class="sel-happy">🍹 ${escapeHTML(ref.happyHours)}</span>`:'';
       const c=document.createElement('div'); c.className='sel-card partner';
       c.innerHTML=`${photo}<div class="sel-info"><div class="sel-name">${escapeHTML(t.nom)}</div><div class="sel-sub">${escapeHTML(preferredPlaceType(t,ref))}${ref.priceLevel?' · '+escapeHTML(ref.priceLevel):''}${dist?' · '+escapeHTML(dist):''}</div>${happy}</div>`;
-      c.addEventListener('click',()=>{ closeDrawer(); showPlaceSheet(t); });
+      c.addEventListener('click',()=>{ closeDrawer(); focusPlace(t); showPlaceSheet(t); });
       scroll.appendChild(c);
     });
     wrap.appendChild(scroll);
@@ -2405,9 +2343,7 @@ function renderList(h,query){
     const divider=document.createElement('div'); divider.className='list-divider'; divider.textContent='Tous les lieux';
     fragment.appendChild(divider);
   }
-  // Toutes les terrasses restent dans allListItems. Elles sont ajoutées à la
-  // liste à mesure du défilement, afin que l'ouverture et les fiches restent
-  // instantanées, même lorsqu'une ville en contient plus de 1 200.
+
   const allListItems = (!q && refTerrasses.length) ? sorted.filter(t=>!findReferenced(t)) : sorted;
   const renderLimit = q ? Math.max(MAX_RENDERED_LIST_ITEMS, 900) : Math.min(allListItems.length, 900);
   const listItems = allListItems.slice(0, renderLimit);
@@ -2435,55 +2371,11 @@ function renderList(h,query){
     more.innerHTML=`${allListItems.length-listItems.length} autres résultats disponibles. Utilise la recherche pour les retrouver instantanément.`;
     fragment.appendChild(more);
   }
-  const cardsHost=document.createElement('div');
-  cardsHost.className='list-cards';
-  const loadStatus=document.createElement('div');
-  loadStatus.className='list-load-more';
-  cardsHost.appendChild(loadStatus);
-  fragment.appendChild(cardsHost);
   list.appendChild(fragment);
-  let nextIndex=0;
-  let appendFrame=0;
-  const appendCards=()=>{
-    if(renderVersion!==listRenderVersion) return;
-    const size=nextIndex===0 ? LIST_INITIAL_RENDER_BATCH : LIST_RENDER_BATCH;
-    const end=Math.min(nextIndex+size,allListItems.length);
-    const batch=document.createDocumentFragment();
-    for(;nextIndex<end;nextIndex++) batch.appendChild(createListCard(allListItems[nextIndex],query));
-    cardsHost.insertBefore(batch,loadStatus);
-    const remaining=allListItems.length-nextIndex;
-    if(!remaining){
-      loadStatus.remove();
-      return;
-    }
-    loadStatus.textContent=`Encore ${remaining} terrasse${remaining>1?'s':''} dans la liste`;
-    requestAnimationFrame(()=>{
-      if(renderVersion!==listRenderVersion || nextIndex>=allListItems.length) return;
-      if(list.scrollHeight<=list.clientHeight+120) scheduleAppend();
-    });
-  };
-  const scheduleAppend=()=>{
-    if(renderVersion!==listRenderVersion || appendFrame || nextIndex>=allListItems.length) return;
-    appendFrame=requestAnimationFrame(()=>{
-      appendFrame=0;
-      appendCards();
-    });
-  };
-  const onListScroll=()=>{
-    if(list.scrollTop+list.clientHeight>=list.scrollHeight-Math.max(280,list.clientHeight*0.35)) scheduleAppend();
-  };
-  list.addEventListener('scroll',onListScroll,{passive:true});
-  listScrollCleanup=()=>{
-    if(appendFrame) cancelAnimationFrame(appendFrame);
-    list.removeEventListener('scroll',onListScroll);
-  };
-  appendCards();
-  const initialListItems=allListItems.slice(0,LIST_INITIAL_RENDER_BATCH);
   const hydrateTargets=[...refTerrasses,...listItems.filter(t=>findReferenced(t))].filter((item,index,self)=>self.findIndex(other=>String(other.id)===String(item.id))===index);
   setTimeout(()=>hydrateVisiblePhotos(hydrateTargets), 80);
-  const hydrateTargets=[...refTerrasses,...initialListItems.filter(t=>findReferenced(t))].filter((item,index,self)=>self.findIndex(other=>String(other.id)===String(item.id))===index);
-  setTimeout(()=>hydrateVisiblePhotos(hydrateTargets),80);
 }
+
 const searchInput=document.getElementById('searchInput'),searchClear=document.getElementById('searchClear');
 searchInput.addEventListener('input',e=>{searchQuery=e.target.value;document.getElementById('drawerSearch').value=searchQuery;searchClear.classList.toggle('visible',searchQuery.length>0);renderList(currentHeure,searchQuery);if(searchQuery.length>0)openDrawer();});
 searchClear.addEventListener('click',()=>{searchInput.value='';searchQuery='';document.getElementById('drawerSearch').value='';searchClear.classList.remove('visible');renderList(currentHeure,'');});
@@ -2500,12 +2392,14 @@ document.getElementById('filterChips').addEventListener('click',e=>{
   renderList(currentHeure,searchQuery);
   syncDots();
 });
+
 const slider=document.getElementById('timeSlider');
 let sliderFrame=null;
 let sliderCommitTimer=null;
 let sliderIsDragging=false;
 let sliderPendingValue=parseFloat(slider.value);
 let sliderLastCommitted=sliderPendingValue;
+
 function updateSliderLabel(val){
   const h=Math.floor(val),m=Math.round((val-h)*60);
   document.getElementById('heureAffichee').textContent=h+'h'+(m<10?'0'+m:m);
@@ -2576,6 +2470,7 @@ slider.addEventListener('blur',()=>{
   sliderIsDragging=false;
   commitSliderChange();
 });
+
 const handler=new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 handler.setInputAction(click=>{
   const picked=viewer.scene.pick(click.position);
@@ -2590,9 +2485,11 @@ handler.setInputAction(click=>{
   }
   hidePlaceSheet();
 },Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
 function areaSignature(){
   return `${currentCity.id}:${currentCity.lat.toFixed(4)}:${currentCity.lng.toFixed(4)}`;
 }
+
 function paintTerrasses(data, suffix=''){
   document.getElementById('loadingState').style.display='none';
   document.getElementById('terrasseList').style.display='block';
@@ -2614,6 +2511,7 @@ function paintTerrasses(data, suffix=''){
   if(splashDone) launch();
   else{const w=setInterval(()=>{if(splashDone){clearInterval(w);launch();}},100);}
 }
+
 let nearbyHydrationVersion=0;
 async function hydrateNearbyInBackground(signature){
   const version=++nearbyHydrationVersion;
@@ -2624,6 +2522,7 @@ async function hydrateNearbyInBackground(signature){
     paintTerrasses(merged);
   }catch(e){}
 }
+
 let utilityHydrationVersion=0;
 async function hydrateUtilitiesInBackground(signature){
   const version=++utilityHydrationVersion;
@@ -2634,6 +2533,7 @@ async function hydrateUtilitiesInBackground(signature){
     paintTerrasses(merged);
   }catch(e){}
 }
+
 let overpassHydrationVersion=0;
 async function hydrateOverpassInBackground(signature){
   const version=++overpassHydrationVersion;
@@ -2644,20 +2544,13 @@ async function hydrateOverpassInBackground(signature){
     if(merged.length>terrasses.length) paintTerrasses(merged);
   }catch(e){}
 }
+
 let terraceLoadVersion=0;
 async function loadTerrasses(){
   document.getElementById('loadingState').style.display='flex';
   document.getElementById('terrasseList').style.display='none';
   const signature=areaSignature();
   const version=++terraceLoadVersion;
-  // On ouvre toujours la liste immédiatement avec les lieux fiables déjà
-  // embarqués. Les centaines d'autres terrasses sont ajoutées dès que les
-  // données OpenStreetMap/Google arrivent, sans laisser l'app sur un spinner.
-  const quick=mergeFeaturedPlaces(mergePlacesByIdentity([...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
-  paintTerrasses(quick,' · chargement…');
-  preloadGooglePhotosForFeatured(quick, 1200).then(()=>{
-    if(version===terraceLoadVersion && signature===areaSignature()) renderList(currentHeure,searchQuery);
-  }).catch(()=>{});
   const local = await localTerrassesForCurrentArea();
   if(version!==terraceLoadVersion || signature!==areaSignature()) return;
   if(local.length > 80){
@@ -2676,6 +2569,7 @@ async function loadTerrasses(){
   preloadGooglePhotosForFeatured(quick, 1200).then(()=>{
     if(version===terraceLoadVersion && signature===areaSignature()) renderList(currentHeure,searchQuery);
   }).catch(()=>{});
+
   fetchTerrasses().then(data=>{
     if(version!==terraceLoadVersion || signature!==areaSignature()) return;
     paintTerrasses(data);
@@ -2688,6 +2582,7 @@ async function loadTerrasses(){
     document.getElementById('terrasseList').innerHTML=`<div class="no-results">Impossible de charger les lieux.<br><button onclick="loadTerrasses()" style="margin-top:8px;background:#FFD600;border:none;padding:10px 20px;border-radius:12px;font-weight:600;cursor:pointer;font-size:14px;">Réessayer</button></div>`;
   });
 }
+
 async function init(){
   const now=new Date();
   const initH=Math.min(21,Math.max(6,now.getHours()+(Math.round(now.getMinutes()/15)*15/60)));
@@ -2695,6 +2590,7 @@ async function init(){
   slider.dispatchEvent(new Event('input'));
   loadGooglePlacesLibrary();
   loadTerrasses();
+
   // Géoloc auto ensuite : l'app reste utilisable pendant que le GPS répond.
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(async pos=>{
@@ -2721,7 +2617,9 @@ async function init(){
     },()=>{}, {enableHighAccuracy:true,timeout:4500,maximumAge:15000});
   }
 }
+
 init();
 </script>
+
 </body>
 </html>
