@@ -346,6 +346,16 @@
     .ps-btn { position:relative; z-index:2; touch-action:manipulation; }
     @media (max-width:699px) { #placeSheet { max-height:72dvh; } }
 
+    /* Défilement au doigt : iOS < 15.4 ignore dvh, donc on garde un repli en vh. */
+    #placeSheet { max-height:72vh; max-height:72dvh; -webkit-overflow-scrolling:touch; touch-action:pan-y; overscroll-behavior-y:contain; }
+    @media (min-width:700px) { #placeSheet { max-height:min(70vh,600px); max-height:min(70dvh,600px); } }
+    @media (max-width:640px) { #drawer { height:84vh; height:84dvh; } }
+    #drawer .list { min-height:0; touch-action:pan-y; overscroll-behavior-y:contain; scroll-behavior:auto; }
+    .sel-scroll { touch-action:pan-x pan-y; overscroll-behavior-x:contain; scroll-snap-type:x proximity; scroll-padding:0 16px; }
+    .sel-card { scroll-snap-align:start; }
+    @media (max-width:699px) { #psOverlay { backdrop-filter:none; -webkit-backdrop-filter:none; background:rgba(15,23,42,0.34); } #placeSheet, #drawer { will-change:transform; } }
+    @media (hover:none) { .card:hover, .sel-card:hover, .filter-chip:hover { transform:none; } }
+
     /* Navigateur intégré : le lien se charge sans faire quitter la carte. */
     #siteViewer { position:fixed; inset:0; z-index:90; display:flex; flex-direction:column; background:#F2F2F7; opacity:0; pointer-events:none; transform:translateY(12px); transition:opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
     #siteViewer.open { opacity:1; pointer-events:auto; transform:translateY(0); }
@@ -508,7 +518,9 @@ const PERFORMANCE_MODE = false;
 const ENABLE_GOOGLE_3D_TEST = false;
 const ENABLE_SHADOW_RAYCASTS = false;
 const MAX_RENDERED_LIST_ITEMS = 280;
-const MAX_MARKERS_ON_MAP = 950;
+const MAX_MARKERS_ON_MAP = 220;
+const MARKER_RADIUS_METERS = 1300;
+const FEATURED_MARKER_RADIUS_METERS = 3000;
 const MARKER_RENDER_BATCH = 180;
 const PHOTO_HYDRATE_LIMIT = 6;
 const LOCAL_CITY_RADIUS_METERS = 30000;
@@ -617,6 +629,7 @@ function clearPlaces(){
   Object.keys(markerEntities).forEach(k => { viewer.entities.remove(markerEntities[k]); delete markerEntities[k]; });
   terrasses = [];
   sunStates = {};
+  markerCenter = null;
 }
 
 async function switchCity(cityId){
@@ -678,7 +691,8 @@ viewer.scene.globe.preloadSiblings = false;
 viewer.scene.globe.enableLighting = true;
 viewer.scene.fog.enabled = false;
 viewer.shadows = true;
-viewer.resolutionScale = window.devicePixelRatio || 1;
+// Plafond à 2 : sur iPhone (x3) la 3D devient beaucoup plus fluide, sans perte visible.
+viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 2);
 viewer.scene.globe.showWaterEffect = false;
 viewer.scene.postProcessStages.fxaa.enabled = false;
 viewer.scene.screenSpaceCameraController.inertiaSpin = 0.9;
@@ -1210,7 +1224,16 @@ function checkSunny(t,sunDir,relaxed=false){
 
 let cameraMoving=false;
 viewer.camera.moveStart.addEventListener(()=>{cameraMoving=true;});
-viewer.camera.moveEnd.addEventListener(()=>{cameraMoving=false;});
+viewer.camera.moveEnd.addEventListener(()=>{
+  cameraMoving=false;
+  const c=cameraGroundCenter();
+  if(!c) return;
+  const prev=markerAreaCenter();
+  if(!markerCenter || metersBetween(prev.lat,prev.lng,c.lat,c.lng)>250){
+    markerCenter=c;
+    if(terrasses.length) syncDots();
+  }
+});
 
 let shadowDebounce=null,computing=false,shadowVersion=0,shadowPending=false;
 function computeFastSunStates(){
@@ -1317,14 +1340,33 @@ function markerSizeForPlace(t){
 }
 
 let markerRenderToken=0;
+let markerCenter=null;
+function cameraGroundCenter(){
+  const canvas=viewer.scene.canvas;
+  const ray=viewer.camera.getPickRay(new Cesium.Cartesian2(canvas.clientWidth/2,canvas.clientHeight/2));
+  const hit=ray && viewer.scene.globe.pick(ray,viewer.scene);
+  if(!hit) return null;
+  const c=Cesium.Cartographic.fromCartesian(hit);
+  return {lat:Cesium.Math.toDegrees(c.latitude),lng:Cesium.Math.toDegrees(c.longitude)};
+}
+function markerAreaCenter(){
+  if(markerCenter) return markerCenter;
+  if(userLat!==null) return {lat:userLat,lng:userLng};
+  return {lat:currentCity.lat,lng:currentCity.lng};
+}
+function inMarkerArea(t){
+  const c=markerAreaCenter();
+  const d=metersBetween(c.lat,c.lng,t.lat,t.lng);
+  return d<=(findReferenced(t)?FEATURED_MARKER_RADIUS_METERS:MARKER_RADIUS_METERS);
+}
 function prioritizedMarkerItems(items=terrasses){
   const source = Array.isArray(items) ? items : terrasses;
   const sorted = [...source].sort((a,b)=>{
     const ra=findReferenced(a)?0:(isFoodPlace(a)?2:1);
     const rb=findReferenced(b)?0:(isFoodPlace(b)?2:1);
     if(ra!==rb) return ra-rb;
-    if(userLat!==null) return distMeters(a.lat,a.lng)-distMeters(b.lat,b.lng);
-    return metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng);
+    const c=markerAreaCenter();
+    return metersBetween(c.lat,c.lng,a.lat,a.lng)-metersBetween(c.lat,c.lng,b.lat,b.lng);
   });
   return sorted.slice(0, MAX_MARKERS_ON_MAP);
 }
@@ -1335,8 +1377,8 @@ function syncDots(items=terrasses){
   // La carte 3D reste dédiée aux terrasses. Les lieux Canicule vivent dans
   // leur liste, sans transformer la carte en série d'emojis.
   const mapItems = fullRefresh
-    ? terrasses.filter(t=>isFoodPlace(t) && (activeFilter==='heatwave' || matchesActiveFilter(t)))
-    : items.filter(isFoodPlace);
+    ? terrasses.filter(t=>isFoodPlace(t) && Number.isFinite(t.lat) && Number.isFinite(t.lng) && inMarkerArea(t) && (activeFilter==='heatwave' || matchesActiveFilter(t)))
+    : items.filter(t=>isFoodPlace(t) && markerEntities[t.id]?.show);
   const targets=fullRefresh ? prioritizedMarkerItems(mapItems) : mapItems;
   if(fullRefresh){
     const visibleIds=new Set(targets.map(t=>String(t.id)));
@@ -1353,8 +1395,9 @@ function syncDots(items=terrasses){
       const img=markerImageForPlace(t);
       const size=markerSizeForPlace(t);
       if(!markerEntities[t.id]){
-        markerEntities[t.id]=viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,2),billboard:{image:img,verticalOrigin:Cesium.VerticalOrigin.CENTER,heightReference:Cesium.HeightReference.RELATIVE_TO_GROUND,width:size,height:size,disableDepthTestDistance:Number.POSITIVE_INFINITY},properties:{id:t.id}});
+        markerEntities[t.id]=viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,0),billboard:{image:img,verticalOrigin:Cesium.VerticalOrigin.CENTER,heightReference:Cesium.HeightReference.CLAMP_TO_GROUND,width:size,height:size,disableDepthTestDistance:Number.POSITIVE_INFINITY},properties:{id:t.id}});
       }else{
+        markerEntities[t.id].position=Cesium.Cartesian3.fromDegrees(t.lng,t.lat,0);
         markerEntities[t.id].billboard.image=img;
         markerEntities[t.id].billboard.width=size;
         markerEntities[t.id].billboard.height=size;
@@ -2215,6 +2258,7 @@ async function showPlaceSheet(t){
   activePlaceId=String(t.id);
   const ref=findReferenced(t);
   renderPlaceSheetContent(t,ref,ref||{});
+  document.getElementById('placeSheet').scrollTop=0;
   document.getElementById('placeSheet').classList.add('open');
   document.getElementById('psOverlay').classList.add('open');
   const details=await fetchPlaceDetails(t);
