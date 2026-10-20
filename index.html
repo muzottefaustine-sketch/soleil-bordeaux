@@ -495,6 +495,18 @@
     .place-link-viewport { min-width:0; min-height:0; overflow:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-x pan-y; }
     #placeLinkFrame { display:block; width:100%; height:100%; min-height:100%; border:0; background:white; }
     #placeLinkHelp { padding:24px; font-size:15px; line-height:1.5; color:var(--text-2); }
+    .place-google-summary { padding:20px; }
+    .place-google-photo { display:block; width:100%; max-height:220px; object-fit:cover; border-radius:16px; margin-bottom:14px; }
+    .place-google-summary h3 { font-size:23px; line-height:1.2; margin:0 0 8px; }
+    .place-google-summary p { margin:8px 0; font-size:14px; line-height:1.5; color:var(--text-2); }
+    .place-google-summary .ps-btn { display:flex; align-items:center; justify-content:center; min-height:46px; }
+    .place-google-summary .ps-btn.site { display:flex; }
+    .place-google-summary .ps-info-rows { margin:16px 0; }
+    .place-google-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:14px; }
+    .place-google-map { width:100%; height:280px; height:clamp(210px,36dvh,360px); background:#F2F2F7; }
+    .place-google-address { padding:14px 20px 20px; }
+    #placeGoogleAddress { width:100%; padding:12px; border:1px solid var(--divider); border-radius:12px; color:var(--text); background:#fff; font:inherit; font-size:13px; }
+    #placeGoogleMapStatus { padding:0 20px 12px; color:var(--text-2); font-size:12px; }
     .place-link-footer { padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
       border-top:1px solid var(--divider); background:#fff; }
     .place-link-footer summary { min-height:36px; display:flex; align-items:center; font-size:12px; cursor:pointer; }
@@ -591,9 +603,18 @@
       <iframe id="placeLinkFrame" title="Page du restaurant" src="about:blank" referrerpolicy="strict-origin-when-cross-origin"
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads" hidden></iframe>
       <div id="placeLinkHelp" hidden></div>
+      <section id="placeLinkGoogle" aria-label="Informations et localisation du restaurant" hidden>
+        <div id="placeGoogleSummary" class="place-google-summary"></div>
+        <div id="placeGoogleMap" class="place-google-map" role="region" aria-label="Carte Google du restaurant" hidden></div>
+        <p id="placeGoogleMapStatus" role="status"></p>
+        <div class="place-google-address"><label for="placeGoogleAddress">Adresse du restaurant</label>
+          <input id="placeGoogleAddress" readonly><button id="placeGoogleCopyAddress" class="place-link-copy" type="button">Copier l’adresse</button>
+        </div>
+      </section>
     </div>
     <footer class="place-link-footer">
       <a id="placeLinkOpen" class="place-link-button primary" href="#" target="_blank" rel="noopener noreferrer">Ouvrir dans le navigateur ↗</a>
+      <button id="placeLinkContacts" class="place-link-copy" type="button" hidden>Téléphone et infos du restaurant</button>
       <details><summary>La page ne s’affiche pas ?</summary>
         <p class="ps-inline-note">Certains sites demandent le navigateur intégré de l’application. Tu peux aussi copier leur lien.</p>
         <label for="placeLinkUrl">Adresse de la page</label><input id="placeLinkUrl" type="url" readonly>
@@ -3015,7 +3036,14 @@ init();
   const help=document.getElementById('placeLinkHelp');
   const browserLink=document.getElementById('placeLinkOpen');
   const urlField=document.getElementById('placeLinkUrl');
+  const contactsButton=document.getElementById('placeLinkContacts');
+  const googleView=document.getElementById('placeLinkGoogle');
+  const googleSummary=document.getElementById('placeGoogleSummary');
+  const googleMapElement=document.getElementById('placeGoogleMap');
+  const googleMapStatus=document.getElementById('placeGoogleMapStatus');
+  const googleAddress=document.getElementById('placeGoogleAddress');
   let returnFocus=null, sheetWasInert=false, activeUrl='';
+  let googleRequest=0, googleMap=null, googleMarker=null;
   function safeDestination(value){
     try{
       const destination=new URL(String(value||''));
@@ -3054,10 +3082,12 @@ init();
     return false;
   }
   function closeWindow(){
+    googleRequest++;
     frame.onload=null;
     frame.onerror=null;
     frame.src='about:blank';
     frame.hidden=true;
+    googleView.hidden=true;
     dialog.hidden=true;
     dialog.inert=true;
     dialog.setAttribute('aria-hidden','true');
@@ -3065,7 +3095,104 @@ init();
     if(returnFocus?.isConnected) returnFocus.focus({preventScroll:true});
     activeUrl='';
   }
+  function activeGooglePlace(trigger,destination){
+    try{
+      const placeId=trigger?.dataset?.placeId||activePlaceId;
+      const selected=terrasses.find(place=>String(place.id)===String(placeId));
+      if(selected) return selected;
+      const url=new URL(destination);
+      const googleId=url.searchParams.get('query_place_id')||url.searchParams.get('destination_place_id');
+      return googleId ? terrasses.find(place=>place.googlePlaceId===googleId) : null;
+    }catch(error){return null;}
+  }
+  function renderGoogleSummary(place,details,action){
+    const profile=getPlaceProfile(place,findReferenced(place),details);
+    const phone=telephoneUrl(profile.tel);
+    const title=action==='psReserve'?'Pour réserver':action==='psMenu'?'Carte du restaurant':'';
+    const note=action==='psReserve'
+      ? (profile.bookingUrl?'La réservation est disponible sur le site du restaurant.':'Contacte directement le restaurant pour réserver.')
+      : action==='psMenu' && !profile.menuUrl?'Aucun lien direct vers la carte n’a été renseigné. Tu peux consulter le site du restaurant ou l’appeler.':'';
+    const links=[
+      phone?sheetLink('ps-btn tel',phone,'Appeler','Appeler le restaurant','placeGoogleCall'):'',
+      profile.bookingUrl?sheetLink('ps-btn reserve',profile.bookingUrl,'Réserver','Ouvrir la réservation','placeGoogleReserve'):'',
+      profile.menuUrl?sheetLink('ps-btn site',profile.menuUrl,'Voir la carte','Ouvrir la carte du restaurant','placeGoogleMenu'):'',
+      profile.websiteUrl?sheetLink('ps-btn site',profile.websiteUrl,'Site du restaurant','Ouvrir le site du restaurant','placeGoogleWebsite'):''
+    ].filter(Boolean).join('');
+    const rows=[infoRow('⌖','Adresse',profile.address),infoRow('☎','Téléphone',profile.tel),infoRow('€','Budget',profile.price)].filter(Boolean).join('');
+    const markup=`${profile.photo?`<img id="placeGooglePhoto" class="place-google-photo" src="${escapeAttr(profile.photo)}" alt="${escapeAttr(place.nom)}" decoding="async">`:''}
+      ${profile.photoCredit?`<p id="placeGoogleCredit">${escapeHTML(profile.photoCredit)}</p>`:''}
+      <h3 id="placeGoogleName">${escapeHTML(place.nom)}</h3>
+      ${profile.rating?`<p id="placeGoogleRating">★ ${escapeHTML(profile.rating)}${profile.ratingCount?` · ${escapeHTML(profile.ratingCount)} avis Google`:''}</p>`:''}
+      ${title?`<h4 id="placeGoogleActionTitle">${escapeHTML(title)}</h4>`:''}
+      ${note?`<p id="placeGoogleActionNote">${escapeHTML(note)}</p>`:''}
+      <div id="placeGoogleContactActions" class="place-google-actions">${links}</div>
+      <div id="placeGoogleInfoRows" class="ps-info-rows">${rows}</div>
+      ${profile.hours.length?`<ul id="placeGoogleHours" class="ps-hours">${profile.hours.map(line=>`<li>${escapeHTML(line)}</li>`).join('')}</ul>`:''}`;
+    if(googleSummary.dataset.placeId===String(place.id)){
+      const next=googleSummary.cloneNode(false);
+      next.innerHTML=markup;
+      syncPlaceSheetNode(googleSummary,next);
+    }else{
+      googleSummary.innerHTML=markup;
+      googleSummary.dataset.placeId=String(place.id);
+    }
+    googleAddress.value=profile.address||[place.lat,place.lng].filter(Number.isFinite).join(', ');
+    document.getElementById('placeGoogleCopyAddress').textContent='Copier l’adresse';
+  }
+  async function renderGoogleMap(place,request){
+    const center={lat:place.lat,lng:place.lng};
+    if(!Number.isFinite(center.lat)||!Number.isFinite(center.lng)) return;
+    try{
+      if(!window.google?.maps?.Map) await loadGooglePlacesLibrary();
+      if(request!==googleRequest||dialog.hidden) return;
+      if(!window.google?.maps?.Map) throw new Error('Map unavailable');
+      googleMapElement.hidden=false;
+      if(!googleMap){
+        googleMap=new google.maps.Map(googleMapElement,{center,zoom:16,mapTypeControl:false,streetViewControl:false,fullscreenControl:false,gestureHandling:'cooperative'});
+      }else{
+        google.maps.event?.trigger(googleMap,'resize');
+        googleMap.setCenter(center);
+        googleMap.setZoom(16);
+      }
+      googleMarker?.setMap(null);
+      if(typeof google.maps.Marker==='function') googleMarker=new google.maps.Marker({map:googleMap,position:center,title:place.nom});
+      googleMapStatus.textContent='Localisation du restaurant · Google Maps';
+    }catch(error){
+      if(request!==googleRequest||dialog.hidden) return;
+      googleMapElement.hidden=true;
+      googleMapStatus.textContent='La carte est indisponible pour le moment. L’adresse et les contacts restent accessibles.';
+    }
+  }
+  function showGooglePlace(destination,trigger){
+    const request=++googleRequest;
+    const place=activeGooglePlace(trigger,destination);
+    frame.hidden=true;
+    frame.src='about:blank';
+    help.hidden=true;
+    googleMapElement.hidden=true;
+    contactsButton.hidden=true;
+    browserLink.textContent=/(^|\.)(google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl)$/i.test(new URL(destination).hostname)?'Ouvrir la page complète Google ↗':'Ouvrir la page d’origine ↗';
+    if(!place){
+      googleView.hidden=true;
+      help.textContent='Ce lieu n’a pas été retrouvé dans les résultats. Ferme cette fenêtre puis rouvre sa fiche.';
+      help.hidden=false;
+      status.textContent='Lieu introuvable dans les résultats actuels.';
+      return;
+    }
+    googleView.hidden=false;
+    document.getElementById('placeLinkTitle').textContent=place.nom;
+    document.getElementById('placeLinkHost').textContent='Informations et localisation dans l’appli';
+    status.textContent='Les informations du restaurant sont affichées ici. « Retour à l’app » retrouve ta fiche.';
+    googleMapStatus.textContent='L’adresse ci-dessous reste disponible pendant l’affichage de la carte.';
+    renderGoogleSummary(place,cachedDetailsForPlace(place),trigger?.id||'');
+    renderGoogleMap(place,request);
+    fetchGooglePlace(place).then(details=>{
+      if(request!==googleRequest||dialog.hidden) return;
+      renderGoogleSummary(place,details,trigger?.id||'');
+    }).catch(()=>{});
+  }
   function showWindow(destination,label,trigger){
+    googleRequest++;
     if(dialog.hidden){
       returnFocus=trigger||document.activeElement;
       sheetWasInert=sheet.inert;
@@ -3078,18 +3205,17 @@ init();
     document.getElementById('placeLinkTitle').textContent=label||'Page du restaurant';
     document.getElementById('placeLinkHost').textContent=new URL(destination).hostname;
     browserLink.href=destination;
+    browserLink.textContent='Ouvrir dans le navigateur ↗';
     urlField.value=destination;
     dialog.querySelector('details').open=false;
     help.hidden=true;
+    googleView.hidden=true;
+    contactsButton.hidden=!activeGooglePlace(trigger,destination);
     frame.hidden=false;
-    status.textContent='Chargement de la page…';
+    status.textContent='La page s’affiche ci-dessous. Les contacts du restaurant restent accessibles en bas de la fenêtre.';
     const googlePage=/(^|\.)(google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl)$/i.test(new URL(destination).hostname);
     if(googlePage){
-      frame.hidden=true;
-      frame.src='about:blank';
-      help.textContent='Cette page Google doit s’ouvrir dans le navigateur de l’application. Si le bouton ci-dessous ne répond pas, le navigateur intégré doit être activé dans l’application.';
-      help.hidden=false;
-      status.textContent='Ouverture externe nécessaire pour cette page.';
+      showGooglePlace(destination,trigger);
     }else{
       frame.onload=()=>{
         if(destination===activeUrl) status.textContent='Ferme cette fenêtre pour retrouver ta fiche. Si la page est vide, utilise « Ouvrir dans le navigateur ».';
@@ -3106,7 +3232,7 @@ init();
     if(event && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (event.type==='click' && event.button>0))) return true;
     const destination=safeDestination(link?.href);
     if(!destination) return true;
-    returnFocus=link;
+    if(dialog.hidden) returnFocus=link;
     if(tryNative(destination)){
       event?.preventDefault();
       return false;
@@ -3125,18 +3251,27 @@ init();
     return false;
   }
   close.addEventListener('click',closeWindow);
+  contactsButton.addEventListener('click',()=>{
+    if(activeUrl) showGooglePlace(activeUrl,returnFocus);
+  });
   document.getElementById('placeLinkBackdrop').addEventListener('click',closeWindow);
   browserLink.addEventListener('click',event=>{
     const destination=safeDestination(browserLink.href);
     if(!destination) return;
     if(tryNative(destination)){event.preventDefault();return;}
-    status.textContent='Si rien ne s’ouvre, le navigateur intégré doit être activé dans l’application. Le bouton Fermer te ramène à ta fiche.';
+    status.textContent='La page complète s’ouvre dans un autre onglet si l’application l’autorise. Tu peux toujours revenir à ta fiche avec « Retour à l’app ».';
   });
   document.getElementById('placeLinkCopy').addEventListener('click',async()=>{
     try{
       await navigator.clipboard.writeText(urlField.value);
       document.getElementById('placeLinkCopy').textContent='Lien copié';
     }catch(error){urlField.focus();urlField.select();}
+  });
+  document.getElementById('placeGoogleCopyAddress').addEventListener('click',async()=>{
+    try{
+      await navigator.clipboard.writeText(googleAddress.value);
+      document.getElementById('placeGoogleCopyAddress').textContent='Adresse copiée';
+    }catch(error){googleAddress.focus();googleAddress.select();}
   });
   document.addEventListener('keydown',event=>{
     if(dialog.hidden) return;
