@@ -343,19 +343,6 @@
     .ps-btn { position:relative; z-index:2; touch-action:manipulation; }
     
 
-    /* Navigateur intégré : le lien se charge sans faire quitter la carte. */
-    #siteViewer { position:fixed; inset:0; z-index:90; display:flex; flex-direction:column; background:#F2F2F7; opacity:0; pointer-events:none; transform:translateY(12px); transition:opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
-    #siteViewer.open { opacity:1; pointer-events:auto; transform:translateY(0); }
-    .site-viewer-bar { min-height:calc(56px + env(safe-area-inset-top, 0px)); padding:env(safe-area-inset-top, 0px) 14px 0; display:grid; grid-template-columns:44px minmax(0,1fr) 44px; align-items:center; gap:6px; background:rgba(255,255,255,.94); border-bottom:1px solid rgba(60,60,67,.14); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); }
-    .site-viewer-close, .site-viewer-external { width:38px; height:38px; border:0; border-radius:50%; display:grid; place-items:center; text-decoration:none; background:#E9E9ED; color:#1D1D1F; font:700 20px/1 -apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; cursor:pointer; }
-    .site-viewer-external { font-size:17px; }
-    .site-viewer-title { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; color:#1D1D1F; font:750 14px/1.2 -apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; }
-    .site-viewer-body { position:relative; flex:1; min-height:0; background:#fff; }
-    #siteViewerFrame { position:absolute; inset:0; width:100%; height:100%; border:0; background:#fff; }
-    .site-viewer-loading { position:absolute; inset:0; z-index:1; display:grid; place-content:center; gap:10px; justify-items:center; color:#6E6E73; font:600 13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif; background:#fff; }
-    .site-viewer-loading::before { content:''; width:22px; height:22px; border:3px solid #E5E5EA; border-top-color:#1D1D1F; border-radius:50%; animation:spin .75s linear infinite; }
-    #siteViewer.loaded .site-viewer-loading { opacity:0; visibility:hidden; transition:opacity .18s ease, visibility .18s step-end; }
-
     /* La carte reste fixe : seule la zone centrale de la fiche défile.
        Cela évite que Safari mobile bloque le défilement de la fiche. */
     
@@ -574,18 +561,6 @@
   </div>
   <div id="psScroll"><div id="psContent"></div></div>
 </div>
-
-<section id="siteViewer" role="dialog" aria-modal="true" aria-label="Site du lieu" aria-hidden="true">
-  <div class="site-viewer-bar">
-    <button class="site-viewer-close" id="siteViewerClose" type="button" aria-label="Retour à l’application" title="Retour à l’application">×</button>
-    <div class="site-viewer-title" id="siteViewerTitle">Site du lieu</div>
-    <a class="site-viewer-external" id="siteViewerExternal" href="#" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir dans le navigateur" title="Ouvrir dans le navigateur">↗</a>
-  </div>
-  <div class="site-viewer-body">
-    <div class="site-viewer-loading">Ouverture du site…</div>
-    <iframe id="siteViewerFrame" title="Site du lieu" referrerpolicy="strict-origin-when-cross-origin"></iframe>
-  </div>
-</section>
 
 <div id="drawer">
   <div class="drawer-handle" id="drawerHandle"><div class="drawer-bar"></div></div>
@@ -1968,8 +1943,13 @@ function neutralPhotoForPlace(t){
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 function cachedDetailsForPlace(t){
-  return t?.googleDetails || googlePlaceCache[t?.id] || googlePlaceCache[placeKey(t)] || {};
+  // Les données Nearby servent de secours ; la fiche détaillée la plus récente prime.
+  return mergeNonemptyPlaceDetails(
+    mergeNonemptyPlaceDetails(t?.googleDetails || {}, googlePlaceCache[placeKey(t)] || {}),
+    googlePlaceCache[t?.id] || {}
+  );
 }
+
 function placePhotoUrl(t, ref, details){
   const cached=cachedDetailsForPlace(t);
   // Les anciennes photos Unsplash des partenaires étaient seulement illustratives
@@ -2085,24 +2065,27 @@ function normalizeGoogleJsPlace(place){
 async function findGooglePlaceInBrowser(t){
   const service = await getGooglePlacesService();
   if(!service) return {};
+  const knownPlaceId = t.googlePlaceId || t.googleDetails?.googlePlaceId || '';
   const query = `${t.nom} ${t.adresse || currentCity.nom || 'France'}`;
   return new Promise(resolve => {
+    const readDetails = placeId => service.getDetails({
+      placeId,
+      fields:['name','place_id','geometry','photos','formatted_phone_number','international_phone_number','formatted_address','website','url','rating','user_ratings_total','opening_hours','price_level','editorial_summary']
+    }, (place, detailsStatus) => {
+      if(!googleStatusOk(detailsStatus) || !place) { resolve({}); return; }
+      // Un identifiant connu vise déjà le bon établissement, même après un changement de nom.
+      if(knownPlaceId) { resolve(normalizeGoogleJsPlace(place)); return; }
+      const coords = latLngFromGoogle(place);
+      const expected=normalize(t.nom||'').replace(/[^a-z0-9]/g,'');
+      const received=normalize(place?.name||'').replace(/[^a-z0-9]/g,'');
+      const similarName=expected===received || (Math.min(expected.length,received.length)>=6 && (expected.includes(received)||received.includes(expected)));
+      const closeEnough=coords ? metersBetween(t.lat,t.lng,coords.lat,coords.lng) < 1000 : true;
+      resolve(similarName && closeEnough ? normalizeGoogleJsPlace(place) : {});
+    });
+    if(knownPlaceId) { readDetails(knownPlaceId); return; }
     service.findPlaceFromQuery({query, fields:['place_id','name','geometry']}, (results, status) => {
       if(!googleStatusOk(status) || !results?.[0]?.place_id) { resolve({}); return; }
-      service.getDetails({
-        placeId: results[0].place_id,
-        fields:['name','place_id','geometry','photos','formatted_phone_number','international_phone_number','formatted_address','website','url','rating','user_ratings_total','opening_hours','price_level','editorial_summary']
-      }, (place, detailsStatus) => {
-        if(!googleStatusOk(detailsStatus)) { resolve({}); return; }
-        const coords = latLngFromGoogle(place);
-        const expected=normalize(t.nom||'').replace(/[^a-z0-9]/g,'');
-        const received=normalize(place?.name||'').replace(/[^a-z0-9]/g,'');
-        // On demande une photo uniquement au vrai établissement : avant, un lieu
-        // voisin pouvait être accepté simplement parce qu'il était dans un rayon trop large.
-        const similarName=expected===received || (Math.min(expected.length,received.length)>=6 && (expected.includes(received)||received.includes(expected)));
-        const closeEnough=coords ? metersBetween(t.lat,t.lng,coords.lat,coords.lng) < 1000 : true;
-        resolve(similarName && closeEnough ? normalizeGoogleJsPlace(place) : {});
-      });
+      readDetails(results[0].place_id);
     });
   });
 }
@@ -2185,39 +2168,57 @@ function mergePlacesByIdentity(items){
   return out.sort((a,b)=>metersBetween(currentCity.lat,currentCity.lng,a.lat,a.lng)-metersBetween(currentCity.lat,currentCity.lng,b.lat,b.lng));
 }
 
+function mergeNonemptyPlaceDetails(base={},updates={}){
+  const merged={...base};
+  Object.entries(updates || {}).forEach(([key,value])=>{
+    // Un champ absent ne doit effacer ni téléphone, ni site, ni photo déjà connu.
+    if(value===undefined || value===null || value==='' || (Array.isArray(value) && !value.length)) return;
+    merged[key]=value;
+  });
+  return merged;
+}
+function hasGooglePlaceDetails(details){
+  return !!(details && (details.photo || details.rating || details.tel || details.googleMapsUrl || details.websiteUrl));
+}
 const googlePlaceCache={};
+const googlePlaceCacheUpdatedAt={};
+const googlePlaceRequests={};
+const GOOGLE_PLACE_DETAILS_TTL=5*60*1000;
 async function fetchGooglePlace(t){
-  if(Object.prototype.hasOwnProperty.call(googlePlaceCache,t.id)) return googlePlaceCache[t.id];
   const key=placeKey(t);
-  if(Object.prototype.hasOwnProperty.call(googlePlaceCache,key)) return googlePlaceCache[key];
-  if(t.googleDetails){
-    googlePlaceCache[t.id]=t.googleDetails;
-    googlePlaceCache[key]=t.googleDetails;
-    return googlePlaceCache[t.id];
-  }
-  const browserDetails = await findGooglePlaceInBrowser(t);
-  if(browserDetails.photo || browserDetails.rating || browserDetails.tel || browserDetails.googleMapsUrl || browserDetails.websiteUrl){
-    googlePlaceCache[t.id]=browserDetails;
-    googlePlaceCache[key]=browserDetails;
-    return googlePlaceCache[t.id];
-  }
-  if(!/^https?:$/.test(location.protocol)){
-    googlePlaceCache[t.id]={};
-    googlePlaceCache[key]={};
-    return {};
-  }
-  try{
-    const r=await fetch(`/api/google-place?name=${encodeURIComponent(t.nom)}&lat=${t.lat}&lng=${t.lng}&city=${encodeURIComponent(currentCity.nom||'')}`);
-    if(!r.ok) throw new Error();
-    const data=await r.json();
-    googlePlaceCache[t.id]=data||{};
-    googlePlaceCache[key]=googlePlaceCache[t.id];
-    return googlePlaceCache[t.id];
-  }catch(e){
-    googlePlaceCache[t.id]={};
-    googlePlaceCache[key]={};
-    return {};
-  }
+  const cached=mergeNonemptyPlaceDetails(googlePlaceCache[key] || {},googlePlaceCache[t.id] || {});
+  const seed=mergeNonemptyPlaceDetails(t.googleDetails || {},cached);
+  const updatedAt=googlePlaceCacheUpdatedAt[t.id] ?? googlePlaceCacheUpdatedAt[key];
+  if(updatedAt!==undefined && Date.now()-updatedAt<GOOGLE_PLACE_DETAILS_TTL) return seed;
+  if(googlePlaceRequests[key]) return googlePlaceRequests[key];
+  const save=details=>{
+    const merged=mergeNonemptyPlaceDetails(seed,details);
+    googlePlaceCache[t.id]=merged;
+    googlePlaceCache[key]=merged;
+    googlePlaceCacheUpdatedAt[t.id]=Date.now();
+    googlePlaceCacheUpdatedAt[key]=googlePlaceCacheUpdatedAt[t.id];
+    return merged;
+  };
+  const request=(async()=>{
+    // Nearby ne fournit pas le téléphone ni le site : on demande toujours les détails.
+    try{
+      const browserDetails=await findGooglePlaceInBrowser(t);
+      if(hasGooglePlaceDetails(browserDetails)) return save(browserDetails);
+    }catch(e){}
+    if(/^https?:$/.test(location.protocol)){
+      try{
+        const r=await fetch(`/api/google-place?name=${encodeURIComponent(t.nom)}&lat=${t.lat}&lng=${t.lng}&city=${encodeURIComponent(currentCity.nom||'')}`);
+        if(!r.ok) throw new Error();
+        const data=await r.json();
+        if(hasGooglePlaceDetails(data)) return save(data);
+      }catch(e){}
+    }
+    // Une panne reste réessayable dès la prochaine ouverture, sans perdre la photo.
+    return seed;
+  })();
+  googlePlaceRequests[key]=request;
+  try{ return await request; }
+  finally{ delete googlePlaceRequests[key]; }
 }
 
 // Foursquare reste un secours si Google ne renvoie pas encore le lieu.
@@ -2234,20 +2235,23 @@ async function fetchFoursquare(t){
 }
 
 function combinePlaceDetails(ref, details, source){
-  if(!ref) return {...details,source};
+  const merged=mergeNonemptyPlaceDetails(ref || {},details || {});
   return {
-    ...ref,
-    ...details,
-    // Une vraie réservation n'est jamais remplacée par une simple fiche Maps.
-    reservationUrl: ref.reservationUrl || '',
-    menuUrl: ref.menuUrl || '',
-    instagramUrl: ref.instagramUrl || '',
-    email: ref.email || '',
-    priceDetail: ref.priceDetail || '',
-    openingHours: (ref.openingHours && ref.openingHours.length) ? ref.openingHours : (details.openingHours || []),
+    ...merged,
+    // Les anciennes images d'illustration du catalogue ne remplacent pas une photo API.
+    photo: details?.photo || '',
+    photoAttribution: details?.photo ? (details.photoAttribution || '') : '',
+    // Les liens de réservation et de carte validés pour ce lieu restent prioritaires.
+    reservationUrl: ref?.reservationUrl || merged.reservationUrl || '',
+    menuUrl: ref?.menuUrl || merged.menuUrl || '',
+    instagramUrl: ref?.instagramUrl || merged.instagramUrl || '',
+    email: merged.email || '',
+    priceDetail: ref?.priceDetail || merged.priceDetail || '',
+    openingHours: Array.isArray(merged.openingHours) ? merged.openingHours : [],
     source
   };
 }
+
 async function fetchPlaceDetails(t){
   const ref=findReferenced(t);
   const google=await fetchGooglePlace(t);
@@ -2257,12 +2261,16 @@ async function fetchPlaceDetails(t){
   return ref ? {...ref,source:'referenced'} : {};
 }
 
-function googleMapsSearchUrl(t){
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.nom+', '+(currentCity.nom||'France'))}`;
+function googleMapsSearchUrl(t,details={}){
+  const placeId=details.googlePlaceId || t.googlePlaceId || '';
+  const query=[t.nom,details.address||t.adresse||currentCity.nom||'France'].filter(Boolean).join(', ');
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}${placeId?`&query_place_id=${encodeURIComponent(placeId)}`:''}`;
 }
 function googleDirectionsUrl(t,details={}){
   const placeId=details.googlePlaceId || t.googlePlaceId || '';
-  const destination=`${t.lat},${t.lng}`;
+  const lat=Number.isFinite(details.lat)?details.lat:t.lat;
+  const lng=Number.isFinite(details.lng)?details.lng:t.lng;
+  const destination=Number.isFinite(lat)&&Number.isFinite(lng) ? `${lat},${lng}` : [t.nom,details.address||t.adresse||currentCity.nom||'France'].join(', ');
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}${placeId?`&destination_place_id=${encodeURIComponent(placeId)}`:''}`;
 }
 function googleReviewsUrl(t,details={}){
@@ -2440,78 +2448,72 @@ function selectPlaceTab(tabName, focus=false){
     }
   });
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){
-      if(document.getElementById('siteViewer').classList.contains('open')) hideExternalSite();
-      else if(sheet.classList.contains('open')) hidePlaceSheet();
-    }
+    if(e.key==='Escape' && sheet.classList.contains('open')) hidePlaceSheet();
   });
-  const viewer=document.getElementById('siteViewer');
-  const viewerFrame=document.getElementById('siteViewerFrame');
-  const viewerTitle=document.getElementById('siteViewerTitle');
-  const viewerExternal=document.getElementById('siteViewerExternal');
-  function hideExternalSite(){
-    viewer.classList.remove('open','loaded');
-    viewer.setAttribute('aria-hidden','true');
-    window.setTimeout(()=>{ if(!viewer.classList.contains('open')) viewerFrame.removeAttribute('src'); },220);
-  }
-  function showExternalSite(href,label){
-    viewerTitle.textContent=label||'Site du lieu';
-    viewerExternal.href=href;
-    viewer.classList.remove('loaded');
-    viewer.setAttribute('aria-hidden','false');
-    viewer.classList.add('open');
-    viewerFrame.src=href;
-  }
-  window.hideExternalSite=hideExternalSite;
-  document.getElementById('siteViewerClose').addEventListener('click',hideExternalSite);
-  viewerFrame.addEventListener('load',()=>viewer.classList.add('loaded'));
-  sheet.addEventListener('click',e=>{
-    const link=e.target.closest('a[data-sheet-link]');
-    if(!link) return;
-    const href=link.getAttribute('href');
-    if(!href) return;
-    e.preventDefault();
-    showExternalSite(href,link.textContent.trim());
-  });
+
 })();
 
 function isFeaturedOrFavorite(t){
   return !!findReferenced(t) || isFavorite(t);
 }
 
-function directReservationUrl(value){
-  if(!value) return '';
+function externalWebUrl(value){
+  const raw=String(value||'').trim();
+  if(!raw) return '';
+  const candidate=/^https?:\/\//i.test(raw) ? raw
+    : /^(?:www\.)?[a-z0-9][a-z0-9.-]+\.[a-z]{2,}(?::\d+)?(?:[/?#]|$)/i.test(raw) ? `https://${raw}` : '';
   try{
-    const url=new URL(value,window.location.href);
-    const isGoogleMaps=/google\.[^/]+/i.test(url.hostname) && /\/maps\//i.test(url.pathname);
-    return /^https?:$/.test(url.protocol) && !isGoogleMaps ? url.href : '';
+    const url=new URL(candidate);
+    return /^https?:$/.test(url.protocol) && !url.username && !url.password ? url.href : '';
   }catch(e){ return ''; }
 }
-function sheetLink(className, href, label, ariaLabel='', direct=false, id=''){
-  const safeHref=String(href||'').trim();
+function directReservationUrl(value){
+  const href=externalWebUrl(value);
+  if(!href) return '';
+  const url=new URL(href);
+  const googleHost=/(^|\.)(?:google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl)$/i.test(url.hostname);
+  const mapsLink=googleHost && (url.hostname.startsWith('maps.') || /\/maps(?:\/|$)/i.test(url.pathname));
+  return mapsLink ? '' : href;
+}
+function telephoneUrl(value){
+  const raw=String(value||'').trim().replace(/\(0\)/g,'');
+  let digits=raw.replace(/\D/g,'');
+  if(raw.startsWith('00')) digits='+'+digits.slice(2);
+  else if(raw.startsWith('+')) digits='+'+digits;
+  return /^\+?\d{6,15}$/.test(digits) ? `tel:${digits}` : '';
+}
+function supportsDirectPhoneCall(){
+  return navigator.userAgentData?.mobile===true
+    || /Android|iPhone|iPad|iPod|Windows Phone|IEMobile/i.test(navigator.userAgent||'')
+    || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
+function sheetLink(className, href, label, ariaLabel='', id=''){
+  const raw=String(href||'').trim();
+  const safeHref=/^tel:/i.test(raw) ? telephoneUrl(raw.slice(4)) : externalWebUrl(raw);
   if(!safeHref) return '';
   const labelAttr=ariaLabel ? ` aria-label="${escapeAttr(ariaLabel)}"` : '';
-  const webLink=/^https?:\/\//i.test(safeHref);
-  // Les sites s’affichent dans un navigateur intégré, avec un retour immédiat
-  // vers la carte. Téléphone et e-mail conservent le comportement natif.
-  return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}"${webLink?(direct?' target="_blank" rel="noopener noreferrer"':' data-sheet-link="true"'):''}${labelAttr}>${escapeHTML(label)}</a>`;
+  // Une navigation dans l'onglet courant fonctionne sans fenêtre surgissante.
+  return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}" target="_self"${labelAttr}>${escapeHTML(label)}</a>`;
 }
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
   return `<div class="ps-info-row"><div class="ps-row-icon">${icon}</div><div><div class="ps-row-label">${escapeHTML(label)}</div><div class="ps-row-value ${extraClass}">${escapeHTML(value)}</div></div></div>`;
 }
 function getPlaceProfile(t,ref,details={}){
-  const info={...(ref||{}),...(details||{})};
   const cached=cachedDetailsForPlace(t);
+  const info={...(ref||{}),...(cached||{}),...(details||{})};
   const address=info.address||info.adresse||t.adresse||currentCity.nom;
-  const websiteUrl=info.websiteUrl||'';
-  const bookingUrl=directReservationUrl(info.reservationUrl);
+  const websiteUrl=externalWebUrl(details?.websiteUrl)||externalWebUrl(cached?.websiteUrl)||externalWebUrl(ref?.websiteUrl)||externalWebUrl(t.websiteUrl);
+  const bookingUrl=directReservationUrl(details?.reservationUrl)||directReservationUrl(cached?.reservationUrl)||directReservationUrl(ref?.reservationUrl);
+  const mapsUrl=externalWebUrl(details?.googleMapsUrl)||externalWebUrl(cached?.googleMapsUrl)||externalWebUrl(ref?.googleMapsUrl)||googleMapsSearchUrl(t,info);
+  const tel=details?.tel||cached?.tel||ref?.tel||t.tel||'';
+  const callUrl=(supportsDirectPhoneCall() && telephoneUrl(tel)) || mapsUrl;
   const hours=Array.isArray(info.openingHours) ? info.openingHours : [];
   return {
     address, websiteUrl, bookingUrl,
     contactUrl:websiteUrl||info.googleMapsUrl||googleMapsSearchUrl(t),
     menuUrl:info.menuUrl||'', instagramUrl:info.instagramUrl||'', email:info.email||'',
-    tel:info.tel||'', hours, tags:Array.isArray(info.tags)?info.tags:[],
+    tel, callUrl, hours, tags:Array.isArray(info.tags)?info.tags:[],
     type:info.type||preferredPlaceType(t,ref), cuisine:info.cuisine||'',
     description:info.description||info.editorialSummary||'',
     price:info.priceDetail||info.priceLevel||'', priceLevel:info.priceLevel||'',
@@ -2519,7 +2521,7 @@ function getPlaceProfile(t,ref,details={}){
     bookingNote:info.bookingNote||'', openNow:info.openNow,
     photo:placePhotoUrl(t,ref,details),
     photoCredit:(details?.photo || cached?.photo) ? (info.photoAttribution ? `Photo : ${info.photoAttribution}` : 'Photo : Google') : '',
-    mapsUrl:info.googleMapsUrl||googleMapsSearchUrl(t),
+    mapsUrl,
     directionsUrl:googleDirectionsUrl(t,info),
     reviewsUrl:googleReviewsUrl(t,info), eventsUrl:googleEventsUrl(t)
   };
@@ -2532,12 +2534,11 @@ function renderPlaceSheetContent(t,ref,details={}){
   const panelPositions={};
   content.querySelectorAll('[data-place-panel]').forEach(panel=>{ panelPositions[panel.dataset.placePanel]=panel.scrollTop; });
   const dist=distKm(t.lat,t.lng);
-  const bookingAction=sheetLink('ps-btn reserve',p.bookingUrl||p.mapsUrl,'Réserver','Réserver sur le site du restaurant ou sa fiche Google',true,'psReserve');
-  const phoneAction=p.tel
-    ? sheetLink('ps-btn icon-action',`tel:${p.tel}`,'Appeler','Appeler le restaurant',false,'psPhone')
-    : sheetLink('ps-btn icon-action',p.mapsUrl,'Infos','Voir les informations du lieu',false,'psPhone');
+  const bookingAction=sheetLink('ps-btn reserve',p.bookingUrl||p.websiteUrl||p.mapsUrl,'Réserver','Ouvrir la réservation ou le site du restaurant', 'psReserve');
+  const phoneAction=sheetLink('ps-btn icon-action',p.callUrl,'Appeler',p.callUrl.startsWith('tel:')?'Appeler le restaurant':'Voir le numéro du restaurant sur Google','psPhone');
   const practical=[
     infoRow('⌖','Adresse',p.address),
+    infoRow('☎','Téléphone',p.tel),
     infoRow('€','Budget',p.price),
     infoRow('♧','Cuisine',p.cuisine)
   ].filter(Boolean).join('');
@@ -2580,7 +2581,7 @@ function renderPlaceSheetContent(t,ref,details={}){
         <section class="ps-panel" id="psPanel-hours" role="tabpanel" aria-labelledby="psTab-hours" data-place-panel="hours" tabindex="0" hidden>${hours}</section>
         <section class="ps-panel" id="psPanel-links" role="tabpanel" aria-labelledby="psTab-links" data-place-panel="links" tabindex="0" hidden><div class="ps-secondary-actions">${secondary}</div></section>
       </div>
-      <div class="ps-primary-actions">${bookingAction}${phoneAction}${sheetLink('ps-btn icon-action',p.directionsUrl,'Y aller','Ouvrir l’itinéraire',false,'psDirections')}</div>
+      <div class="ps-primary-actions">${bookingAction}${phoneAction}${sheetLink('ps-btn icon-action',p.directionsUrl,'Y aller','Ouvrir l’itinéraire Maps','psDirections')}</div>
     </div>`;
   selectPlaceTab(activePlaceTab);
   content.querySelectorAll('[data-place-panel]').forEach(panel=>{ panel.scrollTop=panelPositions[panel.dataset.placePanel]||0; });
@@ -2601,7 +2602,7 @@ async function showPlaceSheet(t){
   activePlaceId=String(t.id);
   activePlaceTab='overview';
   const ref=findReferenced(t);
-  renderPlaceSheetContent(t,ref,ref||{});
+  renderPlaceSheetContent(t,ref,cachedDetailsForPlace(t));
   sheet.inert=false;
   sheet.setAttribute('aria-hidden','false');
   sheet.classList.add('open');
