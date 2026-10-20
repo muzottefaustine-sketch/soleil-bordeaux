@@ -583,9 +583,9 @@
   </div>
   <div id="psScroll"><div id="psContent"></div></div>
   <nav id="psActionBar" class="ps-primary-actions" aria-label="Actions du lieu">
-    <a id="psReserve" class="ps-btn reserve" href="https://www.google.com/maps/" target="_self">Réserver</a>
-    <a id="psPhone" class="ps-btn icon-action" href="https://www.google.com/maps/" target="_self">Appeler</a>
-    <a id="psDirections" class="ps-btn icon-action" href="https://www.google.com/maps/" target="_self">Y aller</a>
+    <a id="psReserve" class="ps-btn reserve" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Réserver</a>
+    <a id="psPhone" class="ps-btn icon-action" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Appeler</a>
+    <a id="psDirections" class="ps-btn icon-action" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Y aller</a>
   </nav>
 </div>
 
@@ -2587,6 +2587,9 @@ function renderPlaceSheetContent(t,ref,details={}){
   actions.forEach(([id,href,label])=>{
     const link=document.getElementById(id);
     link.href=href;
+    // Les pages web et Maps restent dans un onglet indépendant. Un numéro
+    // utilise le composeur du téléphone, qui ne doit pas créer un nouvel onglet.
+    link.target=/^tel:/i.test(href)?'_self':'_blank';
     link.setAttribute('aria-label',label);
     link.dataset.phone=id==='psPhone'?p.tel:'';
   });
