@@ -487,9 +487,9 @@
       #placeSheet .ps-primary-actions .ps-btn { min-height:44px; }
     }
 
-    /* Le navigateur externe ne remplace jamais la carte. */
-    #placeSheet .ps-primary-actions { position:relative; z-index:5; flex-shrink:0; pointer-events:auto; }
-    #placeSheet .ps-primary-actions a { pointer-events:auto; }
+    /* Les liens d’action restent au-dessus de toute la fiche, y compris sur Safari mobile. */
+    #placeSheet .ps-primary-actions { position:relative; z-index:60; isolation:isolate; flex-shrink:0; pointer-events:auto; }
+    #placeSheet .ps-primary-actions a { position:relative; z-index:61; pointer-events:auto !important; -webkit-tap-highlight-color:rgba(255,212,61,.32); }
     #placeLinkDialog[hidden], #placeLinkDialog [hidden] { display:none !important; }
     #placeLinkDialog { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:20px; }
     #placeLinkBackdrop { position:absolute; inset:0; background:rgba(15,23,42,.48); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
@@ -583,9 +583,9 @@
   </div>
   <div id="psScroll"><div id="psContent"></div></div>
   <nav id="psActionBar" class="ps-primary-actions" aria-label="Actions du lieu">
-    <a id="psReserve" class="ps-btn reserve" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Réserver</a>
-    <a id="psPhone" class="ps-btn icon-action" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Appeler</a>
-    <a id="psDirections" class="ps-btn icon-action" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Y aller</a>
+    <a id="psReserve" class="ps-btn reserve" href="https://www.google.com/maps/" target="_self">Réserver</a>
+    <a id="psPhone" class="ps-btn icon-action" href="https://www.google.com/maps/" target="_self">Appeler</a>
+    <a id="psDirections" class="ps-btn icon-action" href="https://www.google.com/maps/" target="_self">Y aller</a>
   </nav>
 </div>
 
@@ -2581,7 +2581,7 @@ function renderPlaceSheetContent(t,ref,details={}){
   // Ces trois liens restent dans le DOM pendant l’arrivée des données API.
   const actions=[
     ['psReserve',p.bookingUrl||p.websiteUrl||p.mapsUrl,'Ouvrir la réservation ou le site du restaurant'],
-    ['psPhone',p.mapsUrl,'Ouvrir les coordonnées et le téléphone du restaurant'],
+    ['psPhone',telephoneUrl(p.tel)||p.mapsUrl,'Appeler le restaurant'],
     ['psDirections',p.directionsUrl,'Ouvrir l’itinéraire Maps']
   ];
   actions.forEach(([id,href,label])=>{
