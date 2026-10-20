@@ -583,9 +583,9 @@
   </div>
   <div id="psScroll"><div id="psContent"></div></div>
   <nav id="psActionBar" class="ps-primary-actions" aria-label="Actions du lieu">
-    <a id="psReserve" class="ps-btn reserve" data-place-link href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Réserver</a>
-    <a id="psPhone" class="ps-btn icon-action" data-place-link href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Appeler</a>
-    <a id="psDirections" class="ps-btn icon-action" data-place-link href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Y aller</a>
+    <a id="psReserve" class="ps-btn reserve" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Réserver</a>
+    <a id="psPhone" class="ps-btn icon-action" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Appeler</a>
+    <a id="psDirections" class="ps-btn icon-action" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Y aller</a>
   </nav>
 </div>
 
@@ -2537,7 +2537,7 @@ function sheetLink(className, href, label, ariaLabel='', id=''){
   if(!safeHref) return '';
   const labelAttr=ariaLabel ? ` aria-label="${escapeAttr(ariaLabel)}"` : '';
   // Une navigation dans l'onglet courant fonctionne sans fenêtre surgissante.
-  return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}" target="_blank" rel="noopener noreferrer" data-place-link${labelAttr}>${escapeHTML(label)}</a>`;
+  return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}" target="_blank" rel="noopener noreferrer"${labelAttr}>${escapeHTML(label)}</a>`;
 }
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
@@ -3202,9 +3202,6 @@ function installPlaceNavigation(){
     }
   });
 }
-installPlaceNavigation();
-
-
 init();
 </script>
 
