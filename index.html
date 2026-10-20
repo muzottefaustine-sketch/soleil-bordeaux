@@ -431,6 +431,11 @@
     .ps-empty { font-size:13px; line-height:1.5; color:var(--text-2); }
     #placeSheet .ps-secondary-actions { grid-template-columns:repeat(2,minmax(0,1fr)); }
     #placeSheet .ps-secondary-actions .ps-btn { min-height:46px; }
+    #placeSheet .ps-overview-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:0 0 16px; }
+    #placeSheet .ps-overview-actions .ps-btn { display:grid; place-items:center; min-height:48px; padding:10px 5px; }
+    #placeSheet .ps-overview-actions .ps-btn.reserve { grid-column:auto; }
+    #placeSheet a.ps-btn { touch-action:manipulation; -webkit-tap-highlight-color:rgba(255,212,61,.32); }
+    #placeSheet a.ps-btn.site { display:grid; }
     #placeSheet .ps-primary-actions { grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);
       gap:8px; margin:0; padding:10px max(12px,env(safe-area-inset-right,0px)) max(10px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
       border-top:1px solid var(--divider); background:#fff; }
@@ -2364,7 +2369,7 @@ function selectPlaceTab(tabName, focus=false){
     }
   });
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape' && document.getElementById('placeLinkDialog').hidden && sheet.classList.contains('open')) hidePlaceSheet();
+    if(e.key==='Escape' && sheet.classList.contains('open')) hidePlaceSheet();
   });
 })();
 function isFeaturedOrFavorite(t){
@@ -2406,25 +2411,21 @@ function sheetLink(className, href, label, ariaLabel='', id=''){
   if(!safeHref) return '';
   const labelAttr=ariaLabel ? ` aria-label="${escapeAttr(ariaLabel)}"` : '';
   const target=/^tel:/i.test(safeHref)?'_self':'_blank';
-  return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}" target="${target}" rel="noopener noreferrer"${labelAttr}>${escapeHTML(label)}</a>`;
-  return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}" target="${target}" rel="noopener noreferrer" onclick="return openExternalLink(this)"${labelAttr}>${escapeHTML(label)}</a>`;
+  return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}" target="${target}" rel="noopener noreferrer" onclick="return openExternalLink(this,event)"${labelAttr}>${escapeHTML(label)}</a>`;
 }
-function openExternalLink(link){
-  const href=link?.href||'';
-  if(!href) return true;
-  if(/^tel:/i.test(href)){
-    window.location.href=href;
-    return false;
-  }
+function openExternalLink(link,event){
+  if(event && (event.button!==0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)) return true;
+  if(/^tel:/i.test(link.href)) return true;
+  const destination=externalWebUrl(link.href);
+  if(!destination) return true;
   try{
-    const externalWindow=window.open(href,'_blank');
-    if(externalWindow){
-      try{externalWindow.opener=null;}catch(error){}
+    const opened=window.open(destination,'_blank');
+    if(opened){
+      try{opened.opener=null;}catch(error){}
       return false;
     }
   }catch(error){}
-  // Si une fenêtre indépendante est refusée par le navigateur, le href
-  // standard prend le relais plutôt que d’ignorer le clic.
+  link.target='_self';
   return true;
 }
 function infoRow(icon,label,value,extraClass=''){
@@ -2458,6 +2459,36 @@ function getPlaceProfile(t,ref,details={}){
     reviewsUrl:googleReviewsUrl(t,info), eventsUrl:googleEventsUrl(t)
   };
 }
+function syncPlaceSheetNode(currentNode,nextNode){
+  if(currentNode.nodeType!==nextNode.nodeType || currentNode.nodeName!==nextNode.nodeName){
+    currentNode.replaceWith(nextNode.cloneNode(true));
+    return;
+  }
+  if(currentNode.nodeType===Node.TEXT_NODE){
+    if(currentNode.nodeValue!==nextNode.nodeValue) currentNode.nodeValue=nextNode.nodeValue;
+    return;
+  }
+  if(currentNode.nodeType!==Node.ELEMENT_NODE) return;
+  [...currentNode.attributes].forEach(attribute=>{
+    if(!nextNode.hasAttribute(attribute.name)) currentNode.removeAttribute(attribute.name);
+  });
+  [...nextNode.attributes].forEach(attribute=>{
+    if(currentNode.getAttribute(attribute.name)!==attribute.value) currentNode.setAttribute(attribute.name,attribute.value);
+  });
+  [...nextNode.childNodes].forEach((nextChild,index)=>{
+    let currentChild=currentNode.childNodes[index];
+    if(nextChild.id && currentChild?.id!==nextChild.id){
+      const matchingChild=[...currentNode.children].find(child=>child.id===nextChild.id);
+      if(matchingChild){
+        currentNode.insertBefore(matchingChild,currentChild||null);
+        currentChild=matchingChild;
+      }
+    }
+    if(currentChild) syncPlaceSheetNode(currentChild,nextChild);
+    else currentNode.appendChild(nextChild.cloneNode(true));
+  });
+  while(currentNode.childNodes.length>nextNode.childNodes.length) currentNode.lastChild.remove();
+}
 function renderPlaceSheetContent(t,ref,details={}){
   const p=getPlaceProfile(t,ref,details);
   const content=document.getElementById('psContent');
@@ -2480,21 +2511,20 @@ function renderPlaceSheetContent(t,ref,details={}){
     ref?.happyHours ? `<span class="ps-happy">Happy hour ${escapeHTML(ref.happyHours)}</span>` : ''
   ].filter(Boolean).join('');
   const phoneUrl=telephoneUrl(p.tel);
-  const actionLinks=[
-    sheetLink('ps-btn reserve',p.bookingUrl||p.websiteUrl||p.mapsUrl,'Réserver','Ouvrir la réservation ou le site du restaurant'),
-    phoneUrl ? sheetLink('ps-btn tel',phoneUrl,'Appeler','Appeler directement le restaurant') : sheetLink('ps-btn maps',p.mapsUrl,'Téléphone','Voir le numéro sur Google'),
-    sheetLink('ps-btn maps',p.directionsUrl,'Y aller','Ouvrir l’itinéraire Maps'),
-    sheetLink('ps-btn maps',p.mapsUrl,'Fiche Google'),
-    p.websiteUrl ? sheetLink('ps-btn site',p.websiteUrl,'Site') : '',
-    p.menuUrl ? sheetLink('ps-btn site',p.menuUrl,'Carte') : ''
+  const overviewActions=[
+    sheetLink('ps-btn reserve',p.bookingUrl||p.websiteUrl||p.mapsUrl,'Réserver','Ouvrir la réservation ou le site du restaurant','psReserve'),
+    phoneUrl ? sheetLink('ps-btn tel',phoneUrl,'Appeler','Appeler directement le restaurant','psCall') : sheetLink('ps-btn tel',p.mapsUrl,'Téléphone','Voir le numéro du restaurant sur Google','psCall'),
+    sheetLink('ps-btn site',p.menuUrl||p.websiteUrl||p.mapsUrl,'Carte',p.menuUrl?'Ouvrir la carte du restaurant':'Consulter la carte sur le site ou la fiche du restaurant','psMenu')
   ].filter(Boolean).join('');
   const secondary=[
-    actionLinks
+    sheetLink('ps-btn maps',p.directionsUrl,'Y aller','Ouvrir l’itinéraire Maps','psDirections'),
+    sheetLink('ps-btn maps',p.mapsUrl,'Fiche Google','Ouvrir la fiche Google','psGoogle'),
+    p.websiteUrl ? sheetLink('ps-btn site',p.websiteUrl,'Site','Ouvrir le site du restaurant','psWebsite') : ''
   ].filter(Boolean).join('');
   const hours=p.hours.length
     ? `<ul class="ps-hours">${p.hours.map(line=>`<li>${escapeHTML(line)}</li>`).join('')}</ul>`
     : `<p class="ps-empty">Les horaires ne sont pas encore renseignés. Consulte la fiche Google pour les vérifier.</p>${sheetLink('ps-btn maps',p.mapsUrl,'Voir les horaires sur Google')}`;
-  content.innerHTML=`
+  const markup=`
     <div class="ps-hero" id="psHero"><img class="ps-photo" id="psHeroPhoto" data-place-id="${escapeAttr(t.id)}" src="${escapeAttr(p.photo)}" alt="${escapeAttr(t.nom)}" decoding="async" onerror="markPhotoError(this)">${p.photoCredit?`<span class="photo-credit">${escapeHTML(p.photoCredit)}</span>`:''}</div>
     <div class="ps-body">
       <div class="ps-summary">
@@ -2510,6 +2540,7 @@ function renderPlaceSheetContent(t,ref,details={}){
       </div>
       <div class="ps-panels">
         <section class="ps-panel" id="psPanel-overview" role="tabpanel" aria-labelledby="psTab-overview" data-place-panel="overview" tabindex="0">
+          <div class="ps-overview-actions" aria-label="Actions du restaurant">${overviewActions}</div>
           <div class="ps-info-rows">${practical||infoRow('i','Informations','Les informations détaillées arrivent bientôt.')}</div>
           ${tags}
           ${p.bookingNote?`<p class="ps-inline-note">${escapeHTML(p.bookingNote)}</p>`:''}
@@ -2518,6 +2549,14 @@ function renderPlaceSheetContent(t,ref,details={}){
         <section class="ps-panel" id="psPanel-links" role="tabpanel" aria-labelledby="psTab-links" data-place-panel="links" tabindex="0" hidden><div class="ps-secondary-actions">${secondary}</div></section>
       </div>
     </div>`;
+  if(content.dataset.placeId===String(t.id)){
+    const nextContent=content.cloneNode(false);
+    nextContent.innerHTML=markup;
+    syncPlaceSheetNode(content,nextContent);
+  }else{
+    content.innerHTML=markup;
+    content.dataset.placeId=String(t.id);
+  }
   selectPlaceTab(activePlaceTab);
   content.querySelectorAll('[data-place-panel]').forEach(panel=>{ panel.scrollTop=panelPositions[panel.dataset.placePanel]||0; });
   if(focusId) document.getElementById(focusId)?.focus({preventScroll:true});
@@ -2951,110 +2990,6 @@ async function init(){
       setTimeout(()=>navigator.geolocation.clearWatch(wid), 20000);
     },()=>{}, {enableHighAccuracy:true,timeout:4500,maximumAge:15000});
   }
-}
-function installPlaceNavigation(){
-  const sheet=document.getElementById('placeSheet');
-  const dialog=document.getElementById('placeLinkDialog');
-  const title=document.getElementById('placeLinkTitle');
-  const status=document.getElementById('placeLinkStatus');
-  const open=document.getElementById('placeLinkOpen');
-  const urlField=document.getElementById('placeLinkUrl');
-  const phoneBox=document.getElementById('placeLinkPhoneBox');
-  const phoneText=document.getElementById('placeLinkPhone');
-  const dial=document.getElementById('placeLinkDial');
-  const close=document.getElementById('placeLinkClose');
-  const closePage=document.getElementById('placeLinkClosePage');
-  const copy=document.getElementById('placeLinkCopy');
-  let externalWindow=null, returnFocus=null, pressedLink=null;
-  function closeDialog(){
-    dialog.hidden=true;
-    dialog.inert=true;
-    dialog.setAttribute('aria-hidden','true');
-    if(returnFocus?.isConnected) returnFocus.focus({preventScroll:true});
-  }
-  function openLink(href,label,phone='',trigger=null){
-    const destination=externalWebUrl(href);
-    if(!destination) return;
-    returnFocus=trigger||document.activeElement;
-    title.textContent=label||'Ouvrir la page';
-    open.href=destination;
-    urlField.value=destination;
-    const phoneUrl=telephoneUrl(phone);
-    phoneBox.hidden=!phoneUrl;
-    phoneText.textContent=phone||'';
-    if(phoneUrl) dial.href=phoneUrl;
-    else dial.removeAttribute('href');
-    dialog.hidden=false;
-    dialog.inert=false;
-    dialog.setAttribute('aria-hidden','false');
-    copy.textContent='Copier le lien';
-    closePage.hidden=true;
-    status.textContent='La page s’ouvre séparément. Ta fiche reste ici.';
-    // Synchrone pendant le clic : aucun await, aucune redirection de l’application.
-    // Le handle reste disponible pour fermer la fenêtre créée par ce clic.
-    let opened=null;
-    try{
-      opened=window.open('about:blank','_blank','popup=yes,width=1000,height=760,resizable=yes,scrollbars=yes');
-      if(opened){
-        opened.opener=null;
-        opened.location.replace(destination);
-      }
-    }catch(e){
-      try{ opened?.close(); }catch(ignore){}
-      opened=null;
-    }
-    externalWindow=opened;
-    if(opened) closePage.hidden=false;
-    else status.textContent='Appuie sur « Ouvrir la page » pour continuer dans une autre fenêtre. Ta fiche reste ici.';
-    close.focus({preventScroll:true});
-  }
-  // La destination au début de l’appui reste valable si les données arrivent avant le clic.
-  sheet.addEventListener('pointerdown',event=>{
-    const link=event.target.closest('a[data-place-link]');
-    pressedLink=link?{node:link,href:link.getAttribute('href'),phone:link.dataset.phone||'',label:link.textContent.trim()}:null;
-  });
-  sheet.addEventListener('pointercancel',()=>{pressedLink=null;});
-  sheet.addEventListener('click',event=>{
-    const link=event.target.closest('a[data-place-link]');
-    if(!link) return;
-    if(event.button!==0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    event.preventDefault();
-    const press=pressedLink?.node===link?pressedLink:null;
-    pressedLink=null;
-    openLink(press?.href||link.getAttribute('href'),press?.label||link.textContent.trim(),press?.phone||link.dataset.phone||'',link);
-  });
-  close.addEventListener('click',closeDialog);
-  document.getElementById('placeLinkBackdrop').addEventListener('click',closeDialog);
-  closePage.addEventListener('click',()=>{
-    try{ externalWindow?.close(); }catch(e){}
-    externalWindow=null;
-    closeDialog();
-    try{window.focus();}catch(e){}
-  });
-  copy.addEventListener('click',async()=>{
-    try{
-      if(!navigator.clipboard?.writeText) throw new Error('clipboard unavailable');
-      await navigator.clipboard.writeText(urlField.value);
-      copy.textContent='Lien copié';
-    }catch(e){
-      urlField.focus();
-      urlField.select();
-      copy.textContent='Lien sélectionné : tu peux le copier';
-    }
-  });
-  dialog.addEventListener('keydown',event=>{
-    if(event.key==='Escape'){
-      event.preventDefault();
-      event.stopPropagation();
-      closeDialog();
-    }
-    if(event.key==='Tab'){
-      const controls=[...dialog.querySelectorAll('button,a[href],input')].filter(el=>!el.closest('[hidden]'));
-      const first=controls[0],last=controls[controls.length-1];
-      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}
-      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}
-    }
-  });
 }
 init();
 </script>
