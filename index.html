@@ -506,6 +506,7 @@
     .place-google-map { width:100%; height:280px; height:clamp(210px,36dvh,360px); background:#F2F2F7; }
     .place-google-address { padding:14px 20px 20px; }
     #placeGoogleAddress { width:100%; padding:12px; border:1px solid var(--divider); border-radius:12px; color:var(--text); background:#fff; font:inherit; font-size:13px; }
+    #placeGoogleWebsiteURL { width:100%; padding:12px; border:1px solid var(--divider); border-radius:12px; background:white; color:var(--text); font:inherit; font-size:13px; }
     #placeGoogleMapStatus { padding:0 20px 12px; color:var(--text-2); font-size:12px; }
     .place-link-footer { padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
       border-top:1px solid var(--divider); background:#fff; }
@@ -615,8 +616,9 @@
     <footer class="place-link-footer">
       <a id="placeLinkOpen" class="place-link-button primary" href="#" target="_blank" rel="noopener noreferrer">Ouvrir dans le navigateur ↗</a>
       <button id="placeLinkContacts" class="place-link-copy" type="button" hidden>Téléphone et infos du restaurant</button>
-      <details><summary>La page ne s’affiche pas ?</summary>
-        <p class="ps-inline-note">Certains sites demandent le navigateur intégré de l’application. Tu peux aussi copier leur lien.</p>
+      <button id="placeLinkShare" class="place-link-copy" type="button" hidden>Partager le lien</button>
+      <details><summary>Lien de la page</summary>
+        <p class="ps-inline-note">Tu peux copier le lien pour consulter la page complète dans ton navigateur.</p>
         <label for="placeLinkUrl">Adresse de la page</label><input id="placeLinkUrl" type="url" readonly>
         <button id="placeLinkCopy" class="place-link-copy" type="button">Copier le lien</button>
       </details>
@@ -3091,6 +3093,7 @@ init();
   const browserLink=document.getElementById('placeLinkOpen');
   const urlField=document.getElementById('placeLinkUrl');
   const contactsButton=document.getElementById('placeLinkContacts');
+  const shareButton=document.getElementById('placeLinkShare');
   const googleView=document.getElementById('placeLinkGoogle');
   const googleSummary=document.getElementById('placeGoogleSummary');
   const googleMapElement=document.getElementById('placeGoogleMap');
@@ -3109,7 +3112,15 @@ init();
   }
   function finishNativeFailure(url){
     showWindow(url,'Page du restaurant',returnFocus);
-    status.textContent='Le navigateur de l’application n’a pas pu ouvrir cette page.';
+  }
+  function hasNativeBrowser(){
+    return typeof window.webkit?.messageHandlers?.soleilBrowser?.postMessage==='function'
+      || typeof window.cordova?.InAppBrowser?.open==='function'
+      || (window.Capacitor?.isNativePlatform?.() && typeof window.Capacitor?.Plugins?.Browser?.open==='function');
+  }
+  function knownInlinePage(destination){
+    const url=new URL(destination);
+    return url.protocol==='https:' && ['lapointe-bordeaux.fr','www.lapointe-bordeaux.fr'].includes(url.hostname);
   }
   function tryNative(destination){
     const bridge=window.webkit?.messageHandlers?.soleilBrowser;
@@ -3169,8 +3180,7 @@ init();
     const links=[
       phone?sheetLink('ps-btn tel',phone,'Appeler','Appeler le restaurant','placeGoogleCall'):'',
       profile.bookingUrl?sheetLink('ps-btn reserve',profile.bookingUrl,'Réserver','Ouvrir la réservation','placeGoogleReserve'):'',
-      profile.menuUrl?sheetLink('ps-btn site',profile.menuUrl,'Voir la carte','Ouvrir la carte du restaurant','placeGoogleMenu'):'',
-      profile.websiteUrl?sheetLink('ps-btn site',profile.websiteUrl,'Site du restaurant','Ouvrir le site du restaurant','placeGoogleWebsite'):''
+      profile.menuUrl?sheetLink('ps-btn site',profile.menuUrl,'Voir la carte','Ouvrir la carte du restaurant','placeGoogleMenu'):''
     ].filter(Boolean).join('');
     const rows=[infoRow('⌖','Adresse',profile.address),infoRow('☎','Téléphone',profile.tel),infoRow('€','Budget',profile.price)].filter(Boolean).join('');
     const markup=`${profile.photo?`<img id="placeGooglePhoto" class="place-google-photo" src="${escapeAttr(profile.photo)}" alt="${escapeAttr(place.nom)}" decoding="async">`:''}
@@ -3181,6 +3191,7 @@ init();
       ${note?`<p id="placeGoogleActionNote">${escapeHTML(note)}</p>`:''}
       <div id="placeGoogleContactActions" class="place-google-actions">${links}</div>
       <div id="placeGoogleInfoRows" class="ps-info-rows">${rows}</div>
+      ${profile.websiteUrl?`<div id="placeGoogleWebsiteSection"><label for="placeGoogleWebsiteURL">Site internet du restaurant</label><input id="placeGoogleWebsiteURL" readonly value="${escapeAttr(profile.websiteUrl)}"><button id="placeGoogleCopyWebsite" class="place-link-copy" type="button">Copier le lien du site</button></div>`:''}
       ${profile.hours.length?`<ul id="placeGoogleHours" class="ps-hours">${profile.hours.map(line=>`<li>${escapeHTML(line)}</li>`).join('')}</ul>`:''}`;
     if(googleSummary.dataset.placeId===String(place.id)){
       const next=googleSummary.cloneNode(false);
@@ -3259,23 +3270,26 @@ init();
     document.getElementById('placeLinkTitle').textContent=label||'Page du restaurant';
     document.getElementById('placeLinkHost').textContent=new URL(destination).hostname;
     browserLink.href=destination;
+    browserLink.hidden=!hasNativeBrowser();
+    shareButton.hidden=typeof navigator.share!=='function';
     browserLink.textContent='Ouvrir dans le navigateur ↗';
     urlField.value=destination;
     dialog.querySelector('details').open=false;
     help.hidden=true;
     googleView.hidden=true;
     contactsButton.hidden=!activeGooglePlace(trigger,destination);
-    frame.hidden=false;
-    status.textContent='La page s’affiche ci-dessous. Les contacts du restaurant restent accessibles en bas de la fenêtre.';
-    const googlePage=/(^|\.)(google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl)$/i.test(new URL(destination).hostname);
-    if(googlePage){
+    frame.hidden=true;
+    status.textContent='Informations du restaurant';
+    if(!knownInlinePage(destination)){
       showGooglePlace(destination,trigger);
     }else{
+      frame.hidden=false;
+      status.textContent='Site officiel du restaurant · « Retour à l’app » retrouve ta fiche.';
       frame.onload=()=>{
-        if(destination===activeUrl) status.textContent='Ferme cette fenêtre pour retrouver ta fiche. Si la page est vide, utilise « Ouvrir dans le navigateur ».';
+        if(destination===activeUrl) status.textContent='Site officiel du restaurant · « Retour à l’app » retrouve ta fiche.';
       };
       frame.onerror=()=>{
-        if(destination===activeUrl) status.textContent='Affichage indisponible : essaie « Ouvrir dans le navigateur ».';
+        if(destination===activeUrl) showGooglePlace(destination,trigger);
       };
       frame.title=label||'Page du restaurant';
       frame.src=destination;
@@ -3287,7 +3301,7 @@ init();
     const destination=safeDestination(link?.href);
     if(!destination) return true;
     if(dialog.hidden) returnFocus=link;
-    if(/(^|\.)(google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl)$/i.test(new URL(destination).hostname)){
+    if(!destination.startsWith('tel:') && activeGooglePlace(link,destination)){
       event?.preventDefault();
       showWindow(destination,link.textContent.trim(),link);
       return false;
@@ -3318,7 +3332,22 @@ init();
     const destination=safeDestination(browserLink.href);
     if(!destination) return;
     if(tryNative(destination)){event.preventDefault();return;}
-    status.textContent='La page complète s’ouvre dans un autre onglet si l’application l’autorise. Tu peux toujours revenir à ta fiche avec « Retour à l’app ».';
+    event.preventDefault();
+    browserLink.hidden=true;
+  });
+  shareButton.addEventListener('click',async()=>{
+    if(typeof navigator.share!=='function'||!activeUrl) return;
+    try{await navigator.share({title:document.getElementById('placeLinkTitle').textContent,url:activeUrl});}catch(error){}
+  });
+  googleSummary.addEventListener('click',async event=>{
+    const button=event.target.closest('#placeGoogleCopyWebsite');
+    if(!button) return;
+    const input=document.getElementById('placeGoogleWebsiteURL');
+    if(!input) return;
+    try{
+      await navigator.clipboard.writeText(input.value);
+      button.textContent='Lien copié';
+    }catch(error){input.focus();input.select();}
   });
   document.getElementById('placeLinkCopy').addEventListener('click',async()=>{
     try{
