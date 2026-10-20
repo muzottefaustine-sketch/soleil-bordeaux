@@ -479,14 +479,30 @@
     #placeSheet .ps-primary-actions { position:relative; z-index:60; isolation:isolate; flex-shrink:0; pointer-events:auto; }
     #placeSheet .ps-primary-actions a { position:relative; z-index:61; pointer-events:auto !important; -webkit-tap-highlight-color:rgba(255,212,61,.32); }
     #placeLinkDialog[hidden], #placeLinkDialog [hidden] { display:none !important; }
-    #placeLinkDialog { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:20px; }
+    #placeLinkDialog { position:fixed; inset:0; z-index:2000; display:grid; place-items:center; padding:0; }
     #placeLinkBackdrop { position:absolute; inset:0; background:rgba(15,23,42,.48); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
-    .place-link-card { position:relative; width:min(100%,440px); max-height:calc(100dvh - 40px); overflow:auto; border-radius:24px;
-      background:#fff; box-shadow:0 20px 70px rgba(0,0,0,.25); padding:20px; color:var(--text); }
-    .place-link-return { min-height:44px; background:none; border:0; font:750 14px/1.3 -apple-system,BlinkMacSystemFont,sans-serif; cursor:pointer; margin-bottom:18px; }
-    .place-link-eyebrow { display:block; font-size:11px; font-weight:800; color:#9A7500; margin-bottom:8px; }
-    #placeLinkTitle { font-size:25px; line-height:1.15; margin:0 0 12px; }
-    #placeLinkStatus { font-size:14px; line-height:1.5; color:var(--text-2); margin:0 0 20px; }
+    .place-link-card { position:relative; width:100%; height:100vh; height:100dvh; min-height:0;
+      display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; overflow:hidden;
+      background:#fff; box-shadow:0 20px 70px rgba(0,0,0,.25); color:var(--text); }
+    .place-link-toolbar { display:flex; align-items:center; gap:12px; min-height:60px;
+      padding:calc(6px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 6px max(12px,env(safe-area-inset-left,0px)); border-bottom:1px solid var(--divider); }
+    .place-link-return { flex:0 0 auto; min-height:44px; padding:0 10px; background:#F2F2F7; border:0; border-radius:12px;
+      font:750 14px/1.3 -apple-system,BlinkMacSystemFont,sans-serif; cursor:pointer; touch-action:manipulation; }
+    .place-link-heading { flex:1; min-width:0; }
+    #placeLinkTitle { font-size:16px; line-height:1.3; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    #placeLinkHost { display:block; margin-top:2px; color:var(--text-2); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    #placeLinkStatus { font-size:12px; line-height:1.4; color:var(--text-2); margin:0; padding:8px 16px; background:#F7F7FA; }
+    .place-link-viewport { min-width:0; min-height:0; overflow:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-x pan-y; }
+    #placeLinkFrame { display:block; width:100%; height:100%; min-height:100%; border:0; background:white; }
+    #placeLinkHelp { padding:24px; font-size:15px; line-height:1.5; color:var(--text-2); }
+    .place-link-footer { padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
+      border-top:1px solid var(--divider); background:#fff; }
+    .place-link-footer summary { min-height:36px; display:flex; align-items:center; font-size:12px; cursor:pointer; }
+    .place-link-footer label { font-size:11px; color:var(--text-2); }
+    @media (min-width:800px) and (min-height:650px) {
+      #placeLinkDialog { padding:24px; }
+      .place-link-card { max-width:1080px; height:calc(100dvh - 48px); border-radius:22px; }
+    }
     .place-link-button { display:flex; align-items:center; justify-content:center; width:100%; min-height:48px; padding:12px; border:0; border-radius:13px; background:#F2F2F7;
       color:var(--text); text-decoration:none; font-family:inherit; font-size:14px; font-weight:750; cursor:pointer; margin:8px 0; }
     .place-link-button.primary { background:#1D1D1F; color:#fff; }
@@ -551,7 +567,7 @@
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
   <div class="tt-sun" id="ttSun"></div>
-  <a id="ttMaps" href="#" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;">Ouvrir dans Maps</a>
+  <a id="ttMaps" href="#" target="_blank" rel="noopener noreferrer" onclick="return openExternalLink(this,event)" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;">Ouvrir dans Maps</a>
 </div>
 <!-- Fiche lieu (Foursquare + partenaires) -->
 <div id="psOverlay" onclick="hidePlaceSheet()"></div>
@@ -566,16 +582,24 @@
 <section id="placeLinkDialog" role="dialog" aria-modal="true" aria-labelledby="placeLinkTitle" aria-hidden="true" hidden inert>
   <div id="placeLinkBackdrop" aria-hidden="true"></div>
   <div class="place-link-card">
-    <button id="placeLinkClose" class="place-link-return" type="button">‹ Retour à la fiche</button>
-    <span class="place-link-eyebrow">Soleilenterrasse</span>
-    <h2 id="placeLinkTitle">Ouvrir la page</h2>
-    <p id="placeLinkStatus" role="status"></p>
-    <div id="placeLinkPhoneBox" hidden><strong id="placeLinkPhone"></strong><a id="placeLinkDial" class="place-link-button" target="_self">Lancer l’appel</a></div>
-    <a id="placeLinkOpen" class="place-link-button primary" target="_blank" rel="noopener noreferrer">Ouvrir la page ↗</a>
-    <button id="placeLinkClosePage" class="place-link-button" type="button" hidden>Fermer la page ouverte et revenir</button>
-    <label for="placeLinkUrl">Lien de la page</label>
-    <input id="placeLinkUrl" type="url" readonly>
-    <button id="placeLinkCopy" class="place-link-copy" type="button">Copier le lien</button>
+    <header class="place-link-toolbar">
+      <button id="placeLinkClose" class="place-link-return" type="button" aria-label="Fermer la fenêtre et revenir à l’application">‹ Retour à l’app</button>
+      <div class="place-link-heading"><h2 id="placeLinkTitle">Page du restaurant</h2><span id="placeLinkHost"></span></div>
+    </header>
+    <p id="placeLinkStatus" role="status">Chargement de la page…</p>
+    <div class="place-link-viewport">
+      <iframe id="placeLinkFrame" title="Page du restaurant" src="about:blank" referrerpolicy="strict-origin-when-cross-origin"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads" hidden></iframe>
+      <div id="placeLinkHelp" hidden></div>
+    </div>
+    <footer class="place-link-footer">
+      <a id="placeLinkOpen" class="place-link-button primary" href="#" target="_blank" rel="noopener noreferrer">Ouvrir dans le navigateur ↗</a>
+      <details><summary>La page ne s’affiche pas ?</summary>
+        <p class="ps-inline-note">Certains sites demandent le navigateur intégré de l’application. Tu peux aussi copier leur lien.</p>
+        <label for="placeLinkUrl">Adresse de la page</label><input id="placeLinkUrl" type="url" readonly>
+        <button id="placeLinkCopy" class="place-link-copy" type="button">Copier le lien</button>
+      </details>
+    </footer>
   </div>
 </section>
 <div id="drawer">
@@ -2369,7 +2393,7 @@ function selectPlaceTab(tabName, focus=false){
     }
   });
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape' && sheet.classList.contains('open')) hidePlaceSheet();
+    if(e.key==='Escape' && document.getElementById('placeLinkDialog').hidden && sheet.classList.contains('open')) hidePlaceSheet();
   });
 })();
 function isFeaturedOrFavorite(t){
@@ -2414,19 +2438,7 @@ function sheetLink(className, href, label, ariaLabel='', id=''){
   return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}" target="${target}" rel="noopener noreferrer" onclick="return openExternalLink(this,event)"${labelAttr}>${escapeHTML(label)}</a>`;
 }
 function openExternalLink(link,event){
-  if(event && (event.button!==0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)) return true;
-  if(/^tel:/i.test(link.href)) return true;
-  const destination=externalWebUrl(link.href);
-  if(!destination) return true;
-  try{
-    const opened=window.open(destination,'_blank');
-    if(opened){
-      try{opened.opener=null;}catch(error){}
-      return false;
-    }
-  }catch(error){}
-  link.target='_self';
-  return true;
+  return window.SoleilLinks ? window.SoleilLinks.activate(link,event) : true;
 }
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
@@ -2992,6 +3004,156 @@ async function init(){
   }
 }
 init();
+</script>
+<script>
+(()=>{
+  const dialog=document.getElementById('placeLinkDialog');
+  const sheet=document.getElementById('placeSheet');
+  const frame=document.getElementById('placeLinkFrame');
+  const close=document.getElementById('placeLinkClose');
+  const status=document.getElementById('placeLinkStatus');
+  const help=document.getElementById('placeLinkHelp');
+  const browserLink=document.getElementById('placeLinkOpen');
+  const urlField=document.getElementById('placeLinkUrl');
+  let returnFocus=null, sheetWasInert=false, activeUrl='';
+  function safeDestination(value){
+    try{
+      const destination=new URL(String(value||''));
+      if(destination.username || destination.password) return '';
+      if(/^https?:$/.test(destination.protocol)) return destination.href;
+      if(destination.protocol==='tel:' && /^\+?\d{6,15}$/.test(destination.pathname)) return destination.href;
+    }catch(error){}
+    return '';
+  }
+  function finishNativeFailure(url){
+    showWindow(url,'Page du restaurant',returnFocus);
+    status.textContent='Le navigateur de l’application n’a pas pu ouvrir cette page.';
+  }
+  function tryNative(destination){
+    const bridge=window.webkit?.messageHandlers?.soleilBrowser;
+    if(typeof bridge?.postMessage==='function'){
+      try{bridge.postMessage({url:destination});return true;}catch(error){}
+    }
+    const inAppBrowser=window.cordova?.InAppBrowser;
+    if(typeof inAppBrowser?.open==='function'){
+      try{
+        inAppBrowser.open(destination,destination.startsWith('tel:')?'_system':'_blank',
+          'location=yes,toolbar=yes,toolbarposition=top,closebuttoncaption=Fermer,presentationstyle=fullscreen,hardwareback=yes');
+        return true;
+      }catch(error){}
+    }
+    const capacitor=window.Capacitor;
+    const browser=capacitor?.Plugins?.Browser;
+    if(!destination.startsWith('tel:') && capacitor?.isNativePlatform?.() && typeof browser?.open==='function'){
+      try{
+        Promise.resolve(browser.open({url:destination,presentationStyle:'fullscreen',toolbarColor:'#FFFFFF'}))
+          .catch(()=>finishNativeFailure(destination));
+        return true;
+      }catch(error){}
+    }
+    return false;
+  }
+  function closeWindow(){
+    frame.onload=null;
+    frame.onerror=null;
+    frame.src='about:blank';
+    frame.hidden=true;
+    dialog.hidden=true;
+    dialog.inert=true;
+    dialog.setAttribute('aria-hidden','true');
+    sheet.inert=sheetWasInert;
+    if(returnFocus?.isConnected) returnFocus.focus({preventScroll:true});
+    activeUrl='';
+  }
+  function showWindow(destination,label,trigger){
+    if(dialog.hidden){
+      returnFocus=trigger||document.activeElement;
+      sheetWasInert=sheet.inert;
+    }
+    activeUrl=destination;
+    dialog.hidden=false;
+    dialog.inert=false;
+    dialog.setAttribute('aria-hidden','false');
+    sheet.inert=true;
+    document.getElementById('placeLinkTitle').textContent=label||'Page du restaurant';
+    document.getElementById('placeLinkHost').textContent=new URL(destination).hostname;
+    browserLink.href=destination;
+    urlField.value=destination;
+    dialog.querySelector('details').open=false;
+    help.hidden=true;
+    frame.hidden=false;
+    status.textContent='Chargement de la page…';
+    const googlePage=/(^|\.)(google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl)$/i.test(new URL(destination).hostname);
+    if(googlePage){
+      frame.hidden=true;
+      frame.src='about:blank';
+      help.textContent='Cette page Google doit s’ouvrir dans le navigateur de l’application. Si le bouton ci-dessous ne répond pas, le navigateur intégré doit être activé dans l’application.';
+      help.hidden=false;
+      status.textContent='Ouverture externe nécessaire pour cette page.';
+    }else{
+      frame.onload=()=>{
+        if(destination===activeUrl) status.textContent='Ferme cette fenêtre pour retrouver ta fiche. Si la page est vide, utilise « Ouvrir dans le navigateur ».';
+      };
+      frame.onerror=()=>{
+        if(destination===activeUrl) status.textContent='Affichage indisponible : essaie « Ouvrir dans le navigateur ».';
+      };
+      frame.title=label||'Page du restaurant';
+      frame.src=destination;
+    }
+    close.focus({preventScroll:true});
+  }
+  function activate(link,event){
+    if(event && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (event.type==='click' && event.button>0))) return true;
+    const destination=safeDestination(link?.href);
+    if(!destination) return true;
+    returnFocus=link;
+    if(tryNative(destination)){
+      event?.preventDefault();
+      return false;
+    }
+    if(destination.startsWith('tel:')) return true;
+    try{
+      const opened=window.open(destination,'_blank');
+      if(opened){
+        try{opened.opener=null;}catch(error){}
+        event?.preventDefault();
+        return false;
+      }
+    }catch(error){}
+    event?.preventDefault();
+    showWindow(destination,link.textContent.trim(),link);
+    return false;
+  }
+  close.addEventListener('click',closeWindow);
+  document.getElementById('placeLinkBackdrop').addEventListener('click',closeWindow);
+  browserLink.addEventListener('click',event=>{
+    const destination=safeDestination(browserLink.href);
+    if(!destination) return;
+    if(tryNative(destination)){event.preventDefault();return;}
+    status.textContent='Si rien ne s’ouvre, le navigateur intégré doit être activé dans l’application. Le bouton Fermer te ramène à ta fiche.';
+  });
+  document.getElementById('placeLinkCopy').addEventListener('click',async()=>{
+    try{
+      await navigator.clipboard.writeText(urlField.value);
+      document.getElementById('placeLinkCopy').textContent='Lien copié';
+    }catch(error){urlField.focus();urlField.select();}
+  });
+  document.addEventListener('keydown',event=>{
+    if(dialog.hidden) return;
+    if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();closeWindow();}
+    if(event.key==='Tab'){
+      const controls=[...dialog.querySelectorAll('button,a[href],input,summary,iframe')].filter(element=>element.getClientRects().length);
+      const first=controls[0],last=controls[controls.length-1];
+      if(event.shiftKey && document.activeElement===first){event.preventDefault();last?.focus();}
+      else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first?.focus();}
+    }
+  },true);
+  window.addEventListener('soleil-browser-error',event=>{
+    const destination=safeDestination(event.detail?.url);
+    if(destination && !destination.startsWith('tel:')) finishNativeFailure(destination);
+  });
+  window.SoleilLinks={activate,close:closeWindow};
+})();
 </script>
 </body>
 </html>
