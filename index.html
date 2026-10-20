@@ -2046,6 +2046,62 @@ function normalizeGoogleJsPlace(place){
     lng: coords?.lng
   };
 }
+function googlePlaceMatches(place,target){
+  const expected=normalize(target.nom||'').replace(/[^a-z0-9]/g,'');
+  const received=normalize(place.displayName?.text||'').replace(/[^a-z0-9]/g,'');
+  const matchingName=expected===received || (Math.min(expected.length,received.length)>=6 && (expected.includes(received)||received.includes(expected)));
+  const location=place.location;
+  const matchingLocation=!Number.isFinite(target.lat)||!Number.isFinite(target.lng)
+    || (Number.isFinite(location?.latitude)&&Number.isFinite(location?.longitude)
+      && metersBetween(target.lat,target.lng,location.latitude,location.longitude)<1000);
+  return matchingName&&matchingLocation;
+}
+function normalizeGoogleApiPlace(place){
+  if(!place?.id) return {};
+  const photo=place.photos?.[0];
+  const photoName=typeof photo?.name==='string' && /^places\/[^/?]+\/photos\/[^/?]+$/.test(photo.name) ? photo.name : '';
+  const levels={PRICE_LEVEL_FREE:'Gratuit',PRICE_LEVEL_INEXPENSIVE:'€',PRICE_LEVEL_MODERATE:'€€',PRICE_LEVEL_EXPENSIVE:'€€€',PRICE_LEVEL_VERY_EXPENSIVE:'€€€€'};
+  return {
+    photo:photoName?`https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=1100&key=${encodeURIComponent(GOOGLE_MAPS_API_KEY.trim())}`:'',
+    photoAttribution:(photo?.authorAttributions||[]).map(author=>author.displayName).filter(Boolean).join(', '),
+    rating:place.rating??'',
+    userRatingCount:place.userRatingCount??'',
+    tel:place.internationalPhoneNumber||place.nationalPhoneNumber||'',
+    websiteUrl:place.websiteUri||'',
+    googleMapsUrl:place.googleMapsUri||`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.displayName?.text||'Restaurant')}&query_place_id=${encodeURIComponent(place.id)}`,
+    address:place.formattedAddress||'',
+    openingHours:place.regularOpeningHours?.weekdayDescriptions||[],
+    openNow:typeof place.currentOpeningHours?.openNow==='boolean'?place.currentOpeningHours.openNow:null,
+    priceLevel:levels[place.priceLevel]||'',
+    googlePlaceId:place.id,
+    lat:place.location?.latitude,
+    lng:place.location?.longitude
+  };
+}
+async function findGooglePlaceWithApi(target){
+  if(!hasGoogleMapsKey()) return {};
+  const headers={'Content-Type':'application/json','X-Goog-Api-Key':GOOGLE_MAPS_API_KEY.trim()};
+  let placeId=target.googlePlaceId||target.googleDetails?.googlePlaceId||'';
+  if(!/^[A-Za-z0-9_-]+$/.test(placeId)) placeId='';
+  if(!placeId){
+    const request={textQuery:[target.nom,target.adresse,currentCity.nom||'France'].filter(Boolean).join(', '),languageCode:'fr',regionCode:'FR',maxResultCount:3};
+    if(Number.isFinite(target.lat)&&Number.isFinite(target.lng)) request.locationBias={circle:{center:{latitude:target.lat,longitude:target.lng},radius:3000}};
+    const response=await fetchWithTimeout('https://places.googleapis.com/v1/places:searchText',{
+      method:'POST',headers:{...headers,'X-Goog-FieldMask':'places.id,places.displayName,places.location'},body:JSON.stringify(request)
+    },6500);
+    if(!response.ok) throw new Error(`Google Places search ${response.status}`);
+    const data=await response.json();
+    const found=(data.places||[]).find(place=>googlePlaceMatches(place,target));
+    if(!found) return {};
+    placeId=found.id;
+  }
+  const fields='id,displayName,location,photos,formattedAddress,internationalPhoneNumber,nationalPhoneNumber,websiteUri,googleMapsUri,rating,userRatingCount,regularOpeningHours,currentOpeningHours.openNow,priceLevel';
+  const response=await fetchWithTimeout(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=fr`,{
+    headers:{...headers,'X-Goog-FieldMask':fields}
+  },6500);
+  if(!response.ok) throw new Error(`Google Places details ${response.status}`);
+  return normalizeGoogleApiPlace(await response.json());
+}
 async function findGooglePlaceInBrowser(t){
   const service = await getGooglePlacesService();
   if(!service) return {};
@@ -2054,7 +2110,7 @@ async function findGooglePlaceInBrowser(t){
   return new Promise(resolve => {
     const readDetails = placeId => service.getDetails({
       placeId,
-      fields:['name','place_id','geometry','photos','formatted_phone_number','international_phone_number','formatted_address','website','url','rating','user_ratings_total','opening_hours','price_level','editorial_summary']
+      fields:['name','place_id','geometry','photos','formatted_phone_number','international_phone_number','formatted_address','website','url','rating','user_ratings_total','opening_hours','price_level']
     }, (place, detailsStatus) => {
       if(!googleStatusOk(detailsStatus) || !place) { resolve({}); return; }
       // Un identifiant connu vise déjà le bon établissement, même après un changement de nom.
@@ -2178,19 +2234,17 @@ async function fetchGooglePlace(t){
     return merged;
   };
   const request=(async()=>{
-    // Nearby ne fournit pas le téléphone ni le site : on demande toujours les détails.
     try{
-      const browserDetails=await findGooglePlaceInBrowser(t);
+      const details=await findGooglePlaceWithApi(t);
+      if(hasGooglePlaceDetails(details)) return save(details);
+    }catch(e){}
+    try{
+      const browserDetails=await Promise.race([
+        findGooglePlaceInBrowser(t),
+        new Promise(resolve=>setTimeout(()=>resolve({}),5000))
+      ]);
       if(hasGooglePlaceDetails(browserDetails)) return save(browserDetails);
     }catch(e){}
-    if(/^https?:$/.test(location.protocol)){
-      try{
-        const r=await fetch(`/api/google-place?name=${encodeURIComponent(t.nom)}&lat=${t.lat}&lng=${t.lng}&city=${encodeURIComponent(currentCity.nom||'')}`);
-        if(!r.ok) throw new Error();
-        const data=await r.json();
-        if(hasGooglePlaceDetails(data)) return save(data);
-      }catch(e){}
-    }
     // Une panne reste réessayable dès la prochaine ouverture, sans perdre la photo.
     return seed;
   })();
@@ -3233,6 +3287,11 @@ init();
     const destination=safeDestination(link?.href);
     if(!destination) return true;
     if(dialog.hidden) returnFocus=link;
+    if(/(^|\.)(google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl)$/i.test(new URL(destination).hostname)){
+      event?.preventDefault();
+      showWindow(destination,link.textContent.trim(),link);
+      return false;
+    }
     if(tryNative(destination)){
       event?.preventDefault();
       return false;
