@@ -1,6 +1,7 @@
 <!DOCTYPE html><html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <meta name="soleil-version" content="2026-10-21-partenaires-nom-seul">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -121,6 +122,8 @@
     .panel-labels { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-3); font-weight: 500; }
     #tooltip { position: fixed; z-index: 50; background: rgba(20,20,22,0.93); color: white; padding: 12px 18px; border-radius: 16px; font-size: 15px; font-weight: 600; pointer-events: none; opacity: 0; transform: translateY(6px); transition: opacity 0.18s, transform 0.18s; backdrop-filter: blur(12px); max-width: 260px; text-align: center; border: 1px solid rgba(255,255,255,0.08); }
     #tooltip.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #tooltip.name-only { padding:10px 16px; }
+    #tooltip.name-only > :not(#ttName) { display:none !important; }
     #tooltip .tt-type { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; font-weight: 400; font-family: Arial, sans-serif; }
     #tooltip .tt-sun { font-size: 13px; font-weight: 600; margin-top: 6px; font-family: Arial, sans-serif; }
     #tooltip .tt-sun.sun { color: var(--yellow); }
@@ -576,7 +579,7 @@
   <input type="range" id="timeSlider" min="6" max="21" value="14" step="0.25">
   <div class="panel-labels"><span>6h</span><span>20h</span></div>
 </div>
-<div id="tooltip">
+<div id="tooltip" role="status" aria-live="polite">
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
   <div class="tt-sun" id="ttSun"></div>
@@ -1687,7 +1690,8 @@ viewer.scene.globe.tileLoadProgressEvent.addEventListener(remaining=>{
 });
 window.addEventListener('resize',()=>{markerLayoutDirty=true;viewer.scene.requestRender();});
 const tooltip=document.getElementById('tooltip'); let ttTimeout=null;
-function showTooltip(t,x,y){
+function showTooltip(t,x,y,nameOnly=false){
+  tooltip.classList.toggle('name-only',nameOnly);
   document.getElementById('ttName').textContent=t.nom;
   document.getElementById('ttType').textContent=t.type+(t.adresse?' · '+t.adresse:'');
   const ttSun=document.getElementById('ttSun');
@@ -1700,7 +1704,10 @@ function showTooltip(t,x,y){
       ttSun.textContent=`${placeIcon(t)} ${utilityHeatNote(t)}`;
     }
   }
-  const w=260; tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px'; tooltip.style.top=Math.max(y-130,10)+'px';
+  const w=Math.min(260,window.innerWidth-20);
+  tooltip.style.width=w+'px';
+  tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
+  tooltip.style.top=Math.min(Math.max(y-(nameOnly?54:130),10),window.innerHeight-(nameOnly?68:180))+'px';
   tooltip.classList.add('visible'); if(navigator.vibrate) navigator.vibrate(10);
   const ml=document.getElementById('ttMaps'); if(ml) ml.href=`https://maps.apple.com/?q=${encodeURIComponent(t.nom+', '+currentCity.nom)}&ll=${t.lat},${t.lng}`;
   clearTimeout(ttTimeout); ttTimeout=setTimeout(()=>tooltip.classList.remove('visible'),6000);
@@ -1708,11 +1715,11 @@ function showTooltip(t,x,y){
 function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');}
 // ══════════════════════════════════════════════
 // CAFÉS RÉFÉRENCÉS — ta sélection mise en avant
-// Remplis un bloc par café. Seuls ceux listés ici apparaissent dans la
-// section "Sélection" et ont la fiche enrichie + bouton Réserver.
+// Les anciens lieux restent disponibles comme lieux ordinaires.
+// Seuls ceux sans featured:false ont une fiche enrichie et sont en Sélection.
 // match: nom du café tel qu'il apparaît dans l'app (exact ou proche).
 // ══════════════════════════════════════════════
-const REFERENCED = [
+const CURATED_PLACES = [
   {
     match: "La Pointe",
     aliases: ["La Pointe Bordeaux", "Restaurant La Pointe"],
@@ -1755,6 +1762,7 @@ const REFERENCED = [
   },
   {
     match: "Les Frères Cailloux",
+    featured: false,
     aliases: ["Freres Cailloux", "Frères Cailloux", "Les Freres Cailloux"],
     lat: 44.83949,
     lng: -0.56948,
@@ -1769,6 +1777,7 @@ const REFERENCED = [
   },
   {
     match: "Avant Comptoir",
+    featured: false,
     aliases: ["L'Avant Comptoir", "Avant-Comptoir"],
     lat: 44.8396,
     lng: -0.5686,
@@ -1784,6 +1793,7 @@ const REFERENCED = [
   },
   {
     match: "Le Café Français",
+    featured: false,
     aliases: ["Café Français", "Cafe Francais", "Le Cafe Francais"],
     lat: 44.8374,
     lng: -0.5771,
@@ -1826,6 +1836,7 @@ const REFERENCED = [
   },
   {
     match: "Hôtel de la Plage",
+    featured: false,
     aliases: ["Hotel de la Plage", "Hôtel de la Plage Cap Ferret", "Hotel de la Plage Cap Ferret"],
     lat: 44.6439,
     lng: -1.2526,
@@ -1840,6 +1851,7 @@ const REFERENCED = [
   },
   {
     match: "Le Monte à Bord",
+    featured: false,
     aliases: ["Le Monte a Bord", "Monte à Bord", "Monte a Bord", "Le Monte à Bord Cap Ferret", "Le Monte à Bord L'Herbe"],
     lat: 44.6947,
     lng: -1.2326,
@@ -1852,7 +1864,21 @@ const REFERENCED = [
     googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Le%20Monte%20%C3%A0%20Bord%20Cap%20Ferret",
     priceLevel: "€€"
   },
+  {
+    match: "La Table d’Augustine",
+    aliases: ["La Table d'Augustine", "La Table D Augustine", "La Table d’Augustine Marseille", "La Table d'Augustine Marseille"],
+    lat: 43.2972596,
+    lng: 5.3684939,
+    adresse: "12 Place des Augustines, 13002 Marseille",
+    description: "Restaurant de cuisine provençale dans le quartier du Panier, à Marseille.",
+    type: "Restaurant · Cuisine provençale",
+    cuisine: "Cuisine provençale · Méditerranéenne",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=La%20Table%20d%27Augustine%20Marseille",
+    websiteUrl: "https://latabledaugustine.fr/fr/",
+    tel: "+33786271126"
+  },
 ];
+const REFERENCED = CURATED_PLACES.filter(ref=>ref.featured!==false);
 const FEATURED_RADIUS_METERS = 12000;
 function findReferenced(placeOrName){
   const place=typeof placeOrName==='object' ? placeOrName : null;
@@ -1878,7 +1904,7 @@ function referencedToPlace(ref){
     type:ref.type||'Restaurant',
     lng:ref.lng,
     lat:ref.lat,
-    featured:true
+    featured:ref.featured!==false
   };
 }
 function preferredPlaceType(t,ref){
@@ -1888,7 +1914,7 @@ function preferredPlaceType(t,ref){
 function mergeFeaturedPlaces(items){
   const places=[...items];
   const existing=new Set(places.map(t=>normalize(t.nom)));
-  REFERENCED.forEach(ref=>{
+  CURATED_PLACES.forEach(ref=>{
     if(!ref.lat||!ref.lng) return;
     const nearArea = metersBetween(currentCity.lat,currentCity.lng,ref.lat,ref.lng) <= FEATURED_RADIUS_METERS;
     if(!nearArea) return;
@@ -2650,14 +2676,20 @@ function renderPlaceSheetContent(t,ref,details={}){
   content.querySelectorAll('[data-place-panel]').forEach(panel=>{ panel.scrollTop=panelPositions[panel.dataset.placePanel]||0; });
   if(focusId) document.getElementById(focusId)?.focus({preventScroll:true});
 }
-async function showPlaceSheet(t){
+async function showPlaceSheet(t,position=null){
+  const ref=findReferenced(t);
+  if(!ref){
+    hidePlaceSheet();
+    showTooltip(t,position?.x??window.innerWidth/2,position?.y??window.innerHeight/2,true);
+    return;
+  }
+  hideTooltip();
   if(navigator.vibrate) navigator.vibrate(10);
   const sheet=document.getElementById('placeSheet');
   if(!sheet.classList.contains('open')) placeSheetReturnFocus=document.activeElement;
   const request=++placeSheetRequest;
   activePlaceId=String(t.id);
   activePlaceTab='overview';
-  const ref=findReferenced(t);
   renderPlaceSheetContent(t,ref,cachedDetailsForPlace(t));
   sheet.inert=false;
   sheet.removeAttribute('inert');
@@ -2802,7 +2834,7 @@ function renderList(h,query){
       const category=placeCategory(t);
       card.innerHTML=`<div class="category-icon ${escapeAttr(category)}">${escapeHTML(placeIcon(t))}</div><div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${escapeHTML(t.type)}${t.adresse?' · '+escapeHTML(t.adresse):''}${dist?' · '+escapeHTML(dist):''}</div><div class="card-meta"><span class="utility-tag heat">${escapeHTML(utilityHeatNote(t))}</span></div></div>`;
     }else{
-      card.innerHTML=`<div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div><div class="card-sub">${escapeHTML(t.type)}${t.adresse?' · '+escapeHTML(t.adresse):''}${dist?' · '+escapeHTML(dist):''}</div></div>`;
+      card.innerHTML=`<div class="card-body"><div class="card-name">${highlight(t.nom,query)}</div></div>`;
     }
     card.addEventListener('click',()=>selectTerrasse(t,card));
     fragment.appendChild(card);
@@ -2924,10 +2956,11 @@ handler.setInputAction(click=>{
     const t=terrasses.find(x=>String(x.id)===String(id));
     if(t){
       // Un clic sur la carte garde la caméra absolument fixe.
-      showPlaceSheet(t);
+      showPlaceSheet(t,click.position);
       return;
     }
   }
+  hideTooltip();
   hidePlaceSheet();
 },Cesium.ScreenSpaceEventType.LEFT_CLICK);
 function areaSignature(){
