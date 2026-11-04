@@ -123,7 +123,7 @@
     #tooltip { position: fixed; z-index: 50; background: rgba(20,20,22,0.93); color: white; padding: 12px 18px; border-radius: 16px; font-size: 15px; font-weight: 600; pointer-events: none; opacity: 0; transform: translateY(6px); transition: opacity 0.18s, transform 0.18s; backdrop-filter: blur(12px); max-width: 260px; text-align: center; border: 1px solid rgba(255,255,255,0.08); }
     #tooltip.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
     #tooltip.name-only { padding:10px 16px; }
-    #tooltip.name-only > :not(#ttName) { display:none !important; }
+    #tooltip.name-only > :not(#ttName):not(#ttType) { display:none !important; }
     #tooltip .tt-type { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; font-weight: 400; font-family: Arial, sans-serif; }
     #tooltip .tt-sun { font-size: 13px; font-weight: 600; margin-top: 6px; font-family: Arial, sans-serif; }
     #tooltip .tt-sun.sun { color: var(--yellow); }
@@ -1707,7 +1707,7 @@ function showTooltip(t,x,y,nameOnly=false){
   const w=Math.min(260,window.innerWidth-20);
   tooltip.style.width=w+'px';
   tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
-  tooltip.style.top=Math.min(Math.max(y-(nameOnly?54:130),10),window.innerHeight-(nameOnly?68:180))+'px';
+  tooltip.style.top=Math.min(Math.max(y-(nameOnly?72:130),10),window.innerHeight-(nameOnly?88:180))+'px';
   tooltip.classList.add('visible'); if(navigator.vibrate) navigator.vibrate(10);
   const ml=document.getElementById('ttMaps'); if(ml) ml.href=`https://maps.apple.com/?q=${encodeURIComponent(t.nom+', '+currentCity.nom)}&ll=${t.lat},${t.lng}`;
   clearTimeout(ttTimeout); ttTimeout=setTimeout(()=>tooltip.classList.remove('visible'),6000);
