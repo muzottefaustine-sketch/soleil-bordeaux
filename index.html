@@ -641,6 +641,7 @@
   </div>
   <div class="filter-chips" id="filterChips" aria-label="Filtres de recherche">
     <button class="filter-chip active" data-filter="all" type="button">Tous</button>
+    <button class="filter-chip" data-filter="near" type="button">Près de moi</button>
     <button class="filter-chip" data-filter="restaurant" type="button">Restaurants</button>
     <button class="filter-chip" data-filter="cafe" type="button">Cafés</button>
     <button class="filter-chip" data-filter="bar" type="button">Bars</button>
@@ -698,6 +699,14 @@ const PHOTO_HYDRATE_LIMIT = 6;
 const LOCAL_CITY_RADIUS_METERS = 30000;
 let currentCity = {...CITIES[0], localDataIds: localDataCandidateIds(CITIES[0].id, CITIES[0].nom)};
 let userLat = null, userLng = null;
+const NEAR_ME_RADIUS_METERS = 800; // ~10 min à pied
+let pendingNearFilter = false;
+function applyNearFilter(){
+  activeFilter='near';
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active',c.dataset.filter==='near'));
+  renderList(currentHeure,searchQuery);
+  syncDots();
+}
 let lastLoadedArea = null;
 async function fetchWithTimeout(url, options={}, timeout=10000) {
   const controller = new AbortController();
@@ -1094,7 +1103,9 @@ function geolocate(e) {
     clearPlaces();
     focusUser(lng, lat, true);
     await loadTerrasses();
+    if(pendingNearFilter){ pendingNearFilter=false; applyNearFilter(); }
   }, err => {
+    pendingNearFilter=false;
     btn.classList.remove('locating');
     alert("Position introuvable. Vérifiez que la localisation est autorisée.");
   }, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
@@ -2747,6 +2758,7 @@ function matchesActiveFilter(t){
   if(activeFilter==='parking') return category==='parking';
   if(activeFilter==='cool') return category==='cool';
   if(activeFilter==='restaurant') return isFoodPlace(t) && (type.includes('restaurant')||type.includes('brasserie')||type.includes('bistrot'));
+  if(activeFilter==='near') return isFoodPlace(t) && distMeters(t.lat,t.lng)<=NEAR_ME_RADIUS_METERS;
   if(activeFilter==='cafe') return isFoodPlace(t) && type.includes('cafe');
   if(activeFilter==='bar') return isFoodPlace(t) && (type.includes('bar')||type.includes('pub'));
   return isFoodPlace(t);
@@ -2865,6 +2877,12 @@ document.getElementById('filterChips').addEventListener('click',e=>{
   if(!chip) return;
   if(chip.dataset.city){
     switchCity(chip.dataset.city);
+    return;
+  }
+  if(chip.dataset.filter==='near' && userLat===null){
+    // Pas encore de position : on la demande, puis le filtre s'applique tout seul.
+    pendingNearFilter=true;
+    geolocate();
     return;
   }
   activeFilter=chip.dataset.filter||'all';
