@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Soleilenterrasse Reel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #FFF7D6; }
+  body { font-family: Inter, -apple-system, "Helvetica Neue", Arial, sans-serif; color: #15171A; }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  #bg { position: absolute; inset: 0; }
+  .layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; will-change: transform, opacity; }
+  .center { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .logo { font-family: Arial, sans-serif; font-weight: 700; letter-spacing: -2px; white-space: nowrap; }
+  .logo em { font-style: italic; }
+  .big { font-weight: 800; letter-spacing: -3px; line-height: 1.02; }
+  .kicker { font-weight: 700; font-size: 34px; letter-spacing: 6px; text-transform: uppercase; color: #C99400; }
+  .hl { background: linear-gradient(transparent 58%, #F8C83E 58%, #F8C83E 92%, transparent 92%); padding: 0 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 14px; padding: 26px 44px; border-radius: 999px; font-size: 46px; font-weight: 700; background: #fff; box-shadow: 0 14px 38px rgba(15,23,42,.13); }
+  .chip.on { background: #15171A; color: #fff; }
+  .city { font-size: 66px; font-weight: 800; letter-spacing: -1.5px; }
+  .pill { text-align: left; display: flex; align-items: center; gap: 30px; background: #fff; border-radius: 40px; padding: 34px 44px; font-size: 46px; font-weight: 700; box-shadow: 0 14px 38px rgba(15,23,42,.10); width: 860px; }
+  .pill .ic { width: 96px; height: 96px; border-radius: 28px; display: grid; place-items: center; font-size: 54px; background: #FFF7D6; flex: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="bg" viewBox="0 0 1080 1920" width="1080" height="1920">
+    <defs>
+      <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#FFE07A" stop-opacity=".95"/>
+        <stop offset="1" stop-color="#FFE07A" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect id="bgRect" width="1080" height="1920" fill="#FFF7D6"/>
+    <circle id="bgGlow" cx="540" cy="760" r="900" fill="url(#glow)"/>
+  </svg>
+
+  <!-- Sun (shared across scenes) -->
+  <svg id="sun" class="layer" viewBox="0 0 1080 1920" style="pointer-events:none">
+    <g id="sunG">
+      <g id="rays" fill="#FFD600"></g>
+      <circle cx="0" cy="0" r="105" fill="#FFD600"/>
+      <circle cx="-10" cy="-10" r="85" fill="#FFE000" opacity=".55"/>
+      <circle cx="10" cy="10" r="70" fill="#FFC400" opacity=".25"/>
+    </g>
+  </svg>
+
+  <!-- S1 logo -->
+  <div id="s1" class="layer center">
+    <div style="height:520px"></div>
+    <div id="s1logo" class="logo" style="font-size:116px"><em>Soleil</em>enterrasse</div>
+    <div id="s1tag" style="margin-top:36px;font-size:46px;font-weight:500;color:#5E6470;line-height:1.35">Trouvez les meilleures<br><strong style="color:#C99400">terrasses au soleil</strong> près de vous</div>
+  </div>
+
+  <!-- S2 question -->
+  <div id="s2" class="layer center" style="padding:0 90px">
+    <div id="s2a" class="big" style="font-size:132px">Envie d'une<br>terrasse</div>
+    <div id="s2b" class="big" style="font-size:132px;margin-top:10px"><span class="hl">au soleil</span>&nbsp;?</div>
+    <div id="s2c" style="margin-top:60px;font-size:50px;font-weight:500;color:#5E6470">…et pas à l'ombre d'un immeuble 🙃</div>
+  </div>
+
+  <!-- S3 shadow map -->
+  <div id="s3" class="layer">
+    <div id="s3head" style="position:absolute;top:150px;left:0;right:0;text-align:center">
+      <div class="kicker">Calcul d'ombres 3D</div>
+      <div class="big" style="font-size:96px;margin-top:22px">en temps réel</div>
+    </div>
+    <svg id="map" style="position:absolute;left:90px;top:470px" width="900" height="900" viewBox="0 0 900 900">
+      <defs>
+        <clipPath id="mapClip"><rect width="900" height="900" rx="56"/></clipPath>
+      </defs>
+      <g clip-path="url(#mapClip)">
+        <rect width="900" height="900" fill="#F6F7F9"/>
+        <g id="streets" fill="#FFFFFF"></g>
+        <g id="shadows" fill="#5E6470" fill-opacity=".28"></g>
+        <g id="buildings"></g>
+        <g id="terraces"></g>
+      </g>
+      <rect width="900" height="900" rx="56" fill="none" stroke="#15171A" stroke-opacity=".08" stroke-width="3"/>
+    </svg>
+    <div id="slider" style="position:absolute;left:90px;top:1430px;width:900px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div style="font-size:40px;font-weight:600;color:#5E6470">☀️ Heure</div>
+        <div id="hourLabel" style="font-size:84px;font-weight:800;letter-spacing:-2px">14h00</div>
+      </div>
+      <div style="position:relative;height:22px;border-radius:11px;background:#E4E7EC;margin-top:26px">
+        <div id="sliderFill" style="position:absolute;left:0;top:0;bottom:0;border-radius:11px;background:#F8C83E"></div>
+        <div id="sliderKnob" style="position:absolute;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:#fff;box-shadow:0 6px 20px rgba(15,23,42,.25);border:6px solid #F8C83E"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:30px;font-size:34px;color:#9AA1AD;font-weight:600"><span>8h</span><span>20h</span></div>
+    </div>
+    <div id="s3foot" style="position:absolute;top:1720px;left:0;right:0;text-align:center;font-size:46px;font-weight:600;color:#15171A">
+      <span id="sunCount" style="display:inline-block;padding:16px 34px;border-radius:999px;background:#fff;box-shadow:0 8px 24px rgba(15,23,42,.08)"></span>
+    </div>
+  </div>
+
+  <!-- S4 filters -->
+  <div id="s4" class="layer center">
+    <div class="kicker" id="s4k">Choisis ton spot</div>
+    <div class="big" id="s4t" style="font-size:110px;margin-top:24px">Resto, café<br>ou apéro ?</div>
+    <div id="chips" style="display:flex;flex-wrap:wrap;justify-content:center;gap:30px;width:940px;margin-top:90px">
+      <span class="chip">✨ Tous</span>
+      <span class="chip">🍽️ Restaurants</span>
+      <span class="chip">☕ Cafés</span>
+      <span class="chip">🍹 Bars</span>
+      <span class="chip">🥵 Canicule</span>
+    </div>
+    <div id="s4note" style="margin-top:80px;font-size:44px;font-weight:500;color:#5E6470;line-height:1.4;max-width:960px;font-size:40px">Mode <strong style="color:#15171A">Canicule</strong> : parcs, points d'eau<br>et coins au frais quand ça tape trop 🌳💧</div>
+  </div>
+
+  <!-- S5 cities -->
+  <div id="s5" class="layer">
+    <div style="position:absolute;top:200px;left:0;right:0;text-align:center">
+      <div id="s5num" class="big" style="font-size:230px;letter-spacing:-8px">+0</div>
+      <div id="s5sub" style="font-size:52px;font-weight:600;color:#5E6470;margin-top:6px">lieux référencés dans 9 villes</div>
+    </div>
+    <div id="cities" style="position:absolute;top:720px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:20px"></div>
+  </div>
+
+  <!-- S6 values -->
+  <div id="s6" class="layer center">
+    <div class="big" id="s6t" style="font-size:100px;margin-bottom:80px">Simple.<br>Gratuit.<br><span class="hl">Respectueux.</span></div>
+    <div style="display:flex;flex-direction:column;gap:30px">
+      <div class="pill"><span class="ic">📍</span>Ta position reste sur ton tél</div>
+      <div class="pill"><span class="ic">🙅</span>Aucun compte à créer</div>
+      <div class="pill"><span class="ic">🔒</span>Zéro donnée collectée</div>
+      <div class="pill"><span class="ic">🗺️</span>Données OpenStreetMap</div>
+    </div>
+  </div>
+
+  <!-- S7 outro -->
+  <div id="s7" class="layer center">
+    <div style="height:500px"></div>
+    <div id="s7logo" class="logo" style="font-size:116px"><em>Soleil</em>enterrasse</div>
+    <div id="s7tag" style="margin-top:40px;font-size:54px;font-weight:600;line-height:1.35">Le soleil, c'est<br><span class="hl">maintenant</span>. La terrasse aussi.</div>
+    <div id="s7cta" style="margin-top:90px;display:inline-flex;align-items:center;gap:18px;padding:34px 64px;border-radius:999px;background:#15171A;color:#fff;font-size:52px;font-weight:700">🔗 Lien en bio</div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const easeOut = x => 1 - Math.pow(1 - x, 3);
+const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const backOut = x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const lerp = (a, b, x) => a + (b - a) * x;
+
+// Scene windows [in, out] in seconds
+const S = {
+  s1: [0, 3.4], s2: [3.4, 6.6], s3: [6.6, 13.6], s4: [13.6, 17.6],
+  s5: [17.6, 22.2], s6: [22.2, 26.2], s7: [26.2, 30]
+};
+const DURATION = 30;
+
+// Sun rays
+(() => {
+  const g = $('rays');
+  const rots = [0, 40, 75, 110, 145, 180, 215, 250, 285, 320];
+  rots.forEach((r, i) => {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+    e.setAttribute('cx', 0); e.setAttribute('cy', -195);
+    e.setAttribute('rx', 15 + (i % 3) * 2); e.setAttribute('ry', 34 + (i % 2) * 4);
+    e.setAttribute('transform', `rotate(${r})`);
+    g.appendChild(e);
+  });
+})();
+
+// ── Scene 3 data: top-down street block ──
+const buildings = [
+  { x: 60, y: 60, w: 240, h: 200, H: 150 },
+  { x: 380, y: 40, w: 180, h: 260, H: 230 },
+  { x: 640, y: 70, w: 200, h: 170, H: 120 },
+  { x: 70, y: 520, w: 190, h: 300, H: 210 },
+  { x: 600, y: 560, w: 250, h: 260, H: 170 },
+  { x: 340, y: 640, w: 160, h: 170, H: 110 },
+];
+const terraces = [
+  { x: 180, y: 330 }, { x: 330, y: 420 }, { x: 470, y: 360 }, { x: 620, y: 330 },
+  { x: 780, y: 420 }, { x: 160, y: 450 }, { x: 560, y: 470 }, { x: 420, y: 520 },
+  { x: 720, y: 500 }, { x: 300, y: 560 },
+];
+(() => {
+  const st = $('streets');
+  st.innerHTML = `<rect x="0" y="300" width="900" height="200"/><rect x="0" y="500" width="900" height="30" opacity=".6"/>
+                  <rect x="300" y="0" width="70" height="900"/><rect x="560" y="0" width="70" height="900" opacity=".7"/>`;
+  const bg = $('buildings');
+  buildings.forEach(b => {
+    bg.innerHTML += `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="14" fill="#D9DEE6"/>
+      <rect x="${b.x + 12}" y="${b.y + 12}" width="${b.w - 24}" height="${b.h - 24}" rx="8" fill="#E8EBF0"/>`;
+  });
+  const tg = $('terraces');
+  terraces.forEach((p, i) => {
+    tg.innerHTML += `<g id="t${i}" transform="translate(${p.x},${p.y})">
+      <circle r="34" fill="#fff" stroke-width="6"/>
+      <text y="13" text-anchor="middle" font-size="36">☀️</text></g>`;
+  });
+})();
+
+function hull(pts) {
+  pts = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], up = [];
+  for (const p of pts) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+  for (const p of pts.reverse()) { while (up.length >= 2 && cross(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+function inPoly(p, poly) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > p[1]) !== (yj > p[1]) && p[0] < (xj - xi) * (p[1] - yi) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+function drawShadows(hour) {
+  const k = (hour - 8) / 12;
+  const az = (90 + k * 180) * Math.PI / 180;
+  const elev = (8 + Math.sin(Math.PI * k) * 52) * Math.PI / 180;
+  const dx = -Math.sin(az), dy = Math.cos(az);
+  const polys = buildings.map(b => {
+    const L = Math.min(520, b.H / Math.tan(elev));
+    const c = [[b.x, b.y], [b.x + b.w, b.y], [b.x + b.w, b.y + b.h], [b.x, b.y + b.h]];
+    return hull(c.concat(c.map(([x, y]) => [x + dx * L, y + dy * L])));
+  });
+  $('shadows').innerHTML = polys.map(p => `<polygon points="${p.map(q => q.join(',')).join(' ')}"/>`).join('');
+  let sunny = 0;
+  terraces.forEach((t, i) => {
+    const shade = polys.some(p => inPoly([t.x, t.y], p));
+    if (!shade) sunny++;
+    const g = $('t' + i);
+    g.querySelector('circle').setAttribute('stroke', shade ? '#7C8798' : '#F8C83E');
+    g.querySelector('circle').setAttribute('fill', shade ? '#EDF1F6' : '#FFFFFF');
+    g.querySelector('text').textContent = shade ? '⛱️' : '☀️';
+  });
+  return { sunny, az, elev };
+}
+
+// ── Scene 5: cities ──
+const cities = [
+  ['Lyon', 2643], ['Bordeaux', 1531], ['Marseille', 1420], ['Toulouse', 1356], ['Nice', 1126],
+  ['Nantes', 1043], ['Lille', 1030], ['Strasbourg', 1015], ['Cannes', 318],
+];
+const TOTAL = cities.reduce((s, c) => s + c[1], 0);
+(() => {
+  const box = $('cities');
+  const max = cities[0][1];
+  cities.forEach(([n, v], i) => {
+    box.innerHTML += `<div id="c${i}" style="width:900px;display:flex;align-items:center;gap:26px">
+      <div class="city" style="width:330px;font-size:50px">${n}</div>
+      <div style="flex:1;height:58px;border-radius:29px;background:#fff;position:relative;overflow:hidden">
+        <div id="cb${i}" style="position:absolute;left:0;top:0;bottom:0;border-radius:29px;background:${i === 1 ? '#F8C83E' : '#FFE07A'};width:0"></div>
+      </div>
+      <div id="cv${i}" style="width:130px;text-align:right;font-size:40px;font-weight:700;color:#5E6470">0</div>
+    </div>`;
+  });
+  box.dataset.max = max;
+})();
+
+function show(id, t, fadeIn = .45, fadeOut = .4) {
+  const [a, b] = S[id];
+  const el = $(id);
+  if (t < a || t > b) { el.style.opacity = 0; el.style.visibility = 'hidden'; return null; }
+  el.style.visibility = 'visible';
+  const o = Math.min(seg(t, a, a + fadeIn), id === 's7' ? 1 : 1 - seg(t, b - fadeOut, b));
+  el.style.opacity = o;
+  return { local: t - a, len: b - a, out: seg(t, b - fadeOut, b) };
+}
+function pop(el, p, dist = 60) {
+  el.style.opacity = clamp(p * 1.4);
+  el.style.transform = `translateY(${(1 - easeOut(p)) * dist}px) scale(${lerp(.92, 1, backOut(p))})`;
+}
+const fmt = n => n.toLocaleString('fr-FR').replace(/ | /g, ' ');
+
+function render(t) {
+  // Background warmth
+  const warm = 0.5 + 0.5 * Math.sin(t * .4);
+  $('bgRect').setAttribute('fill', t >= S.s3[0] && t < S.s3[1] ? '#FFFBEA' : '#FFF7D6');
+  $('bgGlow').setAttribute('opacity', .55 + .25 * warm);
+
+  // Sun position by scene
+  let sx = 540, sy = 400, sr = 1, so = 1;
+  const rise = easeOut(seg(t, 0, 1.6));
+  if (t < S.s2[0]) { sx = 540; sy = lerp(1500, 520, rise); sr = lerp(.4, 1.15, rise); }
+  else if (t < S.s3[0]) { const p = easeInOut(seg(t, S.s2[0], S.s2[0] + .8)); sx = lerp(540, 870, p); sy = lerp(520, 250, p); sr = lerp(1.15, .7, p); }
+  else if (t < S.s3[1]) { so = 1 - seg(t, S.s3[0], S.s3[0] + .4); sx = 870; sy = 250; sr = .7; }
+  else if (t < S.s6[0]) { so = 0; }
+  else if (t < S.s7[0]) { so = 0; }
+  else { const p = easeOut(seg(t, S.s7[0], S.s7[0] + 1.2)); so = p; sx = 540; sy = lerp(900, 520, p); sr = lerp(.3, 1.15, p); }
+  $('sunG').setAttribute('transform', `translate(${sx},${sy}) scale(${sr}) rotate(${t * 22})`);
+  $('sun').style.opacity = so;
+  $('rays').setAttribute('transform', `scale(${1 + .06 * Math.sin(t * 4)})`);
+
+  // S1
+  let s = show('s1', t, .01);
+  if (s) {
+    pop($('s1logo'), seg(s.local, .7, 1.4));
+    pop($('s1tag'), seg(s.local, 1.2, 1.9), 40);
+  }
+  // S2
+  s = show('s2', t, .3);
+  if (s) {
+    pop($('s2a'), seg(s.local, .1, .6), 80);
+    pop($('s2b'), seg(s.local, .45, .95), 80);
+    pop($('s2c'), seg(s.local, 1.2, 1.7), 40);
+  }
+  // S3
+  s = show('s3', t, .4);
+  if (s) {
+    pop($('s3head'), seg(s.local, .1, .6), 50);
+    const mp = seg(s.local, .3, .9);
+    $('map').style.opacity = mp;
+    $('map').style.transform = `scale(${lerp(.9, 1, easeOut(mp))})`;
+    pop($('slider'), seg(s.local, .6, 1.1), 50);
+    pop($('s3foot'), seg(s.local, 1.0, 1.5), 30);
+    const hp = easeInOut(seg(s.local, 1.2, s.len - .6));
+    const hour = lerp(9, 19.5, hp);
+    const r = drawShadows(hour);
+    const hh = Math.floor(hour), mm = Math.floor((hour - hh) * 60 / 15) * 15;
+    $('hourLabel').textContent = `${hh}h${String(mm).padStart(2, '0')}`;
+    const pct = (hour - 8) / 12 * 100;
+    $('sliderFill').style.width = pct + '%';
+    $('sliderKnob').style.left = pct + '%';
+    $('sunCount').textContent = `☀️ ${r.sunny} terrasses au soleil · ⛱️ ${terraces.length - r.sunny} à l'ombre`;
+  }
+  // S4
+  s = show('s4', t, .35);
+  if (s) {
+    pop($('s4k'), seg(s.local, .05, .5), 30);
+    pop($('s4t'), seg(s.local, .15, .7), 60);
+    const chips = [...$('chips').children];
+    chips.forEach((c, i) => {
+      pop(c, seg(s.local, .6 + i * .14, 1.0 + i * .14), 50);
+      const active = Math.floor(clamp((s.local - 1.6) / .45, 0, 4.99));
+      c.classList.toggle('on', s.local > 1.6 && i === active);
+    });
+    pop($('s4note'), seg(s.local, 2.1, 2.6), 30);
+  }
+  // S5
+  s = show('s5', t, .35);
+  if (s) {
+    const cp = easeOut(seg(s.local, .2, 2.0));
+    $('s5num').textContent = '+' + fmt(cp >= 1 ? TOTAL : Math.round(TOTAL * cp / 10) * 10);
+    pop($('s5num'), seg(s.local, 0, .5), 60);
+    pop($('s5sub'), seg(s.local, .4, .9), 30);
+    const max = +$('cities').dataset.max;
+    cities.forEach(([n, v], i) => {
+      const p = seg(s.local, .6 + i * .12, 1.4 + i * .12);
+      pop($('c' + i), p, 40);
+      const bp = easeOut(seg(s.local, .8 + i * .12, 1.8 + i * .12));
+      $('cb' + i).style.width = (v / max * 100 * bp) + '%';
+      $('cv' + i).textContent = fmt(Math.round(v * bp));
+    });
+  }
+  // S6
+  s = show('s6', t, .35);
+  if (s) {
+    pop($('s6t'), seg(s.local, .05, .6), 60);
+    [...document.querySelectorAll('#s6 .pill')].forEach((el, i) => pop(el, seg(s.local, .7 + i * .22, 1.2 + i * .22), 50));
+  }
+  // S7
+  s = show('s7', t, .3);
+  if (s) {
+    pop($('s7logo'), seg(s.local, .7, 1.3));
+    pop($('s7tag'), seg(s.local, 1.1, 1.7), 40);
+    const c = seg(s.local, 1.6, 2.1);
+    pop($('s7cta'), c, 40);
+    if (c >= 1) $('s7cta').style.transform = `scale(${1 + .03 * Math.sin((s.local - 2.1) * 5)})`;
+  }
+}
+window.render = render;
+window.DURATION = DURATION;
+
+// Live preview when opened in a browser (not during capture)
+if (!new URLSearchParams(location.search).has('capture')) {
+  const start = performance.now();
+  (function loop() { render(((performance.now() - start) / 1000) % DURATION); requestAnimationFrame(loop); })();
+} else {
+  render(0);
+}
+</script>
+</body>
+</html>
