@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<style>
+  :root { --sun:#FFD600; --sun2:#F8C83E; --ink:#15171A; --cream:#FFF7D6; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:1080px; height:1920px; overflow:hidden; background:#000; font-family: Inter, sans-serif; }
+  #stage { position:absolute; inset:0; overflow:hidden; background:var(--sun); }
+  .layer { position:absolute; inset:0; }
+  .center { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .big { font-weight:900; letter-spacing:-0.045em; line-height:0.92; color:var(--ink); text-align:center; }
+  .word { display:inline-block; will-change:transform,opacity; }
+  #rays { position:absolute; left:50%; top:50%; width:3200px; height:3200px; margin:-1600px 0 0 -1600px;
+    background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.22) 0deg 9deg, rgba(255,255,255,0) 9deg 22.5deg); border-radius:50%; }
+  .icon { width:360px; height:360px; border-radius:82px; background:#fff;
+    box-shadow: 0 40px 90px rgba(120,80,0,0.28), inset 0 0 0 2px rgba(0,0,0,0.03);
+    display:flex; align-items:center; justify-content:center; }
+  .icon svg { width:270px; height:270px; }
+  .wordmark { font-family: Arial, sans-serif; font-weight:700; color:var(--ink); letter-spacing:-0.02em; }
+  .wordmark em { font-style:italic; }
+  .phone { position:absolute; width:620px; height:1292px; left:230px; top:560px; border-radius:100px; background:#0b0b0d;
+    padding:22px; box-shadow: 0 60px 120px rgba(0,0,0,0.35), inset 0 0 0 3px #2a2a2e; }
+  .screen { position:relative; width:100%; height:100%; border-radius:80px; overflow:hidden; background:#000; }
+  .screen img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .island { position:absolute; top:22px; left:50%; width:170px; height:50px; margin-left:-85px; background:#000; border-radius:30px; z-index:5; }
+  .headline { position:absolute; left:60px; right:60px; top:96px; font-weight:900; font-size:92px; letter-spacing:-0.045em; line-height:1.08; color:var(--ink); }
+  .headline .hl { background: var(--ink); color: var(--sun); padding: 0 18px 6px; border-radius: 18px; display:inline-block; margin-top:8px; }
+  .clock { position:absolute; right:58px; top:118px; font-weight:900; font-variant-numeric: tabular-nums; font-size:120px; letter-spacing:-0.05em; color:#fff; text-shadow:0 8px 30px rgba(0,0,0,0.25); }
+  .pill { display:inline-block; padding:20px 38px; border-radius:999px; background:var(--ink); color:#fff; font-weight:800; font-size:44px; letter-spacing:-0.01em; }
+  .city { position:absolute; left:0; right:0; top:250px; text-align:center; font-weight:900; font-size:150px; letter-spacing:-0.05em; color:var(--ink); }
+  #flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; }
+  .grain { position:absolute; inset:0; pointer-events:none; opacity:0.06; mix-blend-mode:multiply;
+    background-image: radial-gradient(rgba(0,0,0,0.6) 1px, transparent 1px); background-size: 4px 4px; }
+</style></head>
+<body>
+<div id="stage">
+  <!-- SCENE A: hook -->
+  <div class="layer center" id="sA">
+    <div id="sunRise" style="position:absolute;left:50%;top:50%;width:900px;height:900px;margin:-450px 0 0 -450px;border-radius:50%;background:radial-gradient(circle,#FFF3A0 0%,#FFE34D 45%,rgba(255,214,0,0) 70%);"></div>
+    <div class="big" style="font-size:210px;position:relative" id="aText1"><span class="word">Il&nbsp;fait</span><br><span class="word">beau.</span></div>
+  </div>
+  <div class="layer center" id="sA2" style="background:var(--ink)">
+    <div class="big" style="font-size:140px;color:#fff;position:relative">
+      <span class="word">Mais</span> <span class="word">quelle</span><br><span class="word">terrasse</span><br><span class="word">est&nbsp;au</span><br><span class="word" style="color:var(--sun)">soleil&nbsp;?</span>
+    </div>
+  </div>
+  <!-- SCENE B: logo drop -->
+  <div class="layer center" id="sB">
+    <div id="rays"></div>
+    <div class="icon" id="bIcon">ICON</div>
+    <div class="wordmark" id="bWord" style="font-size:118px;margin-top:70px"><em>Soleil</em>enterrasse</div>
+    <div id="bTag" style="margin-top:34px;font-weight:700;font-size:50px;color:rgba(21,23,26,0.72);text-align:center;line-height:1.25">La terrasse au soleil,<br>avant même d’y aller.</div>
+  </div>
+  <!-- SCENE C: shadow time-lapse -->
+  <div class="layer" id="sC">
+    <div class="headline" id="cHead"><span class="word">Les ombres</span><br><span class="word">en 3D,</span><br><span class="word"><span class="hl">heure par heure.</span></span></div>
+    <div class="phone" id="cPhone"><div class="screen" id="cScreen"></div></div>
+  </div>
+  <!-- SCENE D: place details -->
+  <div class="layer" id="sD">
+    <div class="headline" id="dHead"><span class="word">Soleil ou ombre ?</span><br><span class="word"><span class="hl">Tu sais d’avance.</span></span></div>
+    <div class="phone" id="dPhone"><div class="screen" id="dScreen"></div></div>
+  </div>
+  <!-- SCENE E: list & filters -->
+  <div class="layer" id="sE">
+    <div class="headline" id="eHead"><span class="word">Restos.</span> <span class="word">Cafés.</span><br><span class="word"><span class="hl">Bars.</span></span></div>
+    <div class="phone" id="ePhone"><div class="screen" id="eScreen"></div></div>
+  </div>
+  <!-- SCENE F: everywhere -->
+  <div class="layer" id="sF">
+    <div class="headline" id="fHead" style="text-align:center"><span class="word">Partout en France</span></div>
+    <div class="city" id="fCity">Bordeaux</div>
+    <div class="phone" id="fPhone" style="top:600px"><div class="screen" id="fScreen"></div></div>
+  </div>
+  <!-- SCENE G: end card -->
+  <div class="layer center" id="sG">
+    <div id="rays2" style="position:absolute;left:50%;top:50%;width:3200px;height:3200px;margin:-1600px 0 0 -1600px;border-radius:50%;background:repeating-conic-gradient(from 0deg, rgba(255,255,255,0.22) 0deg 9deg, rgba(255,255,255,0) 9deg 22.5deg)"></div>
+    <div class="icon" id="gIcon">ICON</div>
+    <div class="wordmark" id="gWord" style="font-size:112px;margin-top:64px"><em>Soleil</em>enterrasse</div>
+    <div class="big" id="gTag" style="font-size:84px;margin-top:40px">Trouve ta place<br>au soleil.</div>
+    <div id="gCta" style="margin-top:70px"><span class="pill">Disponible sur l’App Store</span></div>
+  </div>
+  <div class="grain"></div>
+  <div id="flash"></div>
+</div>
+<script>
+const SUN_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="#FFD600">
+<ellipse cx="50" cy="11" rx="3.2" ry="7" transform="rotate(0 50 50)"/><ellipse cx="50" cy="11" rx="2.8" ry="6.5" transform="rotate(40 50 50)"/>
+<ellipse cx="50" cy="11" rx="3.4" ry="7.5" transform="rotate(75 50 50)"/><ellipse cx="50" cy="11" rx="3" ry="6.8" transform="rotate(110 50 50)"/>
+<ellipse cx="50" cy="11" rx="2.8" ry="6.2" transform="rotate(145 50 50)"/><ellipse cx="50" cy="11" rx="3.3" ry="7.2" transform="rotate(180 50 50)"/>
+<ellipse cx="50" cy="11" rx="2.9" ry="6.5" transform="rotate(215 50 50)"/><ellipse cx="50" cy="11" rx="3.5" ry="7" transform="rotate(250 50 50)"/>
+<ellipse cx="50" cy="11" rx="2.8" ry="6.3" transform="rotate(285 50 50)"/><ellipse cx="50" cy="11" rx="3.1" ry="7.2" transform="rotate(320 50 50)"/></g>
+<circle cx="50" cy="50" r="21" fill="#FFD600"/><circle cx="48" cy="48" r="17" fill="#FFE000" opacity="0.55"/><circle cx="52" cy="52" r="14" fill="#FFC400" opacity="0.25"/></svg>`;
+document.querySelectorAll('.icon').forEach(e => e.innerHTML = SUN_SVG);
+
+const SHOTS = window.SHOTS; // injected
+const $ = id => document.getElementById(id);
+function addImg(screen, src){ const i=new Image(); i.src=src; screen.appendChild(i); return i; }
+const cImgs = SHOTS.time.map(s => addImg($('cScreen'), s));
+const dImgs = [addImg($('dScreen'), SHOTS.tooltip), addImg($('dScreen'), SHOTS.sheet), addImg($('dScreen'), SHOTS.sheet2)];
+const eImgs = [addImg($('eScreen'), SHOTS.list), addImg($('eScreen'), SHOTS.bars)];
+const fImgs = [addImg($('fScreen'), SHOTS.search)];
+
+// ---- helpers ----
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const p=(t,a,b)=>clamp((t-a)/(b-a));
+const eOut=t=>1-Math.pow(1-t,3);
+const eIn=t=>t*t*t;
+const eInOut=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const eBack=t=>{const c1=1.9,c3=c1+1;return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2);};
+const show=(el,on)=>{el.style.display=on?'':'none';};
+function pop(el,t,t0,dur=0.35,dy=80){ const k=p(t,t0,t0+dur); el.style.opacity=k>0?1:0; el.style.transform=`translateY(${(1-eBack(k))*dy}px) scale(${lerp(0.6,1,eBack(k))})`; }
+function wordsIn(container,t,t0,step){ [...container.querySelectorAll(':scope > .word, :scope .word')].forEach((w,i)=>pop(w,t,t0+i*step)); }
+// beat = 0.5s (120 BPM)
+
+function render(t){
+  const stage=$('stage');
+  // Scene windows
+  const S={A:[0,2],A2:[2,4],B:[4,8],C:[8,14],D:[14,18],E:[18,22],F:[22,26],G:[26,32]};
+  for(const k in S){ show($('s'+k), t>=S[k][0] && t<S[k][1]); }
+  let bg='#FFD600';
+  // flash on drop & cuts
+  const fl = Math.max(0, 1-Math.abs(t-4)/0.18, 0.55*(1-Math.abs(t-26)/0.15));
+  $('flash').style.opacity = clamp(fl);
+
+  // A: hook
+  if(t<2){
+    bg='#FFD600';
+    const k=eOut(p(t,0,2));
+    $('sunRise').style.transform=`translateY(${lerp(500,40,k)}px) scale(${lerp(0.7,1.25,k)})`;
+    wordsIn($('aText1'),t,0.1,0.5);
+    $('aText1').style.transform=`scale(${lerp(1,1.06,p(t,0,2))})`;
+  }
+  if(t>=2&&t<4){
+    bg='#15171A';
+    const ws=$('sA2').querySelectorAll('.word'); ws.forEach((w,i)=>pop(w,t,2+i*0.33,0.3,60));
+    $('sA2').firstElementChild.style.transform=`scale(${lerp(1,1.12,eIn(p(t,2,4)))})`;
+  }
+  // B: logo drop
+  if(t>=4&&t<8){
+    const k=p(t,4,4.7);
+    $('bIcon').style.transform=`scale(${eBack(k)*lerp(1,1.05,Math.sin((t-4)*Math.PI*2)*0.5+0.5)}) rotate(${(1-eOut(k))*-120}deg)`;
+    $('bIcon').querySelector('svg').style.transform=`rotate(${(t-4)*28}deg)`;
+    $('rays').style.transform=`rotate(${(t-4)*14}deg) scale(${lerp(0.3,1,eOut(p(t,4,4.8)))})`;
+    const kw=eOut(p(t,4.5,5.1)); $('bWord').style.opacity=kw; $('bWord').style.transform=`translateY(${(1-kw)*60}px)`; $('bWord').style.letterSpacing=`${lerp(0.12,-0.02,kw)}em`;
+    const kt=eOut(p(t,5.5,6.1)); $('bTag').style.opacity=kt; $('bTag').style.transform=`translateY(${(1-kt)*40}px)`;
+    // exit: zoom into icon
+    const ke=eIn(p(t,7.6,8)); $('sB').style.transform=`scale(${1+ke*3})`; $('sB').style.opacity=1-ke;
+  }
+  // C: time-lapse
+  if(t>=8&&t<14){
+    const hours=[8,10,12,14,16,18,19.5];
+    const kk=p(t,8.6,13.6); const hf=lerp(8,19.5,eInOut(kk));
+    // crossfade between screenshots according to hour
+    let idx=0; for(let i=0;i<hours.length-1;i++) if(hf>=hours[i]) idx=i;
+    const f=clamp((hf-hours[idx])/(hours[idx+1]-hours[idx]));
+    cImgs.forEach((im,i)=>{ im.style.opacity = i===idx?1:(i===idx+1?f:0); im.style.zIndex = i===idx+1?2:1; });
+    // background sky: morning peach -> noon yellow -> evening orange
+    const sky=[[255,214,170],[255,214,0],[255,150,70]];
+    const s=hf<13?sky[0].map((c,i)=>lerp(c,sky[1][i],(hf-8)/5)):sky[1].map((c,i)=>lerp(c,sky[2][i],(hf-13)/6.5));
+    bg=`rgb(${s.map(Math.round).join(',')})`;
+    const kin=eOut(p(t,8,8.6));
+    $('cPhone').style.transform=`translateY(${(1-kin)*1300}px) rotate(${(1-kin)*8}deg) scale(${lerp(1,1.04,p(t,8,14))})`;
+    wordsIn($('cHead'),t,8.1,0.4);
+  }
+  // D: details
+  if(t>=14&&t<18){
+    bg='#FFF7D6';
+    const kin=eOut(p(t,14,14.45));
+    $('dPhone').style.transform=`translateX(${(1-kin)*1100}px) rotate(${(1-kin)*-6}deg)`;
+    dImgs[0].style.opacity=1; dImgs[1].style.opacity=eOut(p(t,15.5,15.8)); dImgs[1].style.transform=`translateY(${(1-eOut(p(t,15.5,15.9)))*1400}px)`;
+    dImgs[2].style.opacity=eInOut(p(t,16.8,17.2));
+    wordsIn($('dHead'),t,14.1,0.5);
+  }
+  // E: list
+  if(t>=18&&t<22){
+    bg='#FFD600';
+    const kin=eOut(p(t,18,18.45));
+    $('ePhone').style.transform=`translateY(${(1-kin)*1300}px) scale(${lerp(1,1.03,p(t,18,22))})`;
+    eImgs[1].style.opacity=p(t,20,20.15)>0?1:0;
+    const ws=$('eHead').querySelectorAll(':scope > .word'); [18.1,18.6,19.1].forEach((tt,i)=>pop(ws[i],t,tt));
+  }
+  // F: everywhere
+  if(t>=22&&t<26){
+    bg='#FFE77A';
+    const kin=eOut(p(t,22,22.45));
+    $('fPhone').style.transform=`translateY(${(1-kin)*1300}px)`;
+    pop($('fHead').firstElementChild,t,22.05);
+    const cities=['Bordeaux','Paris','Lyon','Marseille','Toulouse','Nice','Nantes','Lille','Strasbourg','Cannes','Montpellier','Arcachon','Cap Ferret','Agen'];
+    const ci=Math.floor(Math.max(0,t-22.4)/0.25); const c=$('fCity');
+    c.textContent=cities[Math.min(ci,cities.length-1)];
+    const kk=p(t,22.4+ci*0.25,22.4+ci*0.25+0.12); c.style.opacity=t<22.4?0:1; c.style.transform=`translateY(${(1-eOut(kk))*30}px)`;
+  }
+  // G: end card
+  if(t>=26){
+    bg='#FFD600';
+    const k=p(t,26,26.6);
+    $('gIcon').style.transform=`scale(${eBack(k)}) rotate(${(1-eOut(k))*90}deg)`;
+    $('gIcon').querySelector('svg').style.transform=`rotate(${(t-26)*24}deg)`;
+    $('rays2').style.transform=`rotate(${(t-26)*-10}deg) scale(${lerp(0.4,1,eOut(p(t,26,27)))})`;
+    const kw=eOut(p(t,26.5,27)); $('gWord').style.opacity=kw; $('gWord').style.transform=`translateY(${(1-kw)*50}px)`;
+    const kt=eOut(p(t,27.1,27.6)); $('gTag').style.opacity=kt; $('gTag').style.transform=`translateY(${(1-kt)*50}px)`;
+    const kc=p(t,28,28.4); $('gCta').style.opacity=kc>0?1:0; $('gCta').style.transform=`scale(${eBack(kc)})`;
+    const out=p(t,31.2,32); $('stage').style.filter=`brightness(${1-out})`;
+  } else $('stage').style.filter='';
+  stage.style.background=bg;
+}
+window.render=render;
+window.ready = Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))).then(()=>document.fonts.ready);
+</script>
+</body></html>
