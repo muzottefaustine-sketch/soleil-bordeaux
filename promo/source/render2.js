@@ -1,6 +1,6 @@
 // usage: node render2.js <assets.json> <outdir> [fps] [onlyTimes]
 const { chromium } = require('playwright'); const path=require('path'); const fs=require('fs');
-const [assetsFile,out,fpsArg,only]=process.argv.slice(2); const FPS=+(fpsArg||30), DUR=45;
+const [assetsFile,out,fpsArg,only]=process.argv.slice(2); const FPS=+(fpsArg||30), DUR=+(process.env.DUR||45);
 const A=JSON.parse(fs.readFileSync(assetsFile,'utf8')); const base=path.dirname(path.resolve(assetsFile));
 const u=f=>'file://'+path.resolve(base,f);
 for(const k of Object.keys(A)) if(typeof A[k]==='string') A[k]=u(A[k]); else if(Array.isArray(A[k])&&typeof A[k][0]==='string') A[k]=A[k].map(u);

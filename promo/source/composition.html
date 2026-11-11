@@ -1,118 +1,142 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
 <style>
-  :root { --ink:#15171A; --ink2:#5E6470; --ink3:#9AA1AD; --sun:#FFD600; --accent:#F8C83E; --line:#E4E7EC; }
+  :root { --ink:#15171A; --ink2:#5E6470; --ink3:#9AA1AD; --sun:#FFD600; --accent:#F8C83E; --gold:#B58B00; }
   * { box-sizing:border-box; margin:0; padding:0; }
   html,body { width:1080px; height:1920px; overflow:hidden; background:#fff; font-family: Inter, sans-serif; color:var(--ink); }
   #stage { position:absolute; inset:0; overflow:hidden; background:#fff; }
-  .layer { position:absolute; inset:0; display:none; }
+  .layer { position:absolute; inset:0; display:none; background:#fff; }
   .center { flex-direction:column; align-items:center; justify-content:center; }
-  .sun { width:260px; height:260px; }
   .wordmark { font-family: Arial, Helvetica, sans-serif; font-weight:700; letter-spacing:-0.02em; color:var(--ink); }
   .wordmark em { font-style:italic; }
-  .tagline { font-family: Arial, Helvetica, sans-serif; font-size:44px; line-height:1.45; color:var(--ink2); text-align:center; }
-  .tagline strong { color:var(--accent); font-weight:700; }
   .eyebrow { font-weight:700; font-size:30px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink3); }
   .eyebrow b { display:inline-block; width:14px; height:14px; border-radius:50%; background:var(--sun); margin-right:16px; vertical-align:2px; }
-  .h { font-weight:800; font-size:82px; letter-spacing:-0.04em; line-height:1.06; color:var(--ink); }
+  .h { font-weight:800; font-size:96px; letter-spacing:-0.045em; line-height:1.04; color:var(--ink); }
   .h .muted { color:var(--ink3); }
-  .phone { position:absolute; width:620px; height:1311px; left:230px; top:540px; border-radius:96px; background:#111214; padding:14px;
+  .dot { color:var(--accent); }
+  .sub { font-weight:600; font-size:44px; letter-spacing:-0.01em; color:var(--ink2); line-height:1.3; }
+  .full img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .fade-b { position:absolute; left:0; right:0; bottom:0; height:1000px;
+    background:linear-gradient(to top, #fff 0%, #fff 30%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0) 100%); }
+  .full .eyebrow { color:var(--ink2); }
+  .bottom-copy { position:absolute; left:80px; right:80px; bottom:150px; }
+  .phone { position:absolute; width:620px; height:1311px; left:230px; top:560px; border-radius:96px; background:#111214; padding:14px;
     box-shadow: 0 50px 100px rgba(15,23,42,0.16), 0 10px 30px rgba(15,23,42,0.10); }
   .screen { position:relative; width:100%; height:100%; border-radius:82px; overflow:hidden; background:#fff; }
   .screen img { position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; }
-  .ring { position:absolute; border:5px solid var(--sun); border-radius:22px; box-shadow:0 0 0 9999px rgba(21,23,26,0.0); opacity:0; z-index:5; }
-  .full img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-  .glass { background:rgba(255,255,255,0.92); border:1px solid rgba(255,255,255,0.8); box-shadow:0 18px 50px rgba(15,23,42,0.16);
-    backdrop-filter: blur(24px); border-radius:36px; }
-  .copy { position:absolute; left:80px; right:80px; top:120px; }
-  #flash { position:absolute; inset:0; background:#fff; opacity:0; }
-  .odo { display:inline-block; height:1em; overflow:hidden; vertical-align:top; }
-  .odo > div { display:flex; flex-direction:column; }
-  .odo > div > span { height:1em; line-height:1em; display:block; text-align:center; }
+  .ring { position:absolute; border:5px solid var(--sun); border-radius:22px; opacity:0; z-index:5; }
+  .copy { position:absolute; left:80px; right:80px; top:130px; }
+  .glass { background:rgba(255,255,255,0.94); box-shadow:0 18px 50px rgba(15,23,42,0.16); border-radius:36px; }
+  .chip { display:inline-flex; align-items:center; gap:10px; padding:14px 22px; white-space:nowrap; border-radius:999px; background:#fff; color:var(--ink);
+    font-weight:700; font-size:31px; box-shadow:0 10px 30px rgba(15,23,42,0.14); }
+  .chip.on { background:var(--ink); color:#fff; }
+  .seg { display:flex; gap:12px; position:absolute; left:80px; right:80px; top:96px; }
+  .seg div { flex:1; height:7px; border-radius:4px; background:rgba(255,255,255,0.55); overflow:hidden; }
+  .seg div i { display:block; height:100%; width:0; background:#fff; }
   #tick { position:absolute; left:0; right:0; top:330px; height:560px; overflow:hidden;
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%); }
   .row { position:absolute; left:0; right:0; height:112px; display:flex; align-items:center; justify-content:center; gap:28px; }
   .row .c { white-space:nowrap; font-weight:800; font-size:84px; letter-spacing:-0.04em; }
-  .row .n { font-weight:700; font-size:40px; color:#B58B00; background:#FFF7D6; padding:8px 20px; border-radius:999px; font-variant-numeric:tabular-nums; }
+  .row .n { font-weight:700; font-size:40px; color:var(--gold); background:#FFF7D6; padding:8px 20px; border-radius:999px; }
+  .trio { position:absolute; left:110px; right:110px; top:0; bottom:0; display:flex; flex-direction:column; justify-content:center; }
+  .trio .big { font-weight:900; font-size:190px; letter-spacing:-0.055em; line-height:0.95; }
+  .trio .sub { margin-top:40px; font-size:50px; }
+  .trio .idx { font-weight:700; font-size:34px; color:var(--ink3); letter-spacing:0.1em; margin-bottom:40px; font-variant-numeric:tabular-nums; }
 </style></head>
 <body>
 <div id="stage">
-  <!-- 1. Splash, faithful to the app -->
-  <div class="layer center" id="sSplash" style="background:#fff">
-    <div id="spSun" class="sun"></div>
+  <!-- 1. Splash -->
+  <div class="layer center" id="sSplash">
+    <div id="spSun" style="width:260px;height:260px"></div>
     <div id="spWord" class="wordmark" style="font-size:108px;margin-top:70px"><em>Soleil</em>enterrasse</div>
-    <div id="spTag" class="tagline" style="margin-top:34px">Trouvez les meilleures <strong>terrasses<br>près de vous</strong><br>partout en France.</div>
-    <div style="position:absolute;bottom:170px;left:50%;width:360px;margin-left:-180px">
-      <div style="height:5px;background:#E5E5EA;border-radius:4px;overflow:hidden"><div id="spBar" style="height:100%;width:0;background:var(--accent);border-radius:4px"></div></div>
+    <div id="spTag" style="margin-top:34px;font-family:Arial,sans-serif;font-size:46px;color:var(--ink2);text-align:center;line-height:1.4">Les terrasses au soleil,<br><strong style="color:var(--accent)">en temps réel.</strong></div>
+    <div id="spLoad" style="position:absolute;bottom:170px;left:50%;width:360px;margin-left:-180px">
+      <div style="height:5px;background:#E5E5EA;border-radius:4px;overflow:hidden"><div id="spBar" style="height:100%;width:0;background:var(--accent)"></div></div>
       <div id="spStatus" style="margin-top:28px;text-align:center;font-size:28px;color:var(--ink3);font-family:Arial,sans-serif">Chargement…</div>
     </div>
   </div>
 
-  <!-- 2. Hero 3D, full bleed -->
-  <div class="layer full" id="sHero">
-    <div id="heroImgs" style="position:absolute;inset:0"></div>
-    <div style="position:absolute;left:0;right:0;bottom:0;height:820px;background:linear-gradient(to top, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.88) 38%, rgba(255,255,255,0) 100%)"></div>
-    <div id="heroClock" class="glass" style="position:absolute;left:50%;top:110px;width:560px;margin-left:-280px;padding:30px 46px 34px">
-      <div style="text-align:center;font-weight:800;font-size:64px;letter-spacing:-0.03em"><span style="color:#F5A524">☀</span>&nbsp;<span id="heroTime">7h15</span></div>
+  <!-- 2. Grand soleil (3D, still) -->
+  <div class="layer full" id="sGrand">
+    <img id="grImg">
+    <div class="fade-b"></div>
+    <div class="bottom-copy">
+      <div class="eyebrow" id="grEy"><b></b>Bordeaux · 17h30</div>
+      <div class="h" id="grH" style="margin-top:26px;font-size:150px;line-height:0.98">Grand<br>soleil<span class="dot">.</span></div>
+      <div class="sub" id="grS" style="margin-top:30px;font-size:50px">…mais ta terrasse, elle est où ?</div>
+    </div>
+  </div>
+
+  <!-- 3. Shadows sweep (3D) -->
+  <div class="layer full" id="sShadow">
+    <div id="shImgs" style="position:absolute;inset:0"></div>
+    <div class="fade-b"></div>
+    <div id="shClock" class="glass" style="position:absolute;left:50%;top:110px;width:560px;margin-left:-280px;padding:30px 46px 34px">
+      <div style="text-align:center;font-weight:800;font-size:64px;letter-spacing:-0.03em;font-variant-numeric:tabular-nums"><span style="color:#F5A524">☀</span>&nbsp;<span id="shTime">7h15</span></div>
       <div style="position:relative;height:10px;background:#E5E7EB;border-radius:6px;margin-top:22px">
-        <div id="heroFill" style="position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:6px"></div>
-        <div id="heroKnob" style="position:absolute;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:#fff;border:6px solid var(--accent);box-shadow:0 4px 12px rgba(0,0,0,0.15)"></div>
+        <div id="shFill" style="position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:6px"></div>
+        <div id="shKnob" style="position:absolute;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:#fff;border:6px solid var(--accent);box-shadow:0 4px 12px rgba(0,0,0,0.15)"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:18px;font-size:24px;color:var(--ink3);font-weight:600"><span>6h</span><span>21h</span></div>
     </div>
-    <div style="position:absolute;left:80px;right:80px;bottom:150px">
-      <div class="eyebrow" id="heroEy"><b></b>Bordeaux · Place Meynard</div>
-      <div class="h" id="heroL1" style="margin-top:26px;font-size:96px">Le soleil tourne.<br><span class="muted">Les ombres aussi.</span></div>
-      <div class="h" id="heroL2" style="margin-top:26px;font-size:96px;position:absolute;left:0;right:0;top:46px">Chaque ombre,<br><span class="muted">calculée en 3D.</span></div>
+    <div class="bottom-copy">
+      <div class="eyebrow" id="shEy"><b></b>Calcul d’ombres 3D</div>
+      <div class="h" id="shH1" style="margin-top:26px;font-size:118px">Chaque immeuble<span class="dot">.</span></div>
+      <div class="h muted" id="shH2" style="font-size:118px;color:var(--ink3)">Chaque heure<span class="dot">.</span></div>
     </div>
   </div>
 
-  <!-- 3. App: pick the time -->
+  <!-- 4. L'appli -->
   <div class="layer" id="sApp">
-    <div class="copy"><div class="eyebrow" id="apEy"><b></b>Pour vous</div>
-      <div class="h" id="apH" style="margin-top:24px">Choisis l’heure.<br><span class="muted">Vois les terrasses au soleil.</span></div></div>
+    <div class="copy" style="text-align:center"><div class="eyebrow" id="apEy"><b></b>L’appli</div>
+      <div class="h" id="apH" style="margin-top:24px;font-size:88px">Toutes les terrasses<br><span class="muted">autour de toi.</span></div></div>
     <div class="phone" id="apPhone"><div class="screen" id="apScreen"></div></div>
   </div>
 
-  <!-- 3b. Counter + cities (motion design) -->
-  <div class="layer" id="sCount" style="background:#fff;z-index:20">
-    <div class="eyebrow" id="coEy" style="position:absolute;top:200px;left:0;right:0;text-align:center"><b></b>Déjà dans l’app</div>
+  <!-- 5. Filtres (typo) -->
+  <div class="layer" id="sFilt">
+    <div class="eyebrow" id="fiEy" style="position:absolute;top:200px;left:0;right:0;text-align:center"><b></b>Filtre ce qui te fait envie</div>
+    <div id="fiChips" style="position:absolute;top:560px;left:0;right:0;display:flex;justify-content:center;gap:12px;flex-wrap:nowrap;padding:0 30px"></div>
+    <div id="fiWords" style="position:absolute;top:880px;left:0;right:0;height:300px;overflow:hidden"></div>
+    <div id="fiSub" class="sub" style="position:absolute;top:1240px;left:0;right:0;text-align:center;color:var(--ink3)">au soleil, à l’heure que tu veux.</div>
+  </div>
+  <!-- 6. Compteur -->
+  <div class="layer" id="sCount">
+    <div class="eyebrow" id="coEy" style="position:absolute;top:200px;left:0;right:0;text-align:center"><b></b>Partout en France</div>
     <div id="tick"></div>
     <div style="position:absolute;top:960px;left:0;right:0;text-align:center">
-      <div id="coNum" style="font-weight:900;font-size:250px;letter-spacing:-0.05em;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums"></div>
-      <div style="width:640px;height:8px;margin:44px auto 0;background:#F1F2F4;border-radius:6px;overflow:hidden"><div id="coBar" style="height:100%;width:0;background:var(--sun);border-radius:6px"></div></div>
-      <div id="coSub" style="margin-top:44px;font-weight:700;font-size:64px;letter-spacing:-0.03em;color:var(--ink)">terrasses référencées</div>
-      <div id="coSub2" style="margin-top:22px;font-weight:600;font-size:44px;color:var(--ink3)">et partout ailleurs en France.</div>
+      <div id="coNum" style="font-weight:900;font-size:250px;letter-spacing:-0.05em;line-height:1;font-variant-numeric:tabular-nums"></div>
+      <div style="width:640px;height:8px;margin:44px auto 0;background:#F1F2F4;border-radius:6px;overflow:hidden"><div id="coBar" style="height:100%;width:0;background:var(--sun)"></div></div>
+      <div id="coSub" style="margin-top:44px;font-weight:700;font-size:62px;letter-spacing:-0.03em">terrasses &amp; lieux référencés</div>
     </div>
   </div>
-  <!-- 4. List -->
-  <div class="layer" id="sList">
-    <div class="copy"><div class="eyebrow"><b></b>Pour vous</div>
-      <div class="h" id="liH" style="margin-top:24px">Restos, cafés, bars.<br><span class="muted">Partout en France.</span></div></div>
-    <div class="phone" id="liPhone"><div class="screen" id="liScreen"></div></div>
+
+  <!-- 7. Gratuit / Sans compte / Zéro donnée -->
+  <div class="layer" id="sTrio">
+    <div class="trio" id="tr0"><div class="idx">01 / 03</div><div class="big">Gratuit<span class="dot">.</span></div><div class="sub">Ouvre, regarde, profite.</div></div>
+    <div class="trio" id="tr1"><div class="idx">02 / 03</div><div class="big">Sans<br>compte<span class="dot">.</span></div><div class="sub">Pas d’inscription, pas d’email.</div></div>
+    <div class="trio" id="tr2"><div class="idx">03 / 03</div><div class="big">Zéro<br>donnée<span class="dot">.</span></div><div class="sub">Ta position reste sur ton téléphone.</div></div>
   </div>
 
-  <!-- 5. Restaurateurs -->
+  <!-- 8. Restaurateurs -->
   <div class="layer" id="sPro">
-    <div class="copy"><div class="eyebrow" id="prEy"><b></b>Pour les restaurateurs</div>
-      <div class="h" id="prH1" style="margin-top:24px">Votre terrasse au soleil<br><span class="muted">mérite d’être trouvée.</span></div>
-      <div class="h" id="prH2" style="margin-top:24px;position:absolute;left:0;right:0;top:56px">Votre adresse en étoile<br><span class="muted">sur la carte 3D.</span></div>
-      <div class="h" id="prH3" style="margin-top:24px;position:absolute;left:0;right:0;top:56px">Mise en avant<br><span class="muted">avec le badge Sélection.</span></div>
+    <div class="copy"><div class="eyebrow" id="prEy"><b></b>Restaurateurs</div>
+      <div class="h" id="prH1" style="margin-top:24px;font-size:84px">Votre terrasse,<br><span class="muted">en étoile sur la 3D.</span></div>
+      <div class="h" id="prH2" style="position:absolute;left:0;right:0;top:58px;font-size:84px">Rejoignez<br><span class="muted">la Sélection.</span></div>
     </div>
-    <div class="phone" id="prPhone"><div class="screen" id="prScreen"><div class="ring" id="ring1"></div><div class="ring" id="ring2"></div><div class="ring" id="ring3"></div></div></div>
+    <div class="phone" id="prPhone"><div class="screen" id="prScreen"><div class="ring" id="ring1"></div><div class="ring" id="ring2"></div></div></div>
   </div>
 
-  <!-- 6. End card -->
-  <div class="layer center" id="sEnd" style="background:#fff">
-    <div id="enSun" class="sun" style="width:220px;height:220px"></div>
+  <!-- 9. Fin -->
+  <div class="layer center" id="sEnd">
+    <div id="enSun" style="width:220px;height:220px"></div>
     <div id="enWord" class="wordmark" style="font-size:108px;margin-top:60px"><em>Soleil</em>enterrasse</div>
-    <div id="enTag" class="h" style="font-size:64px;margin-top:34px;text-align:center;font-weight:700;color:var(--ink2)">Trouve ta place au soleil.</div>
+    <div id="enTag" class="h" style="font-size:66px;margin-top:34px;text-align:center;font-weight:700;color:var(--ink2)">Le soleil, c’est <span style="color:var(--accent)">maintenant</span>.</div>
     <div id="enCta" style="margin-top:90px;display:flex;flex-direction:column;align-items:center;gap:30px">
-      <div style="padding:26px 54px;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;font-size:40px">Disponible sur l’App Store</div>
-      <div style="font-size:34px;color:var(--ink2);font-weight:600">Restaurateurs : rejoignez la Sélection.</div>
+      <div style="padding:26px 54px;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;font-size:42px">Lien en bio ↗</div>
+      <div style="font-size:34px;color:var(--ink3);font-weight:600">Gratuit sur l’App Store</div>
     </div>
   </div>
-  <div id="flash"></div>
 </div>
 <script>
 const SUN_SVG = `<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><g fill="#FFD600">
@@ -122,138 +146,96 @@ const SUN_SVG = `<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="ht
 <ellipse cx="50" cy="11" rx="2.9" ry="6.5" transform="rotate(215 50 50)"/><ellipse cx="50" cy="11" rx="3.5" ry="7" transform="rotate(250 50 50)"/>
 <ellipse cx="50" cy="11" rx="2.8" ry="6.3" transform="rotate(285 50 50)"/><ellipse cx="50" cy="11" rx="3.1" ry="7.2" transform="rotate(320 50 50)"/></g>
 <circle cx="50" cy="50" r="21" fill="#FFD600"/><circle cx="48" cy="48" r="17" fill="#FFE000" opacity="0.55"/><circle cx="52" cy="52" r="14" fill="#FFC400" opacity="0.25"/></svg>`;
-document.getElementById('spSun').innerHTML = SUN_SVG; document.getElementById('enSun').innerHTML = SUN_SVG;
 const A = window.ASSETS, $ = id => document.getElementById(id);
+$('spSun').innerHTML = SUN_SVG; $('enSun').innerHTML = SUN_SVG;
 const img = (parent, src) => { const i = new Image(); i.src = src; parent.appendChild(i); return i; };
-const heroImgs = A.hero.map(s => img($('heroImgs'), s));
-const appImgs = A.app.map(s => img($('apScreen'), s));
-const tipImg = img($('apScreen'), A.tooltip);
-const listImgs = [img($('liScreen'), A.list), img($('liScreen'), A.bars)];
-const proImgs = [img($('prScreen'), A.proMap), img($('prScreen'), A.proList)];
-proImgs.forEach(i => { $('prScreen').insertBefore(i, $('ring1')); });
+$('grImg').src = A.grand;
+const shImgs = A.hero.map(s => img($('shImgs'), s));
+const apImgs = A.app.map(s => img($('apScreen'), s));
+const FILT = [['☕','Cafés','Un café'],['🍴','Restaurants','Un déj’'],['🍹','Bars','L’apéro'],['🌊','Canicule','Au frais']];
+const chips=FILT.map(f=>{ const c=document.createElement('div'); c.className='chip'; c.style.boxShadow='none'; c.style.border='2px solid #E4E7EC'; c.innerHTML=`<span>${f[0]}</span>${f[1]}`; $('fiChips').appendChild(c); return c; });
+const words=FILT.map(f=>{ const w=document.createElement('div'); w.className='h'; w.style.cssText='position:absolute;left:0;right:0;text-align:center;font-size:230px;line-height:300px;font-weight:900;letter-spacing:-0.055em'; w.innerHTML=`${f[2]}<span class="dot">.</span>`; $('fiWords').appendChild(w); return w; });
+const prImgs = [A.proMap, A.proList].map(s => { const i=img($('prScreen'), s); $('prScreen').insertBefore(i,$('ring1')); return i; });
 
 const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)), lerp=(a,b,t)=>a+(b-a)*t, p=(t,a,b)=>clamp((t-a)/(b-a));
 const eo=t=>1-Math.pow(1-t,4), eio=t=>t<.5?8*t*t*t*t:1-Math.pow(-2*t+2,4)/2;
-const vis=(el,on)=>{ el.style.display=on?'flex':'none'; };
-function fadeUp(el,t,t0,dur=0.6,dy=40,tOut=null){ let k=eo(p(t,t0,t0+dur)); let o=k;
-  if(tOut!==null){ const ko=p(t,tOut,tOut+0.35); o*=1-ko; dy = ko>0 ? -30*ko : dy*(1-k); el.style.transform=`translateY(${ko>0?-30*ko:(1-k)*dy}px)`; }
-  else el.style.transform=`translateY(${(1-k)*dy}px)`; el.style.opacity=o; }
-function seq(imgs,k){ // crossfade through an image sequence, k in [0,1]
-  const f=k*(imgs.length-1), i=Math.min(imgs.length-2,Math.floor(f)), r=f-i;
-  imgs.forEach((im,j)=>{ im.style.opacity = j===i?1:(j===i+1?r:0); im.style.zIndex = j===i+1?2:1; }); return f; }
-function hourLabel(v){ const h=Math.floor(v), m=Math.round((v-h)*60/15)*15; return m===60?`${h+1}h00`:`${h}h${String(m).padStart(2,'0')}`; }
-function phoneIn(el,t,t0,from='bottom'){ const k=eo(p(t,t0,t0+0.8)); el.style.transform= from==='bottom'?`translateY(${(1-k)*260}px)`:`translateY(${(1-k)*80}px) scale(${lerp(0.96,1,k)})`; el.style.opacity=k; }
+function fadeUp(el,t,t0,dur=0.6,dy=40,tOut=null){ const k=eo(p(t,t0,t0+dur)); let o=k, y=(1-k)*dy;
+  if(tOut!==null){ const ko=eio(p(t,tOut,tOut+0.3)); o*=1-ko; if(ko>0) y=-40*ko; }
+  el.style.opacity=o; el.style.transform=`translateY(${y}px)`; }
+function seq(imgs,k){ const f=k*(imgs.length-1), i=Math.min(imgs.length-2,Math.floor(f)), r=f-i;
+  imgs.forEach((im,j)=>{ im.style.opacity = j===i?1:(j===i+1?r:0); im.style.zIndex = j===i+1?2:1; }); }
+function hourLabel(v){ let h=Math.floor(v), m=Math.round((v-h)*60/15)*15; if(m===60){h++;m=0;} return `${h}h${String(m).padStart(2,'0')}`; }
+function phoneIn(el,t,t0){ const k=eo(p(t,t0,t0+0.8)); el.style.transform=`translateY(${(1-k)*240}px)`; el.style.opacity=k; }
+const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
 
-const SC={splash:[0,6.4],hero:[5.6,16.4],app:[16,22.4],list:[22,25.9],pro:[25.5,33.4],end:[33,40]};
-function renderBase(t){
-  const on=k=>t>=SC[k][0]&&t<SC[k][1];
-  vis($('sSplash'),on('splash')); vis($('sHero'),on('hero')); vis($('sApp'),on('app')); vis($('sList'),on('list')); vis($('sPro'),on('pro')); vis($('sEnd'),on('end'));
-  // z-order: later scenes over earlier ones for cross-dissolves
-  ['sSplash','sHero','sApp','sList','sPro','sEnd'].forEach((id,i)=>$(id).style.zIndex=i);
-  $('sSplash').style.zIndex=10; // splash fades out above the 3D, like in the app
-
-  // 1. SPLASH
-  if(on('splash')){
-    const ks=eo(p(t,0.2,1.2));
-    const pulse=Math.sin((t)/2.5*Math.PI*2); // splash-pulse 2.5s
-    $('spSun').style.opacity=ks; $('spSun').style.transform=`scale(${lerp(0.85,1,ks)*(1+0.035*(pulse*0.5+0.5))}) rotate(${3*(pulse*0.5+0.5)}deg)`;
-    fadeUp($('spWord'),t,1.0,0.8,30); fadeUp($('spTag'),t,1.7,0.8,30);
-    const bar=t<2.4?0:(t<5.2?lerp(0,92,eio(p(t,2.4,5.0))):100); $('spBar').style.width=bar+'%';
-    $('spStatus').textContent = t<3.6?'Chargement…':(t<5.2?'La 3D se prépare…':'Prêt !');
-    $('spBar').parentElement.parentElement.style.opacity=eo(p(t,2.2,2.6));
-    $('sSplash').style.opacity=1-eio(p(t,5.6,6.4));
-  }
-  // 2. HERO
-  if(on('hero')){
-    const k=p(t,5.6,16.2); const f=seq(heroImgs,k);
-    const hv=lerp(7.25,20.75,k);
-    $('heroImgs').style.transform=`scale(${lerp(1.10,1.0,eo(p(t,5.6,8)))*lerp(1,1.06,k)})`;
-    $('heroTime').textContent=hourLabel(hv);
-    const pct=(hv-6)/15*100; $('heroFill').style.width=pct+'%'; $('heroKnob').style.left=pct+'%';
-    fadeUp($('heroClock'),t,6.6,0.7,-30);
-    fadeUp($('heroEy'),t,7.0,0.7,30);
-    fadeUp($('heroL1'),t,7.3,0.8,40,11.0);
-    fadeUp($('heroL2'),t,11.4,0.8,40);
-    const ko=eio(p(t,16.0,16.4)); $('sHero').style.opacity=1-ko;
-  }
-  // 3. APP
-  if(on('app')){
-    phoneIn($('apPhone'),t,16.0); fadeUp($('apEy'),t,16.2,0.6,30); fadeUp($('apH'),t,16.4,0.7,30);
-    seq(appImgs,eio(p(t,16.8,20.6)));
-    tipImg.style.zIndex=5; tipImg.style.opacity=eo(p(t,20.9,21.3));
-    $('sApp').style.opacity=1-eio(p(t,22.0,22.4));
-  }
-  // 4. LIST
-  if(on('list')){
-    phoneIn($('liPhone'),t,22.0,'fade'); fadeUp($('liH'),t,22.2,0.7,30);
-    listImgs[1].style.opacity=eo(p(t,23.9,24.2));
-    $('sList').style.opacity=1-eio(p(t,25.5,25.9));
-  }
-  // 5. PRO
-  if(on('pro')){
-    phoneIn($('prPhone'),t,25.5,'fade'); fadeUp($('prEy'),t,25.6,0.6,30);
-    fadeUp($('prH1'),t,25.8,0.7,30,28.0); fadeUp($('prH2'),t,28.3,0.7,30,30.6); fadeUp($('prH3'),t,30.9,0.7,30);
-    // sheet slowly drifts up a touch
-    proImgs[0].style.transform=`scale(${lerp(1,1.04,p(t,25.5,31))})`; proImgs[0].style.transformOrigin='50% 30%';
-    proImgs[1].style.opacity=eo(p(t,30.6,31.0)); proImgs[1].style.zIndex=3;
-    const S=592/1179, z=lerp(1,1.04,p(t,25.5,31)), cx=296, cy=1283*0.3;
-    const place=(r,x,y,w,h,zz)=>{ r.style.left=(cx+((x*S)-cx)*zz-8)+'px'; r.style.top=(cy+((y*S)-cy)*zz-8)+'px'; r.style.width=(w*S*zz+16)+'px'; r.style.height=(h*S*zz+16)+'px'; };
-    const R=A.rings; place($('ring1'),...R.star,z); $('ring1').style.borderRadius='50%';
-    place($('ring3'),...R.card,1);
-    $('ring1').style.opacity=eo(p(t,28.5,28.8))*(1-p(t,30.5,30.7)); $('ring2').style.opacity=0;
-    $('ring3').style.opacity=eo(p(t,31.5,31.8));
-    $('sPro').style.opacity=1-eio(p(t,33.0,33.4));
-  }
-  // 6. END
-  if(on('end')){
-    const ks=eo(p(t,33.2,34.2)); const pulse=Math.sin((t-33)/2.5*Math.PI*2)*0.5+0.5;
-    $('enSun').style.opacity=ks; $('enSun').style.transform=`scale(${lerp(0.85,1,ks)*(1+0.035*pulse)}) rotate(${3*pulse}deg)`;
-    fadeUp($('enWord'),t,33.8,0.8,30); fadeUp($('enTag'),t,34.5,0.8,30); fadeUp($('enCta'),t,35.4,0.8,30);
-    $('stage').style.opacity=1-p(t,38.8,40);
-  } else $('stage').style.opacity=1;
-}
-
-// ---- Counter scene ----
+// counter rows
 const CITIES=[['Bordeaux',1531],['Lyon',2643],['Marseille',1420],['Toulouse',1356],['Nice',1126],['Nantes',1043],['Lille',1030],['Strasbourg',1015],['Cannes',318]];
 const TOTAL=CITIES.reduce((a,c)=>a+c[1],0);
-const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f');
-const rows=CITIES.concat([['Paris · Montpellier · …',0]]).map(([c,n],i)=>{ const r=document.createElement('div'); r.className='row';
+const rows=CITIES.concat([['Paris · Montpellier · …',0]]).map(([c,n])=>{ const r=document.createElement('div'); r.className='row';
   r.innerHTML=`<span class="c">${c}</span>`+(n?`<span class="n">+${fmt(n)}</span>`:''); $('tick').appendChild(r); return r; });
-// odometer: one rolling strip per digit
-const DIG=5; $('coNum').innerHTML='';
-const strips=[];
-for(let k=DIG-1;k>=0;k--){ const o=document.createElement('span'); o.className='odo'; const st=document.createElement('div');
-  st.innerHTML=[...Array(11).keys()].map(d=>`<span>${d%10}</span>`).join(''); o.appendChild(st); $('coNum').appendChild(o); strips.push([k,o,st]);
-  if(k===3){ const sp=document.createElement('span'); sp.textContent='\u202f'; sp.style.display='inline-block'; sp.style.width='0.22em'; $('coNum').appendChild(sp); } }
-function setOdo(v){ // v float
-  for(const [k,o,st] of strips){ const p10=Math.pow(10,k); const q=v/p10; let d=Math.floor(q)%10;
-    const frac=k===0? (v%1) : Math.max(0,((v/1)%p10 - (p10-1))); // roll when all lower digits are 9
-    const pos=d+clamp(frac); st.style.transform=`translateY(${-pos}em)`;
-    const lead = v < p10 && k>0; o.style.opacity = lead?0.0:1; o.style.width = lead?'0':''; }
-}
-function renderCount(t){
-  const k=p(t,22.5,25.6); const e=eio(k); const pos=e*(rows.length-1); // row index at center
-  rows.forEach((r,i)=>{ const d=i-pos; r.style.top=(560/2-56+d*112)+'px';
-    const a=clamp(1-Math.abs(d)*0.55); r.style.opacity=0.25+0.75*a; r.querySelector('.c').style.color = Math.abs(d)<0.5?'var(--ink)':'var(--ink3)';
-    r.style.transform=`scale(${0.86+0.14*a})`; });
-  // cumulative total follows the ticker
-  let cum=0; const ip=Math.floor(pos), fr=pos-ip;
-  for(let i=0;i<CITIES.length;i++){ if(i<=ip) cum+=CITIES[i][1]; else if(i===ip+1) cum+=CITIES[i][1]*eo(fr); }
-  cum=Math.min(TOTAL,cum*(t<22.6?eo(p(t,22.2,22.6)):1)); if(t>=25.6) cum=TOTAL;
-  $('coNum').textContent=fmt(Math.round(cum)); $('coBar').style.width=(cum/TOTAL*100)+'%';
-  fadeUp($('coEy'),t,22.2,0.6,30);
-  $('coSub').style.opacity=eo(p(t,22.4,22.9));
-  fadeUp($('coSub2'),t,25.7,0.6,30);
-  const pop=eo(p(t,25.6,25.9))*(1-eo(p(t,25.9,26.3))); $('coNum').style.transform=`scale(${1+0.06*pop})`;
-}
 
-const BASE=['sSplash','sHero','sApp','sList','sPro','sEnd'];
-window.render=function(t){ const c=$('sCount');
-  if(t<22){ c.style.display="none"; renderBase(t); return; }
-  if(t<27){ if(t<22.4) renderBase(Math.min(t,21.99)); else { BASE.forEach(id=>$(id).style.display='none'); $('stage').style.opacity=1; }
-    c.style.display='block'; c.style.opacity=eo(p(t,22.0,22.35))*(1-eio(p(t,26.65,27.0))); renderCount(t); return; }
-  c.style.display="none"; renderBase(t-5); };
-
+// scene windows [in, out]
+const SC={ sSplash:[0,4.6], sGrand:[4.0,8.0], sShadow:[7.6,14.4], sApp:[14.0,18.2], sFilt:[18.0,22.2], sCount:[22.0,26.2],
+           sTrio:[26.0,29.8], sPro:[29.6,33.4], sEnd:[33.0,38] };
+const ORDER=Object.keys(SC);
+window.render=function(t){
+  ORDER.forEach((id,i)=>{ const [a,b]=SC[id]; const el=$(id); const on=t>=a&&t<b; el.style.display=on?(el.classList.contains('center')?'flex':'block'):'none'; el.style.zIndex=i; });
+  const fadeIn=(id,d=0.4)=>{ $(id).style.opacity=eio(p(t,SC[id][0],SC[id][0]+d)); };
+  // 1 splash
+  { const pulse=Math.sin(t/2.5*Math.PI*2)*0.5+0.5, ks=eo(p(t,0.15,1.0));
+    $('spSun').style.opacity=ks; $('spSun').style.transform=`scale(${lerp(0.85,1,ks)*(1+0.035*pulse)}) rotate(${3*pulse}deg)`;
+    fadeUp($('spWord'),t,0.7,0.7,30); fadeUp($('spTag'),t,1.2,0.7,30);
+    $('spLoad').style.opacity=eo(p(t,1.6,2.0)); $('spBar').style.width=(t<1.8?0:lerp(0,100,eio(p(t,1.8,3.8))))+'%';
+    $('spStatus').textContent=t<2.6?'Chargement…':(t<3.8?'La 3D se prépare…':'Prêt !'); }
+  // 2 grand soleil — 3D revealed under the splash
+  { const k=p(t,4.0,8.0); $('grImg').style.transform=`scale(${lerp(1.18,1.04,eo(k))})`;
+    fadeUp($('grEy'),t,4.4,0.5,30); fadeUp($('grH'),t,4.6,0.6,50); fadeUp($('grS'),t,5.8,0.6,30); }
+  $('sSplash').style.opacity=1-eio(p(t,4.0,4.6)); $('sSplash').style.zIndex=50;
+  // 3 shadows sweep
+  { $('sShadow').style.opacity=eio(p(t,7.6,8.0));
+    const k=p(t,7.8,14.2); seq(shImgs,k); const hv=lerp(7.25,20.75,k);
+    $('shImgs').style.transform=`scale(${lerp(1.04,1.12,k)})`;
+    $('shTime').textContent=hourLabel(hv); const pct=(hv-6)/15*100; $('shFill').style.width=pct+'%'; $('shKnob').style.left=pct+'%';
+    fadeUp($('shClock'),t,8.0,0.6,-30); fadeUp($('shEy'),t,8.1,0.5,30); fadeUp($('shH1'),t,8.3,0.6,40); fadeUp($('shH2'),t,9.0,0.6,40); }
+  // 4 l'appli
+  { fadeIn('sApp'); phoneIn($('apPhone'),t,14.1); fadeUp($('apEy'),t,14.2,0.5,30); fadeUp($('apH'),t,14.4,0.6,30);
+    seq(apImgs,eio(p(t,14.6,17.9))); }
+  // 5 filtres — one beat per category
+  { fadeIn('sFilt',0.3); fadeUp($('fiEy'),t,18.1,0.5,30); fadeUp($('fiSub'),t,18.6,0.6,30);
+    chips.forEach((c,j)=>{ const k=eo(p(t,18.15+j*0.08,18.6+j*0.08)); c.style.opacity=k; c.style.transform=`translateY(${(1-k)*30}px)`; });
+    const i=clamp(Math.floor((t-18.4)/0.95),0,3), t0=18.4+i*0.95;
+    chips.forEach((c,j)=>{ const on=j===i&&t>=18.4; c.style.background=on?'var(--ink)':'#fff'; c.style.color=on?'#fff':'var(--ink)'; c.style.borderColor=on?'var(--ink)':'#E4E7EC'; });
+    words.forEach((w,j)=>{ const kin=eo(p(t,18.4+j*0.95,18.4+j*0.95+0.35)), kout=j<3?eio(p(t,18.4+(j+1)*0.95,18.4+(j+1)*0.95+0.3)):0;
+      w.style.transform=`translateY(${(1-kin)*300 - kout*300}px)`; w.style.opacity=t<18.4+j*0.95?0:1-kout; }); }
+  // 6 compteur
+  { fadeIn('sCount'); const e=eio(p(t,22.4,25.3)), pos=e*(rows.length-1);
+    rows.forEach((r,i)=>{ const d=i-pos; r.style.top=(280-56+d*112)+'px'; const a=clamp(1-Math.abs(d)*0.55);
+      r.style.opacity=0.25+0.75*a; r.querySelector('.c').style.color=Math.abs(d)<0.5?'var(--ink)':'var(--ink3)'; r.style.transform=`scale(${0.86+0.14*a})`; });
+    let cum=0; const ip=Math.floor(pos), fr=pos-ip;
+    for(let i=0;i<CITIES.length;i++){ if(i<=ip) cum+=CITIES[i][1]; else if(i===ip+1) cum+=CITIES[i][1]*eo(fr); }
+    cum=Math.min(TOTAL,cum*eo(p(t,22.1,22.5))); if(t>=25.3) cum=TOTAL;
+    $('coNum').textContent=fmt(Math.round(cum)); $('coBar').style.width=(cum/TOTAL*100)+'%';
+    fadeUp($('coEy'),t,22.1,0.5,30); $('coSub').style.opacity=eo(p(t,22.3,22.8));
+    const pop=eo(p(t,25.3,25.6))*(1-eo(p(t,25.6,26.0))); $('coNum').style.transform=`scale(${1+0.06*pop})`; }
+  // 7 trio
+  { fadeIn('sTrio',0.25); [0,1,2].forEach(i=>{ const t0=26.0+i*1.25; const el=$('tr'+i);
+      const k=eo(p(t,t0,t0+0.45)), ko=i<2?eio(p(t,t0+1.1,t0+1.3)):0;
+      el.style.opacity=k*(1-ko); el.style.transform=`translateY(${(1-k)*90 - ko*90}px)`; }); }
+  // 8 restaurateurs
+  { fadeIn('sPro'); phoneIn($('prPhone'),t,29.7); fadeUp($('prEy'),t,29.8,0.5,30);
+    fadeUp($('prH1'),t,30.0,0.6,30,31.5); fadeUp($('prH2'),t,31.8,0.6,30);
+    const z=lerp(1,1.04,p(t,29.6,31.6)); prImgs[0].style.transform=`scale(${z})`; prImgs[0].style.transformOrigin='50% 30%';
+    prImgs[1].style.opacity=eo(p(t,31.5,31.8)); prImgs[1].style.zIndex=3;
+    const S=592/1179, cx=296, cy=1283*0.3;
+    const place=(r,[x,y,w,h],zz)=>{ r.style.left=(cx+((x*S)-cx)*zz-8)+'px'; r.style.top=(cy+((y*S)-cy)*zz-8)+'px'; r.style.width=(w*S*zz+16)+'px'; r.style.height=(h*S*zz+16)+'px'; };
+    place($('ring1'),A.rings.star,z); $('ring1').style.borderRadius='50%'; place($('ring2'),A.rings.card,1);
+    $('ring1').style.opacity=eo(p(t,30.6,30.9))*(1-p(t,31.4,31.6)); $('ring2').style.opacity=eo(p(t,32.1,32.4)); }
+  // 9 fin
+  { fadeIn('sEnd'); const ks=eo(p(t,33.2,34.1)), pulse=Math.sin((t-33)/2.5*Math.PI*2)*0.5+0.5;
+    $('enSun').style.opacity=ks; $('enSun').style.transform=`scale(${lerp(0.85,1,ks)*(1+0.035*pulse)}) rotate(${3*pulse}deg)`;
+    fadeUp($('enWord'),t,33.7,0.7,30); fadeUp($('enTag'),t,34.3,0.7,30); fadeUp($('enCta'),t,35.0,0.7,30);
+    $('stage').style.opacity=1-p(t,37.2,38); }
+};
 window.ready = Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))).then(()=>document.fonts.ready);
 </script>
 </body></html>

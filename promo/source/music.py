@@ -1,5 +1,5 @@
 import numpy as np, wave
-SR=44100; BPM=120; B=60/BPM; DUR=45.0
+SR=44100; BPM=120; B=60/BPM; DUR=38.0
 N=int(SR*DUR); L=np.zeros(N); R=np.zeros(N); rng=np.random.default_rng(3)
 def add(sig,t,g=1.0,pan=0.0):
     i=int(t*SR); j=min(N,i+len(sig));
@@ -35,7 +35,7 @@ bars=int(DUR/(4*B))
 for bar in range(bars):
     t0=bar*4*B; ch=prog[bar%4]; r=roots[bar%4]
     add(pad([m+12 for m in ch],int(4*B*SR)+int(0.8*SR),0),t0,0.32)
-    beatsOn = 3<=bar<bars-2
+    beatsOn = 2<=bar<bars-1
     seq=[ch[0]+24,ch[2]+24,ch[1]+24,ch[3]+24,ch[2]+24,ch[1]+24,ch[3]+24,ch[2]+24]
     for k in range(8):
         add(pluck(seq[k]),t0+k*B/2,0.16 if bar>=1 else 0.11*(k/8+bar),0.4 if k%2 else -0.4)
@@ -44,15 +44,15 @@ for bar in range(bars):
     if beatsOn:
         for b in range(4):
             tb=t0+b*B; add(kick(),tb,0.55); add(hat(),tb+B/2,1.0,0.25)
-            if b in (1,3) and bar>=5: add(rim(),tb,0.6,-0.2)
+            if b in (1,3) and bar>=4: add(rim(),tb,0.6,-0.2)
         n=int(4*B*SR); tt=np.arange(n)/SR
         add(np.sin(2*np.pi*note(r)*tt)*np.minimum(1,tt/0.05)*np.minimum(1,(4*B-tt)/0.1),t0,0.22)
 # soft swell into 3D reveal at 6s
 n=int(2*SR); t=np.arange(n)/SR; x=lp(rng.standard_normal(n),0.01+0.1*(t/2)**2)*(t/2)**2
-add(x,4.0,0.5)
+add(x,2.0,0.5)
 t=np.arange(N)/SR
 fi=np.clip(t/0.6,0,1); fo=np.clip((DUR-t)/2.5,0,1); L*=fi*fo; R*=fi*fo
 m=max(abs(L).max(),abs(R).max()); L=np.tanh(1.1*L/m)/np.tanh(1.1)*0.85; R=np.tanh(1.1*R/m)/np.tanh(1.1)*0.85
 d=(np.stack([L,R],1)*32767).astype('<i2')
-with wave.open('music3.wav','wb') as w: w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(d.tobytes())
+with wave.open('music4.wav','wb') as w: w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(d.tobytes())
 print('ok')
