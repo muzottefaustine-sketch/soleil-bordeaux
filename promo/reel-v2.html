@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Soleilenterrasse Reel v2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+  body { font-family: "Inter", -apple-system, Arial, sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+  .L { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; visibility: hidden; }
+  .fill { position: absolute; inset: 0; }
+  .foot { position: absolute; left: 50%; top: 50%; width: 1080px; height: 1920px; object-fit: cover; transform-origin: 50% 50%; }
+  .disp { font-family: "Inter Display", "Inter", sans-serif; font-weight: 900; letter-spacing: -0.045em; line-height: .92; }
+  .logo { font-family: Arial, sans-serif; font-weight: 700; letter-spacing: -0.04em; white-space: nowrap; }
+  .logo em { font-style: italic; }
+  .mask { display: block; overflow: hidden; padding-bottom: .08em; }
+  .mask > span { display: inline-block; will-change: transform; }
+  .kick { font-weight: 700; font-size: 30px; letter-spacing: .32em; text-transform: uppercase; }
+  .yl { color: #F8C83E; }
+  .glass { background: rgba(255,255,255,.9); backdrop-filter: blur(18px); border-radius: 40px; box-shadow: 0 20px 60px rgba(0,0,0,.25); color: #15171A; }
+  .chip { display: inline-flex; align-items: center; gap: 14px; padding: 20px 36px; border-radius: 999px; background: #fff; color: #15171A; font-weight: 800; font-size: 44px; box-shadow: 0 14px 38px rgba(0,0,0,.25); }
+  .grad-b { background: linear-gradient(to top, rgba(10,12,16,.85) 0%, rgba(10,12,16,.45) 32%, rgba(10,12,16,0) 55%); }
+  .grad-t { background: linear-gradient(to bottom, rgba(10,12,16,.75) 0%, rgba(10,12,16,.2) 25%, rgba(10,12,16,0) 40%); }
+  .ticker { width: max-content; white-space: pre; font-family: "Inter Display", Inter, sans-serif; font-weight: 900; font-size: 150px; letter-spacing: -0.04em; }
+  .outline { color: transparent; -webkit-text-stroke: 3px #15171A; }
+</style>
+</head>
+<body>
+
+<!-- ============ SCENE 0 : INTRO ============ -->
+<div id="s0" class="L" style="background:#F8C83E">
+  <svg id="s0sun" class="fill" viewBox="0 0 1080 1920" width="1080" height="1920">
+    <g id="s0sunG">
+      <g id="s0rays" fill="#fff"></g>
+      <circle id="s0core" r="120" fill="#fff"/>
+    </g>
+  </svg>
+  <div id="s0logo" class="fill" style="display:flex;flex-direction:column;align-items:center;justify-content:center;color:#15171A">
+    <div class="logo" style="font-size:150px;display:flex">
+      <span class="mask"><span id="s0w1"><em>Soleil</em></span></span><span class="mask"><span id="s0w2">enterrasse</span></span>
+    </div>
+    <div class="mask" style="margin-top:26px"><span id="s0tag" style="font-size:40px;font-weight:600;letter-spacing:.02em">Les terrasses au soleil, en temps réel.</span></div>
+  </div>
+</div>
+
+<!-- ============ SCENE 1 : FLY ============ -->
+<div id="s1" class="L">
+  <img id="s1img" class="foot">
+  <div class="fill grad-b"></div>
+  <div class="fill grad-t"></div>
+  <div style="position:absolute;left:80px;top:150px">
+    <div class="mask"><span id="s1k" class="kick yl">Bordeaux · 17h30</span></div>
+  </div>
+  <div style="position:absolute;left:80px;right:80px;bottom:300px">
+    <div class="disp" style="font-size:150px">
+      <span class="mask"><span id="s1a">Grand</span></span>
+      <span class="mask"><span id="s1b">soleil<span class="yl">.</span></span></span>
+    </div>
+    <div class="mask" style="margin-top:34px"><span id="s1c" style="font-size:54px;font-weight:600;opacity:.95">…mais ta terrasse, elle est où&nbsp;?</span></div>
+  </div>
+</div>
+
+<!-- ============ SCENE 2 : LAPSE ============ -->
+<div id="s2" class="L">
+  <img id="s2img" class="foot">
+  <div class="fill grad-t" style="background:linear-gradient(to bottom, rgba(10,12,16,.8) 0%, rgba(10,12,16,.25) 26%, rgba(10,12,16,0) 42%)"></div>
+  <div class="fill" style="background:linear-gradient(to top, rgba(10,12,16,.55) 0%, rgba(10,12,16,0) 30%)"></div>
+  <div style="position:absolute;left:80px;right:80px;top:140px">
+    <div class="mask"><span id="s2k" class="kick yl">Calcul d'ombres 3D</span></div>
+    <div class="disp" style="font-size:118px;margin-top:22px">
+      <span class="mask"><span id="s2a">Chaque immeuble.</span></span>
+      <span class="mask"><span id="s2b">Chaque heure<span class="yl">.</span></span></span>
+    </div>
+  </div>
+  <!-- replica of the app's time panel -->
+  <div id="s2panel" class="glass" style="position:absolute;left:90px;right:90px;bottom:150px;padding:44px 60px 40px">
+    <div style="display:flex;justify-content:center;align-items:center;gap:20px">
+      <span style="font-size:56px">☀️</span><span id="s2hour" style="font-size:76px;font-weight:800;letter-spacing:-2px">8h30</span>
+    </div>
+    <div style="position:relative;height:16px;border-radius:8px;background:#E4E7EC;margin:34px 0 0">
+      <div id="s2fill" style="position:absolute;left:0;top:0;bottom:0;border-radius:8px;background:#F8C83E"></div>
+      <div id="s2knob" style="position:absolute;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:#fff;border:6px solid #F8C83E;box-shadow:0 6px 18px rgba(0,0,0,.2)"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:30px;font-size:32px;color:#9AA1AD;font-weight:600"><span>6h</span><span>21h</span></div>
+  </div>
+</div>
+
+<!-- ============ SCENE 3 : PHONE (real app UI) ============ -->
+<div id="s3" class="L" style="background:#F8C83E">
+  <div style="position:absolute;left:0;right:0;top:150px;text-align:center;color:#15171A">
+    <div class="mask"><span id="s3k" class="kick">L'appli</span></div>
+    <div class="disp" style="font-size:108px;margin-top:20px">
+      <span class="mask"><span id="s3a">Toutes les terrasses</span></span>
+      <span class="mask"><span id="s3b">autour de toi.</span></span>
+    </div>
+  </div>
+  <div id="s3stage" style="position:absolute;left:0;right:0;top:560px;height:1500px;perspective:2400px">
+    <div id="s3phone" style="position:absolute;left:50%;top:0;width:640px;height:1386px;margin-left:-320px;border-radius:92px;background:#0B0C0E;padding:20px;box-shadow:0 60px 120px rgba(80,50,0,.45), inset 0 0 0 4px #2A2C30;transform-style:preserve-3d">
+      <div style="position:relative;width:100%;height:100%;border-radius:74px;overflow:hidden;background:#000">
+        <img id="s3scrA" src="assets/ui/map.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+        <img id="s3scrB" src="assets/ui/list.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      </div>
+    </div>
+  </div>
+  <div id="s3tap" style="position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;border:6px solid #fff;background:rgba(255,255,255,.35)"></div>
+</div>
+
+<!-- ============ SCENE 4 : PHOTOS ============ -->
+<div id="s4" class="L" style="background:#15171A"></div>
+
+<!-- ============ SCENE 5 : STATS ============ -->
+<div id="s5" class="L" style="background:#FFF7D6;color:#15171A">
+  <div style="position:absolute;left:0;right:0;top:300px;text-align:center">
+    <div class="mask"><span id="s5k" class="kick" style="color:#C99400">Partout en France</span></div>
+    <div id="s5num" class="disp" style="font-size:300px;margin-top:30px;letter-spacing:-0.06em">0</div>
+    <div class="mask" style="margin-top:10px"><span id="s5sub" style="font-size:54px;font-weight:700">terrasses &amp; lieux référencés</span></div>
+  </div>
+  <div id="s5t1" class="ticker" style="position:absolute;top:1080px;left:0"></div>
+  <div id="s5t2" class="ticker outline" style="position:absolute;top:1260px;left:0"></div>
+  <div id="s5t3" class="ticker" style="position:absolute;top:1440px;left:0;color:#F8C83E"></div>
+</div>
+
+<!-- ============ SCENE 6 : VALUES ============ -->
+<div id="s6" class="L">
+  <div id="s6bg" class="fill"></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;padding:0 80px">
+    <div id="s6emo" style="font-size:150px;margin-bottom:30px">🆓</div>
+    <div class="disp" style="font-size:170px"><span class="mask"><span id="s6w">Gratuit.</span></span></div>
+    <div class="mask" style="margin-top:30px"><span id="s6s" style="font-size:52px;font-weight:600">Sans pub cachée, sans abonnement.</span></div>
+  </div>
+</div>
+
+<!-- ============ SCENE 7 : END ============ -->
+<div id="s7" class="L">
+  <img id="s7img" class="foot">
+  <div class="fill" style="background:radial-gradient(ellipse at 50% 46%, rgba(10,12,16,.25) 0%, rgba(10,12,16,.72) 70%)"></div>
+  <div class="fill" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+    <svg id="s7sun" width="200" height="200" viewBox="-250 -250 500 500" style="margin-bottom:40px"><g id="s7rays" fill="#F8C83E"></g><circle r="120" fill="#F8C83E"/></svg>
+    <div class="logo" style="font-size:132px;display:flex">
+      <span class="mask"><span id="s7w1"><em>Soleil</em></span></span><span class="mask"><span id="s7w2">enterrasse</span></span>
+    </div>
+    <div class="mask" style="margin-top:34px"><span id="s7tag" style="font-size:52px;font-weight:600">Le soleil, c'est <span class="yl">maintenant</span>.</span></div>
+    <div id="s7cta" style="margin-top:90px;display:inline-flex;align-items:center;gap:18px;padding:34px 70px;border-radius:999px;background:#F8C83E;color:#15171A;font-size:52px;font-weight:800">Lien en bio ↗</div>
+  </div>
+</div>
+
+<!-- transition wipe -->
+<div id="wipe" class="L" style="visibility:visible;pointer-events:none">
+  <div id="wipeA" style="position:absolute;left:-200px;width:1480px;height:2400px;top:0;background:#F8C83E;transform-origin:center"></div>
+  <div id="wipeB" style="position:absolute;left:-200px;width:1480px;height:2400px;top:0;background:#15171A;transform-origin:center"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const L = (a, b, x) => a + (b - a) * x;
+const eOut = x => 1 - Math.pow(1 - x, 4);
+const eIn = x => x * x * x;
+const eIO = x => x < .5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
+const eBack = x => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const eExpo = x => x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
+
+const FPS = 30;
+// scene timeline (seconds)
+const T = { s0: [0, 2.6], s1: [2.5, 6.5], s2: [6.5, 12.5], s3: [12.5, 16.6], s4: [16.6, 20.6], s5: [20.6, 24.2], s6: [24.2, 26.6], s7: [26.6, 31] };
+const DURATION = 31;
+const FOOT = { s1: ['fly', 120], s2: ['lapse', 180], s7: ['end', 120] };
+
+// rays
+function rays(g, color, n = 10, rIn = 200) {
+  const rots = [0, 40, 75, 110, 145, 180, 215, 250, 285, 320];
+  rots.forEach((r, i) => {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+    e.setAttribute('cx', 0); e.setAttribute('cy', -rIn);
+    e.setAttribute('rx', 16 + (i % 3) * 2); e.setAttribute('ry', 38 + (i % 2) * 5);
+    e.setAttribute('transform', `rotate(${r})`);
+    g.appendChild(e);
+  });
+}
+rays($('s0rays')); rays($('s7rays'));
+
+// reveal helpers
+function up(el, p, from = 110) { el.style.transform = `translateY(${(1 - eOut(clamp(p))) * from}%)`; }
+function upOut(el, pIn, pOut, from = 110) {
+  const y = (1 - eOut(clamp(pIn))) * from - eIn(clamp(pOut)) * from;
+  el.style.transform = `translateY(${y}%)`;
+}
+function vis(id, t) { const [a, b] = T[id]; const on = t >= a && t < b; $(id).style.visibility = on ? 'visible' : 'hidden'; return on ? t - a : null; }
+
+const loads = [];
+function setFoot(img, name, idx) {
+  const src = `assets/footage/${name}/f${String(idx).padStart(4, '0')}.jpg`;
+  if (img.getAttribute('src') !== src) { img.setAttribute('src', src); loads.push(img.decode().catch(() => {})); }
+}
+function footTransform(img, scale, dx = 0, dy = 0) {
+  img.style.transform = `translate(-50%,-50%) translate(${dx}px,${dy}px) scale(${scale})`;
+}
+
+// ── PHOTOS scene build ──
+const PH = [
+  { src: 'p1', word: 'Un café', emo: '☕', chip: 'Cafés', pos: '50% 40%' },
+  { src: 'p8', word: 'Un déj\'', emo: '🍽️', chip: 'Restaurants', pos: '50% 50%' },
+  { src: 'p14', word: 'L\'apéro', emo: '🍹', chip: 'Bars', pos: '60% 50%' },
+  { src: 'p2', word: 'Au frais', emo: '🌊', chip: 'Canicule', pos: '40% 50%' },
+];
+(() => {
+  const host = $('s4');
+  PH.forEach((ph, i) => {
+    host.insertAdjacentHTML('beforeend', `
+      <div id="ph${i}" class="fill" style="overflow:hidden">
+        <img id="phi${i}" src="assets/photos/${ph.src}.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:${ph.pos}">
+        <div class="fill" style="background:linear-gradient(to top, rgba(10,12,16,.85) 0%, rgba(10,12,16,.2) 40%, rgba(10,12,16,0) 60%)"></div>
+        <div style="position:absolute;left:80px;right:80px;bottom:260px">
+          <div class="mask" style="margin-bottom:40px"><span id="phc${i}"><span class="chip">${ph.emo} ${ph.chip}</span></span></div>
+          <div class="disp" style="font-size:180px"><span class="mask"><span id="phw${i}">${ph.word}<span class="yl">.</span></span></span></div>
+        </div>
+      </div>`);
+  });
+  host.insertAdjacentHTML('beforeend', `<div style="position:absolute;left:80px;top:150px"><div class="mask"><span id="s4k" class="kick yl">Filtre ce qui te fait envie</span></div></div>
+    <div id="s4bar" style="position:absolute;left:80px;right:80px;top:220px;height:8px;display:flex;gap:12px">${PH.map((_, i) => `<div style="flex:1;background:rgba(255,255,255,.3);border-radius:4px;overflow:hidden"><div id="pb${i}" style="height:100%;width:0;background:#fff"></div></div>`).join('')}</div>`);
+})();
+
+// ── Ticker ──
+const CITIES = ['Bordeaux', 'Lyon', 'Marseille', 'Toulouse', 'Nice', 'Nantes', 'Lille', 'Strasbourg', 'Cannes'];
+const row = (arr) => (arr.join('  ·  ') + '  ·  ').repeat(3);
+$('s5t1').textContent = row(CITIES);
+$('s5t2').textContent = row(CITIES.slice(3).concat(CITIES.slice(0, 3)));
+$('s5t3').textContent = row(CITIES.slice(6).concat(CITIES.slice(0, 6)));
+const TOTAL = 11482;
+const fmt = n => n.toLocaleString('fr-FR').replace(/ | /g, ' ');
+
+// ── Values ──
+const VALUES = [
+  { w: 'Gratuit.', s: 'Ouvre, regarde, profite.', e: '☀️', bg: '#F8C83E', fg: '#15171A' },
+  { w: 'Sans compte.', s: 'Pas d\'inscription, pas d\'email.', e: '🙅', bg: '#15171A', fg: '#FFFFFF' },
+  { w: 'Zéro donnée.', s: 'Ta position reste sur ton téléphone.', e: '🔒', bg: '#FFFFFF', fg: '#15171A' },
+];
+
+// ── wipe transitions between scenes ──
+// each: [time center, direction]
+const WIPES = [[6.5, 1], [12.5, -1], [16.6, 1], [20.6, -1], [24.2, 1], [26.6, -1]];
+function wipe(t) {
+  let shown = false;
+  for (const [c, dir] of WIPES) {
+    const p = seg(t, c - .28, c + .28);
+    if (p > 0 && p < 1) {
+      shown = true;
+      // yellow bar sweeps first, black follows
+      const pa = eIO(seg(p, 0, .85)), pb = eIO(seg(p, .15, 1));
+      const ya = L(2200, -2600, pa) * dir, yb = L(2200, -2600, pb) * dir;
+      $('wipeA').style.transform = `translateY(${ya}px) rotate(${-8 * dir}deg)`;
+      $('wipeB').style.transform = `translateY(${yb}px) rotate(${-8 * dir}deg)`;
+    }
+  }
+  $('wipe').style.visibility = shown ? 'visible' : 'hidden';
+}
+
+function render(t) {
+  loads.length = 0;
+  let l;
+
+  // ── S0 intro ──
+  if ((l = vis('s0', t)) !== null) {
+    const p = eBack(seg(l, 0, .7));
+    const grow = eIn(seg(l, 1.9, 2.6));
+    const sc = L(0, 1, p) + grow * 14;
+    $('s0sunG').setAttribute('transform', `translate(540,${L(960, 760, eIO(seg(l, .7, 1.2)))}) rotate(${l * 60}) scale(${sc})`);
+    $('s0rays').setAttribute('opacity', 1 - seg(l, 1.9, 2.1));
+    const lp = seg(l, .85, 1.35), lp2 = seg(l, 1.0, 1.5), tg = seg(l, 1.2, 1.7);
+    up($('s0w1'), lp); up($('s0w2'), lp2); up($('s0tag'), tg);
+    $('s0logo').style.transform = `translateY(${L(120, 160, eIO(seg(l, .7, 1.2)))}px) scale(${1 + grow * .3})`;
+    $('s0logo').style.opacity = 1 - seg(l, 2.05, 2.35);
+    $('s0').style.background = '#F8C83E';
+  }
+
+  // ── S1 fly ──
+  if ((l = vis('s1', t)) !== null) {
+    const fi = Math.min(119, Math.floor(l * FPS));
+    setFoot($('s1img'), 'fly', fi);
+    footTransform($('s1img'), 1.5 * L(1.04, 1.0, seg(l, 0, 4)));
+    // circular iris reveal from the intro sun
+    const r = eIO(seg(l, 0, .45)) * 1300;
+    $('s1').style.clipPath = l < .45 ? `circle(${r}px at 540px 760px)` : 'none';
+    up($('s1k'), seg(l, .5, .9));
+    upOut($('s1a'), seg(l, .6, 1.05), seg(l, 3.55, 3.85));
+    upOut($('s1b'), seg(l, .72, 1.17), seg(l, 3.6, 3.9));
+    upOut($('s1c'), seg(l, 1.5, 1.95), seg(l, 3.6, 3.9));
+  } else $('s1').style.clipPath = 'none';
+
+  // ── S2 lapse ──
+  if ((l = vis('s2', t)) !== null) {
+    const fi = Math.min(179, Math.floor(l * FPS));
+    setFoot($('s2img'), 'lapse', fi);
+    footTransform($('s2img'), 1.5 * L(1.0, 1.06, seg(l, 0, 6)));
+    const hour = L(8.5, 19.5, fi / 179);
+    const hh = Math.floor(hour), mm = Math.floor((hour - hh) * 60);
+    $('s2hour').textContent = `${hh}h${String(mm).padStart(2, '0')}`;
+    const pct = (hour - 6) / 15 * 100;
+    $('s2fill').style.width = pct + '%'; $('s2knob').style.left = pct + '%';
+    up($('s2k'), seg(l, .25, .65));
+    up($('s2a'), seg(l, .35, .8)); up($('s2b'), seg(l, .5, .95));
+    const pp = eOut(seg(l, .3, .9));
+    $('s2panel').style.transform = `translateY(${(1 - pp) * 500}px)`;
+  }
+
+  // ── S3 phone ──
+  if ((l = vis('s3', t)) !== null) {
+    up($('s3k'), seg(l, .25, .6)); up($('s3a'), seg(l, .32, .75)); up($('s3b'), seg(l, .45, .9));
+    const ph = eOut(seg(l, .3, 1.2));
+    const ry = L(-28, -8, ph) + Math.sin(l * 1.3) * 3, rx = L(30, 10, ph);
+    $('s3phone').style.transform = `translateY(${(1 - ph) * 1400 + L(0, -40, seg(l, 1.2, 4))}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${L(8, 2, ph)}deg)`;
+    // tap then switch to list
+    const tapP = seg(l, 2.0, 2.45);
+    const tap = $('s3tap');
+    tap.style.left = '790px'; tap.style.top = '600px';
+    tap.style.opacity = tapP > 0 && tapP < 1 ? Math.sin(tapP * Math.PI) : 0;
+    tap.style.transform = `scale(${L(.6, 1.3, tapP)})`;
+    const sw = eIO(seg(l, 2.3, 2.75));
+    $('s3scrB').style.clipPath = `inset(${(1 - sw) * 100}% 0 0 0)`;
+  }
+
+  // ── S4 photos ──
+  if ((l = vis('s4', t)) !== null) {
+    const D = 1.0;
+    PH.forEach((ph, i) => {
+      const a = i * D;
+      const p = seg(l, a - .0, a + .42);
+      const el = $('ph' + i);
+      if (i === 0) el.style.clipPath = 'none';
+      else el.style.clipPath = `polygon(0 ${L(100, -20, eIO(p))}%, 100% ${L(120, 0, eIO(p))}%, 100% 100%, 0 100%)`;
+      el.style.visibility = l >= a ? 'visible' : 'hidden';
+      const k = seg(l, a, a + D + .5);
+      $('phi' + i).style.transform = `scale(${L(1.18, 1.04, eOut(k))}) translateY(${L(30, 0, eOut(k))}px)`;
+      up($('phc' + i), seg(l, a + .2, a + .55));
+      up($('phw' + i), seg(l, a + .28, a + .65));
+      $('pb' + i).style.width = (seg(l, a, a + D) * 100) + '%';
+    });
+    up($('s4k'), seg(l, .1, .45));
+  }
+
+  // ── S5 stats ──
+  if ((l = vis('s5', t)) !== null) {
+    up($('s5k'), seg(l, .2, .55));
+    const c = eExpo(seg(l, .25, 1.8));
+    $('s5num').textContent = fmt(Math.round(TOTAL * c));
+    $('s5num').style.transform = `scale(${L(.85, 1, eBack(seg(l, .2, .7)))})`;
+    $('s5num').style.opacity = seg(l, .2, .4);
+    up($('s5sub'), seg(l, .9, 1.3));
+    const sp = l * 230;
+    $('s5t1').style.transform = `translateX(${-200 - sp}px)`;
+    $('s5t2').style.transform = `translateX(${-1800 + sp}px)`;
+    $('s5t3').style.transform = `translateX(${-900 - sp * 1.2}px)`;
+    ['s5t1', 's5t2', 's5t3'].forEach((id, i) => $(id).style.opacity = seg(l, .5 + i * .12, .8 + i * .12));
+  }
+
+  // ── S6 values ──
+  if ((l = vis('s6', t)) !== null) {
+    const D = .8;
+    const i = Math.min(2, Math.floor(l / D));
+    const v = VALUES[i], ll = l - i * D;
+    $('s6bg').style.background = v.bg;
+    $('s6').style.color = v.fg;
+    $('s6w').textContent = v.w; $('s6s').textContent = v.s; $('s6emo').textContent = v.e;
+    up($('s6w'), seg(ll, 0, .28));
+    up($('s6s'), seg(ll, .12, .38));
+    $('s6emo').style.transform = `scale(${eBack(seg(ll, .0, .3))}) rotate(${L(-20, 0, eOut(seg(ll, 0, .3)))}deg)`;
+  }
+
+  // ── S7 end ──
+  if ((l = vis('s7', t)) !== null) {
+    const fi = Math.min(119, Math.floor(l * FPS));
+    setFoot($('s7img'), 'end', fi);
+    footTransform($('s7img'), 1.5 * L(1.08, 1.0, eOut(seg(l, 0, 4.4))));
+    const sp = eBack(seg(l, .25, .8));
+    $('s7sun').style.transform = `scale(${sp}) rotate(${l * 40}deg)`;
+    up($('s7w1'), seg(l, .5, .95)); up($('s7w2'), seg(l, .62, 1.07));
+    up($('s7tag'), seg(l, .95, 1.4));
+    const c = seg(l, 1.3, 1.75);
+    $('s7cta').style.opacity = c;
+    $('s7cta').style.transform = `translateY(${(1 - eOut(c)) * 60}px) scale(${c >= 1 ? 1 + .035 * Math.sin((l - 1.75) * 6) : 1})`;
+    $('s7').style.opacity = 1 - seg(l, 4.1, 4.4);
+  }
+
+  wipe(t);
+  return Promise.all(loads);
+}
+window.render = render;
+window.DURATION = DURATION;
+if (!new URLSearchParams(location.search).has('capture')) {
+  const start = performance.now();
+  (function loop() { render(((performance.now() - start) / 1000) % DURATION); requestAnimationFrame(loop); })();
+}
+</script>
+</body>
+</html>
