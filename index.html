@@ -2675,7 +2675,10 @@ function showPhonePanel(telHref,name){
 }
 document.addEventListener('click',event=>{
   const link=event.target.closest?.('a[href^="tel:"]');
-  if(!link || link.dataset.directCall || !isEmbeddedIosWebView()) return;
+  if(!link || link.dataset.directCall) return;
+  // Appel direct seulement là où il est sûr de partir : vrai navigateur de téléphone.
+  // Ailleurs (appli iPhone, ordinateur), on montre le numéro.
+  if(supportsDirectPhoneCall() && !isEmbeddedIosWebView()) return;
   const href=telephoneUrl(link.getAttribute('href').slice(4));
   if(!href) return;
   event.preventDefault();
