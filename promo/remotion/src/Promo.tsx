@@ -71,23 +71,14 @@ const Splash: React.FC = () => {
   );
 };
 
-/* 2 ─ Grand soleil : a real Bordeaux terrace (filmed by the owner), with the app's sun marker landing on it */
+/* 2 ─ Grand soleil : a real Bordeaux terrace (filmed by the owner) */
 const Grand: React.FC = () => {
   const t = useT(SC.grand[0]);
   const k = prog(t, 4.0, 8.0);
-  const pin = easeOut(prog(t, 5.3, 5.8));
-  const ring = prog((t - 5.6) % 1.4, 0, 1.4);
   return (
     <AbsoluteFill style={{ background: C.white }}>
       <OffthreadVideo src={staticFile("terrasse.mp4")} muted style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
         transform: `scale(${lerp(1.0, 1.07, k)})`, transformOrigin: "60% 65%" }} />
-      {/* sun marker, as on the app's map */}
-      <div style={{ position: "absolute", left: 800, top: 1120, opacity: pin, transform: `translateY(${(1 - pin) * -60}px)` }}>
-        {t > 5.6 && <div style={{ position: "absolute", left: -55 - ring * 60, top: -55 - ring * 60, width: 110 + ring * 120, height: 110 + ring * 120, borderRadius: "50%",
-          border: `4px solid ${C.white}`, opacity: 0.9 * (1 - ring) }} />}
-        <div style={{ position: "absolute", left: -55, top: -55, width: 110, height: 110, borderRadius: "50%", background: C.white,
-          boxShadow: "0 12px 30px rgba(15,23,42,0.28)", display: "flex", alignItems: "center", justifyContent: "center" }}><Sun size={86} /></div>
-      </div>
       <div style={{ position: "absolute", left: 60, right: 60, top: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)", ...fadeUp(t, 4.4, 0.5, -40) }}>
         <Eyebrow color={C.ink2} style={fadeUp(t, 4.4, 0.5, 30)}>Bordeaux · en terrasse</Eyebrow>
         <H size={150} style={{ marginTop: 26, lineHeight: 0.98, ...fadeUp(t, 4.6, 0.6, 50) }}>Grand<br />soleil<Dot /></H>
@@ -99,36 +90,52 @@ const Grand: React.FC = () => {
   );
 };
 
+/** The app's time slider (.panel-map in index.html), scaled 393 px → 1080 px. It moves in 15-minute steps like the real one. */
+const TimePanel: React.FC<{ hour: number; style?: React.CSSProperties }> = ({ hour, style }) => {
+  const q = Math.round(hour * 4) / 4;
+  const pct = clamp((q - 6) / 15);
+  const W = 886 - 2 * 66, THUMB = 66;
+  return (
+    <div style={{ position: "absolute", left: 97, bottom: 137, width: 886, padding: "44px 66px 38px", borderRadius: 60, background: "rgba(255,255,255,0.9)",
+      backdropFilter: "blur(66px) saturate(1.15)", border: "3px solid rgba(255,255,255,0.7)",
+      boxShadow: "0 38px 104px rgba(15,23,42,0.13), inset 0 3px 0 rgba(255,255,255,0.86)", fontFamily: FONT, ...style }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 22, marginBottom: 33 }}>
+        <Sun size={58} />
+        <span style={{ fontSize: 50, fontWeight: 800, color: C.ink, fontVariantNumeric: "tabular-nums" }}>{hourLabel(q)}</span>
+      </div>
+      <div style={{ position: "relative", height: THUMB, display: "flex", alignItems: "center" }}>
+        <div style={{ width: "100%", height: 11, borderRadius: 6, background: `linear-gradient(to right, ${C.accent} ${pct * 100}%, rgba(0,0,0,0.1) ${pct * 100}%)` }} />
+        <div style={{ position: "absolute", left: pct * (W - THUMB), top: 0, width: THUMB, height: THUMB, borderRadius: "50%", background: C.white,
+          border: `8px solid ${C.accent}`, boxShadow: "0 11px 44px rgba(0,0,0,0.18)" }} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, fontSize: 27, fontWeight: 500, color: C.ink3 }}><span>6h</span><span>20h</span></div>
+    </div>
+  );
+};
+
 /* 3 ─ Calcul d'ombres 3D : the spire's shadow sweeps across the square */
 const Shadows: React.FC = () => {
   const t = useT(SC.shadow[0]);
   const k = prog(t, 7.8, 14.2);
   const here = heroAt(k);
   const hv = here.hour;
-  const pct = ((hv - 6) / 15) * 100;
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 7.6) }}>
       <ImageSequence files={HERO} k={k} style={{ transform: `scale(${lerp(1.04, 1.12, k)})` }} />
-      <div style={{ position: "absolute", left: 200, top: 110, width: 680, padding: "30px 46px 34px", background: "rgba(255,255,255,0.94)",
-        borderRadius: 36, boxShadow: "0 18px 50px rgba(15,23,42,0.16)", fontFamily: FONT, ...fadeUp(t, 8.0, 0.6, -30) }}>
-        <div style={{ textAlign: "center", fontWeight: 800, fontSize: 64, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums", color: C.ink }}>
-          <span style={{ color: "#F5A524" }}>☀</span>&nbsp;{hourLabel(hv)}
-          <div style={{ marginTop: 6, fontSize: 26, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink3 }}>
-            {here.name}
-          </div>
-        </div>
-        <div style={{ position: "relative", height: 10, background: "#E5E7EB", borderRadius: 6, marginTop: 22 }}>
-          <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${pct}%`, background: C.accent, borderRadius: 6 }} />
-          <div style={{ position: "absolute", top: "50%", left: `${pct}%`, width: 44, height: 44, margin: "-22px 0 0 -22px", borderRadius: "50%",
-            background: C.white, border: `6px solid ${C.accent}`, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 18, fontSize: 24, color: C.ink3, fontWeight: 600 }}><span>6h</span><span>21h</span></div>
-      </div>
-      <div style={{ position: "absolute", left: 60, right: 60, bottom: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)" , ...fadeUp(t, 8.0, 0.5, 40) }}>
+      <div style={{ position: "absolute", left: 60, right: 60, top: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)", ...fadeUp(t, 8.0, 0.5, -40) }}>
         <Eyebrow color={C.ink2} style={fadeUp(t, 8.1, 0.5, 30)}>Calcul d’ombres 3D</Eyebrow>
         <H size={118} style={{ marginTop: 26, ...fadeUp(t, 8.3, 0.6, 40) }}>Chaque immeuble<Dot /></H>
         <H size={118} style={{ color: C.ink3, ...fadeUp(t, 9.0, 0.6, 40) }}>Chaque heure<Dot /></H>
       </div>
+      {/* location pill, as in the app */}
+      <div style={{ position: "absolute", top: 676, left: 0, right: 0, display: "flex", justifyContent: "center", ...fadeUp(t, 8.4, 0.5, -20) }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "20px 34px", borderRadius: 999, background: "rgba(255,255,255,0.9)",
+          backdropFilter: "blur(50px)", boxShadow: "0 22px 66px rgba(15,23,42,0.18)", fontFamily: FONT, fontWeight: 800, fontSize: 36, color: C.ink }}>
+          <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#007AFF", boxShadow: "0 0 0 11px rgba(0,122,255,0.14)" }} />
+          {here.name}
+        </div>
+      </div>
+      <TimePanel hour={hv} style={fadeUp(t, 8.0, 0.6, 60)} />
     </AbsoluteFill>
   );
 };
