@@ -539,6 +539,8 @@
     .phone-actions { display:grid; gap:8px; }
     .phone-btn { display:flex; align-items:center; justify-content:center; min-height:50px; border:0; border-radius:14px; background:#F2F2F7; color:var(--text); font-family:inherit; font-size:15px; font-weight:750; text-decoration:none; cursor:pointer; touch-action:manipulation; }
     .phone-btn.primary { background:var(--green); color:#fff; }
+    .phone-btn[hidden] { display:none; }
+    #phonePanelCall { -webkit-touch-callout:default; }
   </style>
 </head>
 <body>
@@ -2645,7 +2647,7 @@ function closePhonePanel(){
   const panel=document.getElementById('phonePanel');
   if(panel) panel.hidden=true;
 }
-function showPhonePanel(telHref,name){
+function showPhonePanel(telHref,name,place=null){
   let panel=document.getElementById('phonePanel');
   if(!panel){
     panel=document.createElement('div');
@@ -2659,6 +2661,7 @@ function showPhonePanel(telHref,name){
       <div class="phone-hint" id="phonePanelHint">Si l’appel ne se lance pas, copie le numéro.</div>
       <div class="phone-actions">
         <a class="phone-btn primary" id="phonePanelCall" data-direct-call="1" target="_self">Appeler</a>
+        <a class="phone-btn" id="phonePanelMaps" target="_self" hidden>Appeler depuis Plans</a>
         <button class="phone-btn" id="phonePanelCopy" type="button">Copier le numéro</button>
         <button class="phone-btn" id="phonePanelClose" type="button">Fermer</button>
       </div></div>`;
@@ -2687,6 +2690,15 @@ function showPhonePanel(telHref,name){
   panel.querySelector('#phonePanelNumber').textContent=readable;
   panel.querySelector('#phonePanelCall').href=telHref;
   panel.querySelector('#phonePanelCopy').textContent='Copier le numéro';
+  // Dans l'appli iPhone, l'appel direct peut être ignoré : la fiche du lieu dans
+  // Plans (même lien que « Ouvrir dans Plans ») a son propre bouton d'appel.
+  const maps=panel.querySelector('#phonePanelMaps');
+  const viaMaps=isEmbeddedIosWebView() && place && Number.isFinite(place.lat) && Number.isFinite(place.lng);
+  maps.hidden=!viaMaps;
+  if(viaMaps) maps.href=`https://maps.apple.com/?q=${encodeURIComponent(place.nom+', '+(currentCity.nom||''))}&ll=${place.lat},${place.lng}`;
+  panel.querySelector('#phonePanelHint').textContent=viaMaps
+    ? 'Si l’appel ne se lance pas : appuie longtemps sur « Appeler », ou passe par Plans.'
+    : 'Si l’appel ne se lance pas, copie le numéro.';
   panel.hidden=false;
 }
 document.addEventListener('click',event=>{
@@ -2699,7 +2711,7 @@ document.addEventListener('click',event=>{
   if(!href) return;
   event.preventDefault();
   const place=terrasses.find(x=>String(x.id)===String(activePlaceId));
-  showPhonePanel(href,place?.nom||'');
+  showPhonePanel(href,place?.nom||'',place);
 });
 document.addEventListener('keydown',event=>{
   if(event.key==='Escape' && document.getElementById('phonePanel')?.hidden===false) closePhonePanel();
