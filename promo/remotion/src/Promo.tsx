@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, Audio, Img, Sequence, staticFile, useVideoConfig, interpolate } from "remotion";
 import { C, FONT, clamp, lerp, prog, easeOut, easeInOut, fadeUp, hourLabel, formatFr } from "./theme";
-import { useT, Sun, Wordmark, Eyebrow, Dot, H, Muted, Phone, ImageSequence, Cover, BottomFade } from "./components";
+import { useT, Sun, Wordmark, Eyebrow, Dot, H, Muted, Phone, ImageSequence, Cover } from "./components";
 
 export const FPS = 30;
 export const DURATION_S = 40;
@@ -58,8 +58,7 @@ const Grand: React.FC = () => {
   return (
     <AbsoluteFill style={{ background: C.white }}>
       <Cover file={GRAND} style={{ transform: `scale(${lerp(1.18, 1.04, easeOut(k))})` }} />
-      <BottomFade />
-      <div style={{ position: "absolute", left: 80, right: 80, bottom: 150 }}>
+      <div style={{ position: "absolute", left: 60, right: 60, bottom: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)" , ...fadeUp(t, 4.4, 0.5, 40) }}>
         <Eyebrow color={C.ink2} style={fadeUp(t, 4.4, 0.5, 30)}>Bordeaux · 17h30</Eyebrow>
         <H size={150} style={{ marginTop: 26, lineHeight: 0.98, ...fadeUp(t, 4.6, 0.6, 50) }}>Grand<br />soleil<Dot /></H>
         <div style={{ marginTop: 30, fontFamily: FONT, fontWeight: 600, fontSize: 50, color: C.ink2, ...fadeUp(t, 5.8, 0.6, 30) }}>
@@ -79,7 +78,6 @@ const Shadows: React.FC = () => {
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 7.6) }}>
       <ImageSequence files={HERO} k={k} style={{ transform: `scale(${lerp(1.04, 1.12, k)})` }} />
-      <BottomFade />
       <div style={{ position: "absolute", left: 260, top: 110, width: 560, padding: "30px 46px 34px", background: "rgba(255,255,255,0.94)",
         borderRadius: 36, boxShadow: "0 18px 50px rgba(15,23,42,0.16)", fontFamily: FONT, ...fadeUp(t, 8.0, 0.6, -30) }}>
         <div style={{ textAlign: "center", fontWeight: 800, fontSize: 64, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums", color: C.ink }}>
@@ -92,7 +90,7 @@ const Shadows: React.FC = () => {
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 18, fontSize: 24, color: C.ink3, fontWeight: 600 }}><span>6h</span><span>21h</span></div>
       </div>
-      <div style={{ position: "absolute", left: 80, right: 80, bottom: 150 }}>
+      <div style={{ position: "absolute", left: 60, right: 60, bottom: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)" , ...fadeUp(t, 8.0, 0.5, 40) }}>
         <Eyebrow color={C.ink2} style={fadeUp(t, 8.1, 0.5, 30)}>Calcul d’ombres 3D</Eyebrow>
         <H size={118} style={{ marginTop: 26, ...fadeUp(t, 8.3, 0.6, 40) }}>Chaque immeuble<Dot /></H>
         <H size={118} style={{ color: C.ink3, ...fadeUp(t, 9.0, 0.6, 40) }}>Chaque heure<Dot /></H>
@@ -160,7 +158,7 @@ const CITIES: [string, number][] = [["Bordeaux", 1531], ["Lyon", 2643], ["Marsei
 const TOTAL = CITIES.reduce((a, c) => a + c[1], 0); // 11 482
 const Count: React.FC = () => {
   const t = useT(SC.count[0]);
-  const rows: [string, number][] = [...CITIES, ["Paris · Montpellier · …", 0]];
+  const rows: [string, number][] = [...CITIES, ["Paris · Montpellier", 0]];
   const pos = easeInOut(prog(t, 22.4, 25.3)) * (rows.length - 1);
   const ip = Math.floor(pos), fr = pos - ip;
   let cum = 0;
@@ -226,7 +224,7 @@ const Trio: React.FC = () => {
 
 /* 8 ─ Restaurateurs : La Mère Michel as the example */
 const S = 592 / 1179; // capture px → phone screen px
-const STAR = [489, 1329, 120, 120], CARD = [36, 1080, 1104, 318];
+const STAR = [489, 1329, 120, 120];
 // La Mère Michel's place page, screenshot from the app (978 px wide).
 const SHEET_S = 592 / 978;
 const BADGE = [40, 645, 445, 43], BOOK = [40, 1045, 286, 120];
@@ -251,14 +249,12 @@ const Pro: React.FC = () => {
         <Cover file="app/014.jpg" style={{ transform: `scale(${z})`, transformOrigin: "50% 30%" }} />
         {/* the place page slides up like the app's sheet */}
         <AbsoluteFill style={{ background: C.white, zIndex: 3, transform: `translateY(${(1 - easeOut(prog(t, 31.3, 31.8))) * 1300}px)`,
-          opacity: 1 - easeInOut(prog(t, 33.3, 33.6)) }}>
+          }}>
           <Img src={staticFile("ui/mere-michel.jpg")} style={{ position: "absolute", left: 0, top: 0, width: "100%" }} />
           <Ring box={BADGE} zoom={1} scale={SHEET_S} opacity={easeOut(prog(t, 32.0, 32.3)) * (1 - prog(t, 33.0, 33.2))} />
           <Ring box={BOOK} zoom={1} scale={SHEET_S} opacity={easeOut(prog(t, 32.5, 32.8)) * (1 - prog(t, 33.0, 33.2))} />
         </AbsoluteFill>
-        <Cover file="ui/selection.jpg" style={{ opacity: easeOut(prog(t, 33.3, 33.6)), zIndex: 2 }} />
         <Ring box={STAR} zoom={z} round opacity={easeOut(prog(t, 30.6, 30.9)) * (1 - prog(t, 31.2, 31.4))} />
-        <Ring box={CARD} zoom={1} opacity={easeOut(prog(t, 33.9, 34.2))} />
       </Phone>
     </AbsoluteFill>
   );

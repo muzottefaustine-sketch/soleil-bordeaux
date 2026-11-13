@@ -13,7 +13,7 @@ Design épuré, fond blanc, centré sur la 3D en gros plan. Textes inspirés du 
 | 18–22 s | Filtre ce qui te fait envie : Un café. Un déj’. L’apéro. Au frais. |
 | 22–26 s | Partout en France : compteur jusqu’à 11 482 terrasses et lieux, villes qui défilent |
 | 26–30 s | Gratuit. Sans compte. Zéro donnée. |
-| 30–35 s | Restaurateurs : La Mère Michel en étoile sur la 3D, sa fiche avec photo (badge Sélection, Réserver), « Rejoignez la Sélection. » |
+| 30–35 s | Restaurateurs : La Mère Michel en étoile sur la 3D, sa fiche avec photo (badge Sélection, Réserver) puis « Rejoignez la Sélection. » |
 | 35–40 s | « Le soleil, c’est maintenant. » · Lien en bio |
 
 Le chiffre 11 482 est la somme des fichiers `data/*.json` (9 villes).
