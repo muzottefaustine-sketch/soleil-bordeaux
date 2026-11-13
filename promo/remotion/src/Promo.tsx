@@ -23,14 +23,12 @@ const heroAt = (k: number) => {
   }
   return { name: "", hour: 0 };
 };
-// Moments (s) when the shadows scene starts and jumps to the next place.
-const CUTS = [7.8, 7.8 + 6.4 * (13.5 / 39), 7.8 + 6.4 * (25.5 / 39)];
 const FLECHE = seq("hero/fleche", 9); // flèche Saint-Michel, 15h30 → 19h30
 const APP = seq("app-centre", 7); // app UI over the city centre, 8h → 19h30
 
 // Scene windows in seconds [start, end]. Scenes overlap so each one fades in over the previous.
 const SC = {
-  splash: [0, 4.3], grand: [4.0, 8.0], shadow: [7.6, 14.4], app: [14.0, 18.2], filters: [18.0, 22.2],
+  splash: [0, 4.6], grand: [4.0, 8.0], shadow: [7.6, 14.4], app: [14.0, 18.2], filters: [18.0, 22.2],
   count: [22.0, 26.2], trio: [26.0, 29.8], pro: [29.6, 35.2], end: [34.8, 40.0],
 } as const;
 
@@ -44,55 +42,20 @@ const stepped = (k: number, steps: number) => {
   return (i + clamp((f - i - 0.35) / 0.3)) / steps;
 };
 const fadeInOpacity = (t: number, start: number, d = 0.4) => easeInOut(prog(t, start, start + d));
-const expo = (x: number) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * clamp(x)));
-const back = (x: number) => { const c = 1.9, y = clamp(x) - 1; return 1 + (c + 1) * y * y * y + c * y * y; };
-/** Decaying impulse after time t0: 1 at t0, then fades. */
-const punch = (t: number, t0: number, rate = 7) => (t < t0 ? 0 : Math.exp(-(t - t0) * rate));
-
-/** The phone swings in from below in 3D, then floats slightly. */
 const phoneIn = (t: number, t0: number): React.CSSProperties => {
-  const k = expo(prog(t, t0, t0 + 1.0));
-  const float = Math.sin((t - t0) * 1.6) * 6 * k;
-  return { opacity: prog(t, t0, t0 + 0.2),
-    transform: `perspective(2400px) translateY(${(1 - k) * 460 + float}px) rotateX(${(1 - k) * 30}deg) rotateY(${(1 - k) * -20}deg) rotateZ(${(1 - k) * -6}deg) scale(${lerp(0.8, 1, k)})` };
-};
-/** Pop-in with a slight overshoot, for cards and buttons. */
-const popIn = (t: number, t0: number, dur = 0.55, dy = 90): React.CSSProperties => {
-  const k = back(prog(t, t0, t0 + dur));
-  return { opacity: prog(t, t0, t0 + 0.15), transform: `translateY(${(1 - k) * dy}px) scale(${lerp(0.92, 1, k)})` };
-};
-/** Headline lines that rise one after the other from behind a mask. */
-const Lines: React.FC<{ t: number; t0: number; tOut?: number; stagger?: number; lines: React.ReactNode[] }> = ({ t, t0, tOut, stagger = 0.12, lines }) => (
-  <>
-    {lines.map((line, i) => {
-      const k = expo(prog(t, t0 + i * stagger, t0 + i * stagger + 0.75));
-      const ko = tOut === undefined ? 0 : easeInOut(prog(t, tOut + i * 0.05, tOut + i * 0.05 + 0.3));
-      return (
-        <div key={i} style={{ overflow: "hidden", paddingBottom: "0.16em", marginBottom: "-0.16em" }}>
-          <div style={{ transform: `translateY(${(1 - k) * 115 - ko * 115}%) rotate(${(1 - k) * 4}deg)`, transformOrigin: "0 100%" }}>{line}</div>
-        </div>
-      );
-    })}
-  </>
-);
-/** Sun-yellow disc that grows from a point, covers the frame at `at`, then opens as a hole onto the next scene. */
-const SunWipe: React.FC<{ at: number; cx: number; cy: number }> = ({ at, cx, cy }) => {
-  const t = useT(0);
-  if (t < at - 0.4 || t > at + 0.55) return null;
-  const grow = Math.pow(prog(t, at - 0.4, at), 2.2) * 2400;
-  const hole = expo(prog(t, at, at + 0.55) * 0.9) * 2400;
-  return <AbsoluteFill style={{ background: C.sun, clipPath: `circle(${grow}px at ${cx}px ${cy}px)`,
-    WebkitMaskImage: t < at ? undefined : `radial-gradient(circle at ${cx}px ${cy}px, transparent ${hole}px, #000 ${hole + 2}px)` }} />;
+  const k = easeOut(prog(t, t0, t0 + 0.8));
+  return { opacity: k, transform: `translateY(${(1 - k) * 240}px)` };
 };
 
 /* 1 ─ Splash, faithful to the app's launch screen */
 const Splash: React.FC = () => {
   const t = useT(SC.splash[0]);
   const pulse = Math.sin((t / 2.5) * Math.PI * 2) * 0.5 + 0.5;
+  const ks = easeOut(prog(t, 0.15, 1.0));
   const bar = t < 1.8 ? 0 : lerp(0, 100, easeInOut(prog(t, 1.8, 3.8)));
   return (
-    <AbsoluteFill style={{ background: C.white, alignItems: "center", justifyContent: "center" }}>
-      <Sun size={260} style={{ opacity: prog(t, 0.15, 0.3), transform: `scale(${back(prog(t, 0.15, 0.95)) * (1 + 0.035 * pulse)}) rotate(${(1 - expo(prog(t, 0.15, 1.3))) * -160 + 3 * pulse}deg)` }} />
+    <AbsoluteFill style={{ background: C.white, alignItems: "center", justifyContent: "center", opacity: 1 - easeInOut(prog(t, 4.0, 4.6)) }}>
+      <Sun size={260} style={{ opacity: ks, transform: `scale(${lerp(0.85, 1, ks) * (1 + 0.035 * pulse)}) rotate(${3 * pulse}deg)` }} />
       <Wordmark size={108} style={{ marginTop: 70, ...fadeUp(t, 0.7, 0.7, 30) }} />
       <div style={{ marginTop: 34, fontFamily: "Arial, sans-serif", fontSize: 46, color: C.ink2, textAlign: "center", lineHeight: 1.4, ...fadeUp(t, 1.2, 0.7, 30) }}>
         Les terrasses au soleil,<br /><strong style={{ color: C.accent }}>en temps réel.</strong>
@@ -115,10 +78,10 @@ const Grand: React.FC = () => {
   const k = prog(t, 4.0, 8.0);
   return (
     <AbsoluteFill style={{ background: C.white }}>
-      <ImageSequence files={FLECHE} k={k} style={{ transform: `scale(${lerp(1.3, 1.04, expo(prog(t, 4.3, 6.2)))})` }} />
-      <div style={{ position: "absolute", left: 60, right: 60, bottom: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)", ...popIn(t, 4.5) }}>
-        <Eyebrow color={C.ink2} style={fadeUp(t, 4.7, 0.5, 30)}>Bordeaux · {hourLabel(lerp(15.5, 19.5, k))}</Eyebrow>
-        <H size={150} style={{ marginTop: 26, lineHeight: 0.98 }}><Lines t={t} t0={4.75} lines={["Grand", <>soleil<Dot /></>]} /></H>
+      <ImageSequence files={FLECHE} k={k} style={{ transform: `scale(${lerp(1.14, 1.04, easeOut(k))})` }} />
+      <div style={{ position: "absolute", left: 60, right: 60, bottom: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)" , ...fadeUp(t, 4.4, 0.5, 40) }}>
+        <Eyebrow color={C.ink2} style={fadeUp(t, 4.4, 0.5, 30)}>Bordeaux · {hourLabel(lerp(15.5, 19.5, k))}</Eyebrow>
+        <H size={150} style={{ marginTop: 26, lineHeight: 0.98, ...fadeUp(t, 4.6, 0.6, 50) }}>Grand<br />soleil<Dot /></H>
         <div style={{ marginTop: 30, fontFamily: FONT, fontWeight: 600, fontSize: 48, whiteSpace: "nowrap", color: C.ink2, ...fadeUp(t, 5.8, 0.6, 30) }}>
           Reste à trouver la bonne terrasse.
         </div>
@@ -134,17 +97,14 @@ const Shadows: React.FC = () => {
   const here = heroAt(k);
   const hv = here.hour;
   const pct = ((hv - 6) / 15) * 100;
-  // Camera punch and flash each time the place changes (on the beat).
-  const hit = Math.max(...CUTS.map((c) => punch(t, c)));
   return (
-    <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 7.6, 0.25) }}>
-      <ImageSequence files={HERO} k={k} style={{ transform: `scale(${lerp(1.04, 1.12, k) + 0.1 * hit})` }} />
-      <AbsoluteFill style={{ background: C.white, opacity: 0.5 * Math.max(...CUTS.map((c) => punch(t, c, 16))) }} />
+    <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 7.6) }}>
+      <ImageSequence files={HERO} k={k} style={{ transform: `scale(${lerp(1.04, 1.12, k)})` }} />
       <div style={{ position: "absolute", left: 200, top: 110, width: 680, padding: "30px 46px 34px", background: "rgba(255,255,255,0.94)",
-        borderRadius: 36, boxShadow: "0 18px 50px rgba(15,23,42,0.16)", fontFamily: FONT, ...popIn(t, 8.0, 0.55, -90) }}>
+        borderRadius: 36, boxShadow: "0 18px 50px rgba(15,23,42,0.16)", fontFamily: FONT, ...fadeUp(t, 8.0, 0.6, -30) }}>
         <div style={{ textAlign: "center", fontWeight: 800, fontSize: 64, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums", color: C.ink }}>
           <span style={{ color: "#F5A524" }}>☀</span>&nbsp;{hourLabel(hv)}
-          <div style={{ marginTop: 6, fontSize: 26, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink3, transform: `scale(${1 + 0.12 * hit})` }}>
+          <div style={{ marginTop: 6, fontSize: 26, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink3 }}>
             {here.name}
           </div>
         </div>
@@ -155,10 +115,10 @@ const Shadows: React.FC = () => {
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 18, fontSize: 24, color: C.ink3, fontWeight: 600 }}><span>6h</span><span>21h</span></div>
       </div>
-      <div style={{ position: "absolute", left: 60, right: 60, bottom: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)", ...popIn(t, 8.05) }}>
+      <div style={{ position: "absolute", left: 60, right: 60, bottom: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)" , ...fadeUp(t, 8.0, 0.5, 40) }}>
         <Eyebrow color={C.ink2} style={fadeUp(t, 8.1, 0.5, 30)}>Calcul d’ombres 3D</Eyebrow>
-        <H size={118} style={{ marginTop: 26 }}><Lines t={t} t0={8.3} lines={[<>Chaque immeuble<Dot /></>]} /></H>
-        <H size={118} style={{ color: C.ink3 }}><Lines t={t} t0={9.0} lines={[<>Chaque heure<Dot /></>]} /></H>
+        <H size={118} style={{ marginTop: 26, ...fadeUp(t, 8.3, 0.6, 40) }}>Chaque immeuble<Dot /></H>
+        <H size={118} style={{ color: C.ink3, ...fadeUp(t, 9.0, 0.6, 40) }}>Chaque heure<Dot /></H>
       </div>
     </AbsoluteFill>
   );
@@ -171,7 +131,7 @@ const App: React.FC = () => {
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 14.0) }}>
       <div style={{ position: "absolute", left: 80, right: 80, top: 130, textAlign: "center" }}>
         <Eyebrow style={fadeUp(t, 14.2, 0.5, 30)}>L’appli</Eyebrow>
-        <H size={88} style={{ marginTop: 24 }}><Lines t={t} t0={14.35} lines={["Toutes les terrasses", <Muted>autour de toi.</Muted>]} /></H>
+        <H size={88} style={{ marginTop: 24, ...fadeUp(t, 14.4, 0.6, 30) }}>Toutes les terrasses<br /><Muted>autour de toi.</Muted></H>
       </div>
       <Phone style={phoneIn(t, 14.1)}><ImageSequence files={APP} k={stepped(prog(t, 14.5, 18.0), APP.length - 1)} /></Phone>
     </AbsoluteFill>
@@ -194,14 +154,14 @@ const Filters: React.FC = () => {
           return (
             <div key={label} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "14px 22px", whiteSpace: "nowrap", borderRadius: 999,
               fontWeight: 700, fontSize: 31, background: on ? C.ink : C.white, color: on ? C.white : C.ink, border: `2px solid ${on ? C.ink : C.line}`,
-              opacity: k, transform: `translateY(${(1 - k) * 30}px) scale(${1 + (on ? 0.16 * punch(t, s0 + j * beat, 6) : 0)})` }}><span>{emoji}</span>{label}</div>
+              opacity: k, transform: `translateY(${(1 - k) * 30}px)` }}><span>{emoji}</span>{label}</div>
           );
         })}
       </div>
       <div style={{ position: "absolute", top: 880, left: 0, right: 0, height: 300, overflow: "hidden" }}>
         {FILTERS.map(([, , word], j) => {
           const a = s0 + j * beat;
-          const kin = back(prog(t, a, a + 0.45));
+          const kin = easeOut(prog(t, a, a + 0.35));
           const kout = j < 3 ? easeInOut(prog(t, a + beat, a + beat + 0.3)) : 0;
           return (
             <div key={word} style={{ position: "absolute", left: 0, right: 0, textAlign: "center", fontSize: 230, lineHeight: "300px", fontWeight: 900,
@@ -247,12 +207,8 @@ const Count: React.FC = () => {
           );
         })}
       </div>
-      {/* burst when the total lands */}
-      {[0, 0.12].map((d) => { const b = prog(t, 25.3 + d, 25.95 + d); const size = 300 + expo(b) * 1500;
-        return <div key={d} style={{ position: "absolute", left: 540 - size / 2, top: 1085 - size / 2, width: size, height: size, borderRadius: "50%",
-          border: `${lerp(26, 2, b)}px solid ${C.sun}`, opacity: t < 25.3 + d ? 0 : 1 - b }} />; })}
       <div style={{ position: "absolute", top: 960, left: 0, right: 0, textAlign: "center" }}>
-        <div style={{ fontWeight: 900, fontSize: 250, letterSpacing: "-0.05em", lineHeight: 1, color: C.ink, fontVariantNumeric: "tabular-nums", transform: `scale(${1 + 0.1 * pop})` }}>
+        <div style={{ fontWeight: 900, fontSize: 250, letterSpacing: "-0.05em", lineHeight: 1, color: C.ink, fontVariantNumeric: "tabular-nums", transform: `scale(${1 + 0.06 * pop})` }}>
           {formatFr(Math.round(cum))}
         </div>
         <div style={{ width: 640, height: 8, margin: "44px auto 0", background: "#F1F2F4", borderRadius: 6, overflow: "hidden" }}>
@@ -265,24 +221,25 @@ const Count: React.FC = () => {
 };
 
 /* 7 ─ Gratuit. Sans compte. Zéro donnée. */
-const TRIO: [React.ReactNode[], string][] = [
-  [[<>Gratuit<Dot /></>], "Ouvre, regarde, profite."],
-  [["Sans", <>compte<Dot /></>], "Pas d’inscription, pas d’email."],
-  [["Zéro", <>donnée<Dot /></>], "Ta position reste sur ton téléphone."],
+const TRIO: [React.ReactNode, string][] = [
+  [<>Gratuit<Dot /></>, "Ouvre, regarde, profite."],
+  [<>Sans<br />compte<Dot /></>, "Pas d’inscription, pas d’email."],
+  [<>Zéro<br />donnée<Dot /></>, "Ta position reste sur ton téléphone."],
 ];
 const Trio: React.FC = () => {
   const t = useT(SC.trio[0]);
   return (
-    <AbsoluteFill style={{ background: C.white, fontFamily: FONT }}>
+    <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 26.0, 0.25), fontFamily: FONT }}>
       {TRIO.map(([big, sub], i) => {
         const t0 = 26.0 + i * 1.25;
-        const ko = i < 2 ? easeInOut(prog(t, t0 + 1.08, t0 + 1.3)) : 0;
+        const k = easeOut(prog(t, t0, t0 + 0.45));
+        const ko = i < 2 ? easeInOut(prog(t, t0 + 1.1, t0 + 1.3)) : 0;
         return (
           <div key={i} style={{ position: "absolute", left: 110, right: 110, top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center",
-            opacity: t < t0 ? 0 : 1 - ko, transform: `translateY(${-ko * 120}px)` }}>
-            <div style={{ fontWeight: 700, fontSize: 34, color: C.ink3, letterSpacing: "0.1em", marginBottom: 40, fontVariantNumeric: "tabular-nums", ...fadeUp(t, t0 + 0.05, 0.4, 20) }}>0{i + 1} / 03</div>
-            <div style={{ fontWeight: 900, fontSize: 190, letterSpacing: "-0.055em", lineHeight: 0.95, color: C.ink }}><Lines t={t} t0={t0 + 0.05} stagger={0.09} lines={big} /></div>
-            <div style={{ marginTop: 40, fontWeight: 600, fontSize: 50, color: C.ink2, ...fadeUp(t, t0 + 0.35, 0.45, 30) }}>{sub}</div>
+            opacity: k * (1 - ko), transform: `translateY(${(1 - k) * 90 - ko * 90}px)` }}>
+            <div style={{ fontWeight: 700, fontSize: 34, color: C.ink3, letterSpacing: "0.1em", marginBottom: 40, fontVariantNumeric: "tabular-nums" }}>0{i + 1} / 03</div>
+            <div style={{ fontWeight: 900, fontSize: 190, letterSpacing: "-0.055em", lineHeight: 0.95, color: C.ink }}>{big}</div>
+            <div style={{ marginTop: 40, fontWeight: 600, fontSize: 50, color: C.ink2 }}>{sub}</div>
           </div>
         );
       })}
@@ -299,7 +256,7 @@ const BADGE = [40, 645, 445, 43], BOOK = [40, 1045, 286, 120];
 const Ring: React.FC<{ box: number[]; zoom: number; round?: boolean; opacity: number; scale?: number }> = ({ box: [x, y, w, h], zoom, round, opacity, scale = S }) => {
   const cx = 296, cy = 1283 * 0.3;
   const S_ = scale;
-  return <div style={{ position: "absolute", zIndex: 5, border: `5px solid ${C.sun}`, borderRadius: round ? "50%" : 22, opacity, transform: `scale(${lerp(1.35, 1, back(opacity))})`,
+  return <div style={{ position: "absolute", zIndex: 5, border: `5px solid ${C.sun}`, borderRadius: round ? "50%" : 22, opacity,
     left: cx + (x * S_ - cx) * zoom - 8, top: cy + (y * S_ - cy) * zoom - 8, width: w * S_ * zoom + 16, height: h * S_ * zoom + 16 }} />;
 };
 const Pro: React.FC = () => {
@@ -309,14 +266,14 @@ const Pro: React.FC = () => {
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 29.6) }}>
       <div style={{ position: "absolute", left: 80, right: 80, top: 130 }}>
         <Eyebrow style={fadeUp(t, 29.8, 0.5, 30)}>Restaurateurs</Eyebrow>
-        <H size={84} style={{ marginTop: 24 }}><Lines t={t} t0={29.95} tOut={31.15} lines={["Votre terrasse,", <Muted>en étoile sur la 3D.</Muted>]} /></H>
-        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Lines t={t} t0={31.45} tOut={33.15} lines={["Votre fiche avec photo,", <Muted>réservation et appel.</Muted>]} /></H>
-        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Lines t={t} t0={33.45} lines={["Rejoignez", <Muted>la Sélection.</Muted>]} /></H>
+        <H size={84} style={{ marginTop: 24, ...fadeUp(t, 30.0, 0.6, 30, 31.2) }}>Votre terrasse,<br /><Muted>en étoile sur la 3D.</Muted></H>
+        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58, ...fadeUp(t, 31.5, 0.6, 30, 33.2) }}>Votre fiche avec photo,<br /><Muted>réservation et appel.</Muted></H>
+        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58, ...fadeUp(t, 33.5, 0.6, 30) }}>Rejoignez<br /><Muted>la Sélection.</Muted></H>
       </div>
       <Phone style={phoneIn(t, 29.7)}>
         <Cover file="app/014.jpg" style={{ transform: `scale(${z})`, transformOrigin: "50% 30%" }} />
         {/* the place page slides up like the app's sheet */}
-        <AbsoluteFill style={{ background: C.white, zIndex: 3, transform: `translateY(${(1 - expo(prog(t, 31.3, 32.0))) * 1300}px)`,
+        <AbsoluteFill style={{ background: C.white, zIndex: 3, transform: `translateY(${(1 - easeOut(prog(t, 31.3, 31.8))) * 1300}px)`,
           }}>
           <Img src={staticFile("ui/mere-michel.jpg")} style={{ position: "absolute", left: 0, top: 0, width: "100%" }} />
           <Ring box={BADGE} zoom={1} scale={SHEET_S} opacity={easeOut(prog(t, 32.0, 32.3)) * (1 - prog(t, 33.0, 33.2))} />
@@ -331,15 +288,16 @@ const Pro: React.FC = () => {
 /* 9 ─ Fin */
 const End: React.FC = () => {
   const t = useT(SC.end[0]) - 1.8; // timings below were written for a start at 33 s
+  const ks = easeOut(prog(t, 33.2, 34.1));
   const pulse = Math.sin(((t - 33) / 2.5) * Math.PI * 2) * 0.5 + 0.5;
   return (
-    <AbsoluteFill style={{ background: C.white, alignItems: "center", justifyContent: "center", fontFamily: FONT }}>
-      <Sun size={220} style={{ opacity: prog(t, 33.15, 33.3), transform: `scale(${back(prog(t, 33.15, 33.95)) * (1 + 0.035 * pulse)}) rotate(${(1 - expo(prog(t, 33.15, 34.3))) * -160 + 3 * pulse}deg)` }} />
+    <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 33.0), alignItems: "center", justifyContent: "center", fontFamily: FONT }}>
+      <Sun size={220} style={{ opacity: ks, transform: `scale(${lerp(0.85, 1, ks) * (1 + 0.035 * pulse)}) rotate(${3 * pulse}deg)` }} />
       <Wordmark size={108} style={{ marginTop: 60, ...fadeUp(t, 33.7, 0.7, 30) }} />
-      <div style={{ marginTop: 34, fontWeight: 700, fontSize: 66, letterSpacing: "-0.045em", color: C.ink2 }}>
-        <Lines t={t} t0={34.25} lines={[<>Le soleil, c’est <span style={{ color: C.accent }}>maintenant</span>.</>]} />
+      <div style={{ marginTop: 34, fontWeight: 700, fontSize: 66, letterSpacing: "-0.045em", color: C.ink2, ...fadeUp(t, 34.3, 0.7, 30) }}>
+        Le soleil, c’est <span style={{ color: C.accent }}>maintenant</span>.
       </div>
-      <div style={{ marginTop: 90, display: "flex", flexDirection: "column", alignItems: "center", gap: 30, ...popIn(t, 35.0, 0.6, 60) }}>
+      <div style={{ marginTop: 90, display: "flex", flexDirection: "column", alignItems: "center", gap: 30, ...fadeUp(t, 35.0, 0.7, 30) }}>
         <div style={{ padding: "26px 54px", borderRadius: 999, background: C.ink, color: C.white, fontWeight: 700, fontSize: 42 }}>Lien en bio ↗</div>
         <div style={{ fontSize: 34, color: C.ink3, fontWeight: 600 }}>Gratuit sur l’App Store</div>
       </div>
@@ -362,9 +320,6 @@ export const Promo: React.FC = () => {
       <Scene win={SC.pro}><Pro /></Scene>
       <Scene win={SC.end}><End /></Scene>
       <Scene win={SC.splash}><Splash /></Scene>
-      <SunWipe at={4.3} cx={540} cy={781} />
-      <SunWipe at={26.0} cx={540} cy={1085} />
-      <SunWipe at={34.8} cx={540} cy={690} />
       <Audio src={staticFile("music.mp3")} volume={(f) => interpolate(f, [0, 0.4 * fps], [0, 1], { extrapolateRight: "clamp" })} />
     </AbsoluteFill>
   );
