@@ -1822,6 +1822,7 @@ const CURATED_PLACES = [
     happyHours: "",
     reservationUrl: "https://www.google.com/maps/search/?api=1&query=Bistrot%20Le%20Nansouty%20Bordeaux",
     googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Bistrot%20Le%20Nansouty%20Bordeaux",
+    tel: "+33556217131",
     priceLevel: "€€"
   },
   {
@@ -2590,8 +2591,11 @@ function sheetLink(className, href, label, ariaLabel='', id=''){
   const safeHref=/^tel:/i.test(raw) ? telephoneUrl(raw.slice(4)) : externalWebUrl(raw);
   if(!safeHref) return '';
   const labelAttr=ariaLabel ? ` aria-label="${escapeAttr(ariaLabel)}"` : '';
-  const target=/^tel:/i.test(safeHref)?'_self':'_blank';
-  return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}" target="${target}" rel="noopener noreferrer" onclick="return openExternalLink(this,event)"${labelAttr}>${escapeHTML(label)}</a>`;
+  const isPhone=/^tel:/i.test(safeHref);
+  const target=isPhone?'_self':'_blank';
+  // Un appel reste une navigation téléphonique native, jamais une page web.
+  const clickHandler=isPhone?'':' onclick="return openExternalLink(this,event)"';
+  return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}" target="${target}" rel="noopener noreferrer"${clickHandler}${labelAttr}>${escapeHTML(label)}</a>`;
 }
 function openExternalLink(link,event){
   return window.SoleilLinks ? window.SoleilLinks.activate(link,event) : true;
@@ -3386,6 +3390,9 @@ init();
     if(event && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (event.type==='click' && event.button>0))) return true;
     const destination=safeDestination(link?.href);
     if(!destination) return true;
+    // Les anciens liens ou un appel direct au gestionnaire restent utilisables.
+    // Ne pas laisser un navigateur intégré absorber silencieusement tel:.
+    if(destination.startsWith('tel:')) return true;
     if(dialog.hidden) returnFocus=link;
     if(!destination.startsWith('tel:') && activeGooglePlace(link,destination)){
       event?.preventDefault();
@@ -3396,7 +3403,6 @@ init();
       event?.preventDefault();
       return false;
     }
-    if(destination.startsWith('tel:')) return true;
     try{
       const opened=window.open(destination,'_blank');
       if(opened){
