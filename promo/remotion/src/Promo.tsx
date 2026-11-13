@@ -1,10 +1,10 @@
 import React from "react";
-import { AbsoluteFill, Audio, Sequence, staticFile, useVideoConfig, interpolate } from "remotion";
+import { AbsoluteFill, Audio, Img, Sequence, staticFile, useVideoConfig, interpolate } from "remotion";
 import { C, FONT, clamp, lerp, prog, easeOut, easeInOut, fadeUp, hourLabel, formatFr } from "./theme";
 import { useT, Sun, Wordmark, Eyebrow, Dot, H, Muted, Phone, ImageSequence, Cover, BottomFade } from "./components";
 
 export const FPS = 30;
-export const DURATION_S = 38;
+export const DURATION_S = 40;
 
 const HERO = Array.from({ length: 40 }, (_, i) => `hero/${String(i).padStart(3, "0")}.jpg`); // 7h15 → 20h45, place Meynard
 const APP = Array.from({ length: 24 }, (_, i) => `app/${String(i).padStart(3, "0")}.jpg`); // app UI, 8h → 20h
@@ -13,7 +13,7 @@ const GRAND = "hero/030.jpg"; // ≈ 17h30
 // Scene windows in seconds [start, end]. Scenes overlap so each one fades in over the previous.
 const SC = {
   splash: [0, 4.6], grand: [4.0, 8.0], shadow: [7.6, 14.4], app: [14.0, 18.2], filters: [18.0, 22.2],
-  count: [22.0, 26.2], trio: [26.0, 29.8], pro: [29.6, 33.4], end: [33.0, 38.0],
+  count: [22.0, 26.2], trio: [26.0, 29.8], pro: [29.6, 35.2], end: [34.8, 40.0],
 } as const;
 
 const Scene: React.FC<{ win: readonly [number, number]; children: React.ReactNode }> = ({ win, children }) => {
@@ -227,10 +227,14 @@ const Trio: React.FC = () => {
 /* 8 ─ Restaurateurs : La Mère Michel as the example */
 const S = 592 / 1179; // capture px → phone screen px
 const STAR = [489, 1329, 120, 120], CARD = [36, 1080, 1104, 318];
-const Ring: React.FC<{ box: number[]; zoom: number; round?: boolean; opacity: number }> = ({ box: [x, y, w, h], zoom, round, opacity }) => {
+// La Mère Michel's place page, screenshot from the app (978 px wide).
+const SHEET_S = 592 / 978;
+const BADGE = [40, 645, 445, 43], BOOK = [40, 1045, 286, 120];
+const Ring: React.FC<{ box: number[]; zoom: number; round?: boolean; opacity: number; scale?: number }> = ({ box: [x, y, w, h], zoom, round, opacity, scale = S }) => {
   const cx = 296, cy = 1283 * 0.3;
+  const S_ = scale;
   return <div style={{ position: "absolute", zIndex: 5, border: `5px solid ${C.sun}`, borderRadius: round ? "50%" : 22, opacity,
-    left: cx + (x * S - cx) * zoom - 8, top: cy + (y * S - cy) * zoom - 8, width: w * S * zoom + 16, height: h * S * zoom + 16 }} />;
+    left: cx + (x * S_ - cx) * zoom - 8, top: cy + (y * S_ - cy) * zoom - 8, width: w * S_ * zoom + 16, height: h * S_ * zoom + 16 }} />;
 };
 const Pro: React.FC = () => {
   const t = useT(SC.pro[0]);
@@ -239,14 +243,22 @@ const Pro: React.FC = () => {
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 29.6) }}>
       <div style={{ position: "absolute", left: 80, right: 80, top: 130 }}>
         <Eyebrow style={fadeUp(t, 29.8, 0.5, 30)}>Restaurateurs</Eyebrow>
-        <H size={84} style={{ marginTop: 24, ...fadeUp(t, 30.0, 0.6, 30, 31.5) }}>Votre terrasse,<br /><Muted>en étoile sur la 3D.</Muted></H>
-        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58, ...fadeUp(t, 31.8, 0.6, 30) }}>Rejoignez<br /><Muted>la Sélection.</Muted></H>
+        <H size={84} style={{ marginTop: 24, ...fadeUp(t, 30.0, 0.6, 30, 31.2) }}>Votre terrasse,<br /><Muted>en étoile sur la 3D.</Muted></H>
+        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58, ...fadeUp(t, 31.5, 0.6, 30, 33.2) }}>Votre fiche avec photo,<br /><Muted>réservation et appel.</Muted></H>
+        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58, ...fadeUp(t, 33.5, 0.6, 30) }}>Rejoignez<br /><Muted>la Sélection.</Muted></H>
       </div>
       <Phone style={phoneIn(t, 29.7)}>
         <Cover file="app/014.jpg" style={{ transform: `scale(${z})`, transformOrigin: "50% 30%" }} />
-        <Cover file="ui/selection.jpg" style={{ opacity: easeOut(prog(t, 31.5, 31.8)), zIndex: 3 }} />
-        <Ring box={STAR} zoom={z} round opacity={easeOut(prog(t, 30.6, 30.9)) * (1 - prog(t, 31.4, 31.6))} />
-        <Ring box={CARD} zoom={1} opacity={easeOut(prog(t, 32.1, 32.4))} />
+        {/* the place page slides up like the app's sheet */}
+        <AbsoluteFill style={{ background: C.white, zIndex: 3, transform: `translateY(${(1 - easeOut(prog(t, 31.3, 31.8))) * 1300}px)`,
+          opacity: 1 - easeInOut(prog(t, 33.3, 33.6)) }}>
+          <Img src={staticFile("ui/mere-michel.jpg")} style={{ position: "absolute", left: 0, top: 0, width: "100%" }} />
+          <Ring box={BADGE} zoom={1} scale={SHEET_S} opacity={easeOut(prog(t, 32.0, 32.3)) * (1 - prog(t, 33.0, 33.2))} />
+          <Ring box={BOOK} zoom={1} scale={SHEET_S} opacity={easeOut(prog(t, 32.5, 32.8)) * (1 - prog(t, 33.0, 33.2))} />
+        </AbsoluteFill>
+        <Cover file="ui/selection.jpg" style={{ opacity: easeOut(prog(t, 33.3, 33.6)), zIndex: 2 }} />
+        <Ring box={STAR} zoom={z} round opacity={easeOut(prog(t, 30.6, 30.9)) * (1 - prog(t, 31.2, 31.4))} />
+        <Ring box={CARD} zoom={1} opacity={easeOut(prog(t, 33.9, 34.2))} />
       </Phone>
     </AbsoluteFill>
   );
@@ -254,7 +266,7 @@ const Pro: React.FC = () => {
 
 /* 9 ─ Fin */
 const End: React.FC = () => {
-  const t = useT(SC.end[0]);
+  const t = useT(SC.end[0]) - 1.8; // timings below were written for a start at 33 s
   const ks = easeOut(prog(t, 33.2, 34.1));
   const pulse = Math.sin(((t - 33) / 2.5) * Math.PI * 2) * 0.5 + 0.5;
   return (

@@ -1,5 +1,5 @@
 import numpy as np, wave
-SR=44100; BPM=120; B=60/BPM; DUR=38.0
+SR=44100; BPM=120; B=60/BPM; DUR=40.0
 N=int(SR*DUR); L=np.zeros(N); R=np.zeros(N); rng=np.random.default_rng(3)
 def add(sig,t,g=1.0,pan=0.0):
     i=int(t*SR); j=min(N,i+len(sig));
@@ -54,5 +54,5 @@ t=np.arange(N)/SR
 fi=np.clip(t/0.6,0,1); fo=np.clip((DUR-t)/2.5,0,1); L*=fi*fo; R*=fi*fo
 m=max(abs(L).max(),abs(R).max()); L=np.tanh(1.1*L/m)/np.tanh(1.1)*0.85; R=np.tanh(1.1*R/m)/np.tanh(1.1)*0.85
 d=(np.stack([L,R],1)*32767).astype('<i2')
-with wave.open('music4.wav','wb') as w: w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(d.tobytes())
+with wave.open('music.wav','wb') as w: w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(d.tobytes())
 print('ok')
