@@ -7,8 +7,8 @@ Design épuré, fond blanc, centré sur la 3D en gros plan. Textes inspirés du 
 | Temps | Séquence |
 |---|---|
 | 0–4 s | Écran d’accueil : « Les terrasses au soleil, en temps réel. » |
-| 4–8 s | Gros plan 3D sur la flèche Saint-Michel, ombres qui bougent : « Grand soleil. Reste à trouver la bonne terrasse. » |
-| 8–14 s | Calcul d’ombres 3D : « Chaque immeuble. Chaque heure. », de 7h à 21h en gros plans (cathédrale Saint-André sous deux angles, place Meynard) |
+| 4–8 s | Vraie terrasse bordelaise filmée (`public/terrasse.mp4`), le soleil de l’app se pose dessus : « Grand soleil. Reste à trouver la bonne terrasse. » |
+| 8–14 s | Calcul d’ombres 3D : « Chaque immeuble. Chaque heure. », de 7h à 19h30 en gros plans (cathédrale Saint-André sous deux angles, flèche Saint-Michel) |
 | 14–18 s | L’appli sur le centre-ville : « Toutes les terrasses autour de toi. » |
 | 18–22 s | Filtre ce qui te fait envie : Un café. Un déj’. L’apéro. Au frais. |
 | 22–26 s | Partout en France : compteur jusqu’à 11 482 terrasses et lieux, villes qui défilent |

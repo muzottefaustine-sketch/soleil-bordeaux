@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Audio, Img, Sequence, staticFile, useVideoConfig, interpolate } from "remotion";
+import { AbsoluteFill, Audio, Img, OffthreadVideo, Sequence, staticFile, useVideoConfig, interpolate } from "remotion";
 import { C, FONT, clamp, lerp, prog, easeOut, easeInOut, fadeUp, hourLabel, formatFr } from "./theme";
 import { useT, Sun, Wordmark, Eyebrow, Dot, H, Muted, Phone, ImageSequence, Cover } from "./components";
 
@@ -10,8 +10,8 @@ const seq = (dir: string, n: number, from = 0) => Array.from({ length: n }, (_, 
 // Close-ups of tall buildings whose shadows move. Each place covers a slice of the day.
 const PLACES = [
   { name: "Cathédrale Saint-André", files: seq("hero/andre", 14), from: 7.25, to: 11.75 },
-  { name: "Cathédrale Saint-André", files: seq("hero/andre2", 12), from: 11.75, to: 16.25 },
-  { name: "Place Meynard · Saint-Michel", files: seq("hero/meynard", 14, 26), from: 16.25, to: 20.75 },
+  { name: "Cathédrale Saint-André", files: seq("hero/andre2", 11), from: 11.75, to: 15.85 },
+  { name: "Flèche Saint-Michel", files: seq("hero/fleche", 8, 1), from: 16, to: 19.5 },
 ];
 const HERO = PLACES.flatMap((pl) => pl.files);
 /** Place and hour shown at progress k of the HERO sequence. */
@@ -23,7 +23,6 @@ const heroAt = (k: number) => {
   }
   return { name: "", hour: 0 };
 };
-const FLECHE = seq("hero/fleche", 9); // flèche Saint-Michel, 15h30 → 19h30
 const APP = seq("app-centre", 7); // app UI over the city centre, 8h → 19h30
 
 // Scene windows in seconds [start, end]. Scenes overlap so each one fades in over the previous.
@@ -72,15 +71,25 @@ const Splash: React.FC = () => {
   );
 };
 
-/* 2 ─ Grand soleil : 3D still, slow zoom out */
+/* 2 ─ Grand soleil : a real Bordeaux terrace (filmed by the owner), with the app's sun marker landing on it */
 const Grand: React.FC = () => {
   const t = useT(SC.grand[0]);
   const k = prog(t, 4.0, 8.0);
+  const pin = easeOut(prog(t, 5.3, 5.8));
+  const ring = prog((t - 5.6) % 1.4, 0, 1.4);
   return (
     <AbsoluteFill style={{ background: C.white }}>
-      <ImageSequence files={FLECHE} k={k} style={{ transform: `scale(${lerp(1.14, 1.04, easeOut(k))})` }} />
-      <div style={{ position: "absolute", left: 60, right: 60, bottom: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)" , ...fadeUp(t, 4.4, 0.5, 40) }}>
-        <Eyebrow color={C.ink2} style={fadeUp(t, 4.4, 0.5, 30)}>Bordeaux · {hourLabel(lerp(15.5, 19.5, k))}</Eyebrow>
+      <OffthreadVideo src={staticFile("terrasse.mp4")} muted style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
+        transform: `scale(${lerp(1.0, 1.07, k)})`, transformOrigin: "60% 65%" }} />
+      {/* sun marker, as on the app's map */}
+      <div style={{ position: "absolute", left: 800, top: 1120, opacity: pin, transform: `translateY(${(1 - pin) * -60}px)` }}>
+        {t > 5.6 && <div style={{ position: "absolute", left: -55 - ring * 60, top: -55 - ring * 60, width: 110 + ring * 120, height: 110 + ring * 120, borderRadius: "50%",
+          border: `4px solid ${C.white}`, opacity: 0.9 * (1 - ring) }} />}
+        <div style={{ position: "absolute", left: -55, top: -55, width: 110, height: 110, borderRadius: "50%", background: C.white,
+          boxShadow: "0 12px 30px rgba(15,23,42,0.28)", display: "flex", alignItems: "center", justifyContent: "center" }}><Sun size={86} /></div>
+      </div>
+      <div style={{ position: "absolute", left: 60, right: 60, top: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)", ...fadeUp(t, 4.4, 0.5, -40) }}>
+        <Eyebrow color={C.ink2} style={fadeUp(t, 4.4, 0.5, 30)}>Bordeaux · en terrasse</Eyebrow>
         <H size={150} style={{ marginTop: 26, lineHeight: 0.98, ...fadeUp(t, 4.6, 0.6, 50) }}>Grand<br />soleil<Dot /></H>
         <div style={{ marginTop: 30, fontFamily: FONT, fontWeight: 600, fontSize: 48, whiteSpace: "nowrap", color: C.ink2, ...fadeUp(t, 5.8, 0.6, 30) }}>
           Reste à trouver la bonne terrasse.
