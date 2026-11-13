@@ -18,5 +18,15 @@ Design épuré, fond blanc, centré sur la 3D en gros plan. Textes inspirés du 
 
 Le chiffre 11 482 est la somme des fichiers `data/*.json` (9 villes).
 
-- `captures/` : une sélection des captures réelles utilisées.
-- `source/` : scripts de capture (`sweep2.js`, `sweep_app.js`, `lib.js`), animation (`composition.html`), rendu image par image (`render2.js`) et musique originale générée (`music.py`).
+- `captures/` : une sélection des captures réelles.
+- `remotion/` : le projet Remotion qui fabrique la vidéo.
+  - `src/Promo.tsx` : les 9 scènes et leur minutage ; `src/components.tsx` et `src/theme.ts` : soleil, logo, téléphone, couleurs de l'app.
+  - `public/` : captures 3D (`hero/`, `app/`), capture de La Mère Michel (`ui/`), musique.
+  - `capture/` : scripts Playwright qui ont pris les captures de l'app (`sweep2.js`, `sweep_app.js`, `lib.js`) et générateur de la musique (`music.py`).
+
+Modifier et refaire la vidéo :
+```bash
+cd promo/remotion && npm install
+npm run studio   # aperçu interactif
+npm run render   # → out/soleil-en-terrasse-promo.mp4
+```
