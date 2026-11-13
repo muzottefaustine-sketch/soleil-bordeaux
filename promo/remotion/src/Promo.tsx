@@ -7,15 +7,24 @@ export const FPS = 30;
 export const DURATION_S = 40;
 
 const seq = (dir: string, n: number, from = 0) => Array.from({ length: n }, (_, i) => `${dir}/${String(from + i).padStart(3, "0")}.jpg`);
-// The hour runs from 7h15 to 20h45 across three places, 14 frames each (one frame ≈ 21 min).
+// Close-ups of tall buildings whose shadows move. Each place covers a slice of the day.
 const PLACES = [
-  { name: "Cathédrale Saint-André", files: seq("hero/andre", 14) },     // 7h15 → 11h45
-  { name: "Place du Parlement", files: seq("hero/parlement", 14) },     // 11h45 → 16h15
-  { name: "Place Meynard · Saint-Michel", files: seq("hero/meynard", 14, 26) }, // 16h15 → 20h45
+  { name: "Cathédrale Saint-André", files: seq("hero/andre", 14), from: 7.25, to: 11.75 },
+  { name: "Cathédrale Saint-André", files: seq("hero/andre2", 12), from: 11.75, to: 16.25 },
+  { name: "Place Meynard · Saint-Michel", files: seq("hero/meynard", 14, 26), from: 16.25, to: 20.75 },
 ];
 const HERO = PLACES.flatMap((pl) => pl.files);
+/** Place and hour shown at progress k of the HERO sequence. */
+const heroAt = (k: number) => {
+  let f = clamp(k) * (HERO.length - 1);
+  for (const pl of PLACES) {
+    if (f <= pl.files.length - 0.5 || pl === PLACES[PLACES.length - 1]) return { name: pl.name, hour: lerp(pl.from, pl.to, clamp(f / (pl.files.length - 1))) };
+    f -= pl.files.length;
+  }
+  return { name: "", hour: 0 };
+};
+const FLECHE = seq("hero/fleche", 9); // flèche Saint-Michel, 15h30 → 19h30
 const APP = seq("app-centre", 7); // app UI over the city centre, 8h → 19h30
-const GRAND = "hero/grand.jpg"; // quais & place de la Bourse, 17h30
 
 // Scene windows in seconds [start, end]. Scenes overlap so each one fades in over the previous.
 const SC = {
@@ -69,12 +78,12 @@ const Grand: React.FC = () => {
   const k = prog(t, 4.0, 8.0);
   return (
     <AbsoluteFill style={{ background: C.white }}>
-      <Cover file={GRAND} style={{ transform: `scale(${lerp(1.18, 1.04, easeOut(k))})` }} />
+      <ImageSequence files={FLECHE} k={k} style={{ transform: `scale(${lerp(1.14, 1.04, easeOut(k))})` }} />
       <div style={{ position: "absolute", left: 60, right: 60, bottom: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)" , ...fadeUp(t, 4.4, 0.5, 40) }}>
-        <Eyebrow color={C.ink2} style={fadeUp(t, 4.4, 0.5, 30)}>Bordeaux · 17h30</Eyebrow>
+        <Eyebrow color={C.ink2} style={fadeUp(t, 4.4, 0.5, 30)}>Bordeaux · {hourLabel(lerp(15.5, 19.5, k))}</Eyebrow>
         <H size={150} style={{ marginTop: 26, lineHeight: 0.98, ...fadeUp(t, 4.6, 0.6, 50) }}>Grand<br />soleil<Dot /></H>
-        <div style={{ marginTop: 30, fontFamily: FONT, fontWeight: 600, fontSize: 50, color: C.ink2, ...fadeUp(t, 5.8, 0.6, 30) }}>
-          …mais ta terrasse, elle est où ?
+        <div style={{ marginTop: 30, fontFamily: FONT, fontWeight: 600, fontSize: 48, whiteSpace: "nowrap", color: C.ink2, ...fadeUp(t, 5.8, 0.6, 30) }}>
+          Reste à trouver la bonne terrasse.
         </div>
       </div>
     </AbsoluteFill>
@@ -85,7 +94,8 @@ const Grand: React.FC = () => {
 const Shadows: React.FC = () => {
   const t = useT(SC.shadow[0]);
   const k = prog(t, 7.8, 14.2);
-  const hv = lerp(7.25, 20.75, k);
+  const here = heroAt(k);
+  const hv = here.hour;
   const pct = ((hv - 6) / 15) * 100;
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 7.6) }}>
@@ -95,7 +105,7 @@ const Shadows: React.FC = () => {
         <div style={{ textAlign: "center", fontWeight: 800, fontSize: 64, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums", color: C.ink }}>
           <span style={{ color: "#F5A524" }}>☀</span>&nbsp;{hourLabel(hv)}
           <div style={{ marginTop: 6, fontSize: 26, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink3 }}>
-            {PLACES[Math.min(2, Math.floor((k * (HERO.length - 1) + 0.5) / 14))].name}
+            {here.name}
           </div>
         </div>
         <div style={{ position: "relative", height: 10, background: "#E5E7EB", borderRadius: 6, marginTop: 22 }}>
