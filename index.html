@@ -526,6 +526,16 @@
     #placeLinkUrl { width:100%; padding:10px; border:1px solid var(--divider); border-radius:9px; color:var(--text-2); background:#fff; font-size:12px; }
     .place-link-copy { min-height:44px; border:0; background:none; color:#795800; font-size:13px; font-weight:750; cursor:pointer; }
     #placeLinkDialog :focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+    /* Panneau « Appeler » : affiche le numéro quand l'appel direct ne peut pas partir. */
+    #phonePanel[hidden] { display:none !important; }
+    #phonePanel { position:fixed; inset:0; z-index:3000; display:flex; align-items:flex-end; justify-content:center; background:rgba(15,23,42,.45); }
+    .phone-card { width:100%; max-width:440px; background:#fff; border-radius:22px 22px 0 0; padding:22px 20px calc(18px + env(safe-area-inset-bottom,0px)); text-align:center; box-shadow:0 -14px 40px rgba(15,23,42,.22); }
+    .phone-name { font-size:13px; font-weight:750; color:var(--text-2); margin-bottom:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .phone-number { display:block; font-size:28px; font-weight:800; letter-spacing:.5px; color:var(--text); margin-bottom:6px; user-select:all; -webkit-user-select:all; }
+    .phone-hint { font-size:12px; line-height:1.4; color:var(--text-2); margin-bottom:16px; }
+    .phone-actions { display:grid; gap:8px; }
+    .phone-btn { display:flex; align-items:center; justify-content:center; min-height:50px; border:0; border-radius:14px; background:#F2F2F7; color:var(--text); font-family:inherit; font-size:15px; font-weight:750; text-decoration:none; cursor:pointer; touch-action:manipulation; }
+    .phone-btn.primary { background:var(--green); color:#fff; }
   </style>
 </head>
 <body>
@@ -2600,6 +2610,81 @@ function sheetLink(className, href, label, ariaLabel='', id=''){
 function openExternalLink(link,event){
   return window.SoleilLinks ? window.SoleilLinks.activate(link,event) : true;
 }
+// ── Bouton « Appeler » ──────────────────────────────────────────────
+// Dans l'appli iPhone (page affichée dans une vue web intégrée), un lien tel:
+// peut ne rien déclencher. Dans ce cas on affiche le numéro en grand, avec
+// « Appeler » et « Copier le numéro », pour que le toucher ne reste jamais sans effet.
+// Dans Safari, Chrome ou sur Android, l'appel direct reste inchangé.
+function isEmbeddedIosWebView(){
+  const ua=navigator.userAgent||'';
+  const ios=/iPhone|iPad|iPod/i.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  return ios && !/Safari\//i.test(ua) && navigator.standalone!==true;
+}
+function readablePhoneNumber(telHref){
+  const digits=String(telHref||'').replace(/^tel:/i,'');
+  const national=digits.startsWith('+33') ? '0'+digits.slice(3) : digits;
+  return /^0\d{9}$/.test(national) ? national.replace(/(\d{2})(?=\d)/g,'$1 ') : digits;
+}
+function closePhonePanel(){
+  const panel=document.getElementById('phonePanel');
+  if(panel) panel.hidden=true;
+}
+function showPhonePanel(telHref,name){
+  let panel=document.getElementById('phonePanel');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='phonePanel';
+    panel.setAttribute('role','dialog');
+    panel.setAttribute('aria-modal','true');
+    panel.setAttribute('aria-label','Appeler le restaurant');
+    panel.innerHTML=`<div class="phone-card">
+      <div class="phone-name" id="phonePanelName"></div>
+      <span class="phone-number" id="phonePanelNumber"></span>
+      <div class="phone-hint" id="phonePanelHint">Si l’appel ne se lance pas, copie le numéro.</div>
+      <div class="phone-actions">
+        <a class="phone-btn primary" id="phonePanelCall" data-direct-call="1" target="_self">Appeler</a>
+        <button class="phone-btn" id="phonePanelCopy" type="button">Copier le numéro</button>
+        <button class="phone-btn" id="phonePanelClose" type="button">Fermer</button>
+      </div></div>`;
+    document.body.appendChild(panel);
+    panel.addEventListener('click',event=>{ if(event.target===panel) closePhonePanel(); });
+    panel.querySelector('#phonePanelClose').addEventListener('click',closePhonePanel);
+    panel.querySelector('#phonePanelCopy').addEventListener('click',async()=>{
+      const number=panel.dataset.number||'';
+      const button=panel.querySelector('#phonePanelCopy');
+      try{
+        await navigator.clipboard.writeText(number);
+        button.textContent='Numéro copié';
+      }catch(error){
+        // Presse-papiers refusé : le numéro reste sélectionnable à la main.
+        const range=document.createRange();
+        range.selectNodeContents(panel.querySelector('#phonePanelNumber'));
+        const selection=window.getSelection();
+        selection.removeAllRanges(); selection.addRange(range);
+        button.textContent='Appuie longtemps sur le numéro pour le copier';
+      }
+    });
+  }
+  const readable=readablePhoneNumber(telHref);
+  panel.dataset.number=readable;
+  panel.querySelector('#phonePanelName').textContent=name||'';
+  panel.querySelector('#phonePanelNumber').textContent=readable;
+  panel.querySelector('#phonePanelCall').href=telHref;
+  panel.querySelector('#phonePanelCopy').textContent='Copier le numéro';
+  panel.hidden=false;
+}
+document.addEventListener('click',event=>{
+  const link=event.target.closest?.('a[href^="tel:"]');
+  if(!link || link.dataset.directCall || !isEmbeddedIosWebView()) return;
+  const href=telephoneUrl(link.getAttribute('href').slice(4));
+  if(!href) return;
+  event.preventDefault();
+  const place=terrasses.find(x=>String(x.id)===String(activePlaceId));
+  showPhonePanel(href,place?.nom||'');
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape' && document.getElementById('phonePanel')?.hidden===false) closePhonePanel();
+});
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
   return `<div class="ps-info-row"><div class="ps-row-icon">${icon}</div><div><div class="ps-row-label">${escapeHTML(label)}</div><div class="ps-row-value ${extraClass}">${escapeHTML(value)}</div></div></div>`;
