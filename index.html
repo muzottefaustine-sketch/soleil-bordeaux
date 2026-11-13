@@ -560,7 +560,7 @@
 <div id="topBar">
   <div class="search-glass">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#1C1C1E" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <input type="text" id="searchInput" placeholder="Recherche ta terrasse ou ta ville…" autocomplete="off" aria-autocomplete="list" aria-controls="citySuggestions">
+    <input type="text" id="searchInput" placeholder="Recherche ta ville…" aria-label="Rechercher une ville" autocomplete="off" aria-autocomplete="list" aria-controls="citySuggestions">
     <button class="search-clear-btn" id="searchClear">✕</button>
   </div>
   <div id="citySuggestions" role="listbox" aria-label="Villes proposées"></div>
@@ -582,7 +582,7 @@
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
   <div class="tt-sun" id="ttSun"></div>
-  <a id="ttMaps" href="#" target="_blank" rel="noopener noreferrer" onclick="return openExternalLink(this,event)" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;">Ouvrir dans Maps</a>
+  <a id="ttMaps" href="#" target="_self" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;">Ouvrir dans Plans</a>
 </div>
 <!-- Fiche lieu (Foursquare + partenaires) -->
 <div id="psOverlay" onclick="hidePlaceSheet()"></div>
