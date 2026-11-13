@@ -1275,20 +1275,10 @@ function osmDataToTerrasses(data, source='osm'){
 }
 const cityDataCache = {};
 const cityScriptPromises = {};
+const BUNDLED_CITY_IDS = new Set(['bordeaux','cannes','lille','lyon','marseille','nantes','nice','strasbourg','toulouse']);
 function localDataPaths(id, ext){
-  const variants = uniq([
-    id,
-    id.replace(/-/g,''),
-    `restaurants-${id}`,
-    `${id}-restaurants`,
-    `restos-${id}`,
-    `${id}-restos`,
-    `terrasses-${id}`,
-    `${id}-terrasses`
-  ]);
-  const names = variants.flatMap(name=>[`data/${name}.${ext}`, `${name}.${ext}`, `outputs/data/${name}.${ext}`]);
-  if(location.protocol === 'file:') return names;
-  return [...variants.flatMap(name=>[`/data/${name}.${ext}`, `/outputs/data/${name}.${ext}`]), ...names];
+  const path=`data/${id}.${ext}`;
+  return [location.protocol==='file:' ? path : `/${path}`];
 }
 async function loadCityDataScript(id){
   if(window.LOCAL_OSM_DATA?.[id]) return window.LOCAL_OSM_DATA[id];
@@ -1296,12 +1286,23 @@ async function loadCityDataScript(id){
   cityScriptPromises[id] = new Promise(resolve => {
     const paths = localDataPaths(id, 'js');
     let index = 0;
+    let script=null;
+    let done=false;
+    const finish=value=>{
+      if(done) return;
+      done=true;
+      clearTimeout(timer);
+      if(!value) script?.remove();
+      resolve(value);
+    };
+    const timer=setTimeout(()=>finish(null),1500);
     const tryNext = () => {
-      if(index >= paths.length){ resolve(null); return; }
-      const script = document.createElement('script');
+      if(done) return;
+      if(index >= paths.length){ finish(null); return; }
+      script = document.createElement('script');
       script.src = paths[index++];
       script.async = true;
-      script.onload = () => resolve(window.LOCAL_OSM_DATA?.[id] || null);
+      script.onload = () => finish(window.LOCAL_OSM_DATA?.[id] || null);
       script.onerror = () => { script.remove(); tryNext(); };
       document.head.appendChild(script);
     };
@@ -1315,20 +1316,24 @@ async function fetchLocalCityData(id){
     cityDataCache[id] = window.LOCAL_OSM_DATA[id];
     return cityDataCache[id];
   }
+  // Les autres communes utilisent directement la recherche en ligne.
+  // Ne pas chercher des dizaines de fichiers inexistants avant de la lancer.
+  if(!BUNDLED_CITY_IDS.has(id)) return null;
   if(location.protocol === 'file:'){
     cityDataCache[id] = await loadCityDataScript(id);
     if(cityDataCache[id]) return cityDataCache[id];
   }
   for(const path of localDataPaths(id, 'json')){
     try{
-      const res = await fetch(path, {cache:'force-cache'});
+      const res = await fetchWithTimeout(path, {cache:'force-cache'},4500);
       if(!res.ok) throw new Error();
-      cityDataCache[id] = await res.json();
+      const data=await res.json();
+      if(!Array.isArray(data?.features) && !Array.isArray(data?.elements)) continue;
+      cityDataCache[id] = data;
       return cityDataCache[id];
     }catch(e){}
   }
-  cityDataCache[id] = await loadCityDataScript(id);
-  return cityDataCache[id];
+  return null;
 }
 async function localTerrassesForCurrentArea(){
   const localCity = currentCity.dynamic
@@ -1337,12 +1342,12 @@ async function localTerrassesForCurrentArea(){
   const ids = uniq([
     ...(currentCity.localDataIds || []),
     ...localDataCandidateIds(currentCity.id, currentCity.nom, localCity?.id, localCity?.nom)
-  ]);
+  ]).filter(id=>BUNDLED_CITY_IDS.has(id) || window.LOCAL_OSM_DATA?.[id]);
   for(const id of ids){
     try{
       const localData = await fetchLocalCityData(id);
       const places = localData ? osmDataToTerrasses(localData,`local-${id}`) : [];
-      if(places.length > 20) return places.filter(t=>placeCategory(t)!=='parking');
+      if(places.length) return places.filter(t=>placeCategory(t)!=='parking');
     }catch(e){}
   }
   return [];
@@ -2219,11 +2224,46 @@ function googleNearbySearch(service, type){
     service.nearbySearch(request, collect);
   });
 }
+const googleNearbyAreaCache = new Map();
 async function fetchGoogleNearbyTerrasses(){
-  const service = await getGooglePlacesService();
-  if(!service) return [];
-  const groups = await Promise.all(GOOGLE_NEARBY_TYPES.map(type => googleNearbySearch(service, type)));
-  return mergePlacesByIdentity(groups.flat());
+  if(!hasGoogleMapsKey()) return [];
+  const area={lat:currentCity.lat,lng:currentCity.lng};
+  const key=`${area.lat.toFixed(4)}:${area.lng.toFixed(4)}`;
+  const cached=googleNearbyAreaCache.get(key);
+  if(cached && Date.now()-cached.time<300000) return cached.request;
+  // La clé autorise Places API (New), pas l'ancien PlacesService.nearbySearch.
+  // Chaque type conserve sa propre recherche pour ne pas masquer bars et cafés.
+  const request=Promise.allSettled(GOOGLE_NEARBY_TYPES.map(async type=>{
+    const response=await fetchWithTimeout('https://places.googleapis.com/v1/places:searchNearby',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Goog-Api-Key':GOOGLE_MAPS_API_KEY.trim(),
+        'X-Goog-FieldMask':'places.id,places.displayName,places.location,places.formattedAddress,places.types'
+      },
+      body:JSON.stringify({
+        includedTypes:[type],maxResultCount:20,languageCode:'fr',rankPreference:'DISTANCE',
+        locationRestriction:{circle:{center:{latitude:area.lat,longitude:area.lng},radius:GOOGLE_NEARBY_RADIUS_METERS}}
+      })
+    },8000);
+    if(!response.ok) throw new Error(`Google nearby ${response.status}`);
+    const data=await response.json();
+    return (data.places||[]).filter(place=>place.id && place.displayName?.text
+      && Number.isFinite(place.location?.latitude) && Number.isFinite(place.location?.longitude))
+      .map(place=>({
+        id:`google-${place.id}`,nom:place.displayName.text,
+        adresse:place.formattedAddress||'',type:googlePlaceTypeLabel(place,type),category:'food',
+        lat:place.location.latitude,lng:place.location.longitude,source:'google',
+        googlePlaceId:place.id,googleDetails:normalizeGoogleApiPlace(place)
+      }));
+  })).then(groups=>{
+    const places=mergePlacesByIdentity(groups.filter(group=>group.status==='fulfilled').flatMap(group=>group.value));
+    if(!places.length) googleNearbyAreaCache.delete(key);
+    return places;
+  });
+  googleNearbyAreaCache.set(key,{time:Date.now(),request});
+  if(googleNearbyAreaCache.size>12) googleNearbyAreaCache.delete(googleNearbyAreaCache.keys().next().value);
+  return request;
 }
 function mergePlacesByIdentity(items){
   const clean = (items || []).filter(t => t && t.nom && Number.isFinite(t.lat) && Number.isFinite(t.lng));
@@ -3049,7 +3089,7 @@ async function loadTerrasses(){
     setTimeout(()=>hydrateNearbyInBackground(signature), 3500);
     return;
   }
-  const quick=mergeFeaturedPlaces(mergePlacesByIdentity([...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
+  const quick=mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
   // Hors des villes déjà embarquées, on lance Google et OpenStreetMap tout de
   // suite et en parallèle. Avant, Google attendait la fin d'Overpass : une
   // ville pouvait donc rester à 0 pendant de longues secondes alors que les
