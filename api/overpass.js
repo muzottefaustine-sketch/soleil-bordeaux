@@ -3,8 +3,8 @@
 // (1 h), donc la plupart des visiteurs n'attendent pas Overpass.
 // Si ce fichier échoue, l'appli interroge directement les serveurs publics.
 const ENDPOINTS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ];
 const MAX_QUERY_LENGTH = 4000;
 // Vercel (offre gratuite) coupe une fonction vers 10 s : on s'arrête avant.
@@ -27,19 +27,25 @@ module.exports = async function handler(req, res) {
   }
 
   const started = Date.now();
-  for (const url of ENDPOINTS) {
+  for (const [index, url] of ENDPOINTS.entries()) {
     const remaining = TOTAL_BUDGET_MS - (Date.now() - started);
     if (remaining < 1000) break;
+    const budget = Math.floor(remaining / (ENDPOINTS.length - index));
     try {
       const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          'User-Agent': 'SoleilEnTerrasse/1.0 (+https://soleil-bordeaux.vercel.app/)',
+          'Referer': 'https://soleil-bordeaux.vercel.app/',
+        },
         body: 'data=' + encodeURIComponent(query),
-        signal: AbortSignal.timeout(remaining),
+        signal: AbortSignal.timeout(budget),
       });
       if (!response.ok) continue;
       const json = await response.json();
-      if (!Array.isArray(json?.elements)) continue;
+      if (!Array.isArray(json?.elements) || json.remark) continue;
       res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
       res.status(200).json(json);
       return;
