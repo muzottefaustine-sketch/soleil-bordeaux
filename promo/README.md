@@ -7,9 +7,9 @@ Design épuré, fond blanc, centré sur la 3D en gros plan. Textes inspirés du 
 | Temps | Séquence |
 |---|---|
 | 0–4 s | Écran d’accueil : « Les terrasses au soleil, en temps réel. » |
-| 4–8 s | 3D place Meynard : « Grand soleil. …mais ta terrasse, elle est où ? » |
-| 8–14 s | Calcul d’ombres 3D : « Chaque immeuble. Chaque heure. », l’ombre de la flèche Saint-Michel tourne de 7h à 21h |
-| 14–18 s | L’appli : « Toutes les terrasses autour de toi. » |
+| 4–8 s | 3D des quais et de la place de la Bourse : « Grand soleil. …mais ta terrasse, elle est où ? » |
+| 8–14 s | Calcul d’ombres 3D : « Chaque immeuble. Chaque heure. », de 7h à 21h sur trois lieux (cathédrale Saint-André, place du Parlement, place Meynard) |
+| 14–18 s | L’appli sur le centre-ville : « Toutes les terrasses autour de toi. » |
 | 18–22 s | Filtre ce qui te fait envie : Un café. Un déj’. L’apéro. Au frais. |
 | 22–26 s | Partout en France : compteur jusqu’à 11 482 terrasses et lieux, villes qui défilent |
 | 26–30 s | Gratuit. Sans compte. Zéro donnée. |
@@ -22,7 +22,7 @@ Le chiffre 11 482 est la somme des fichiers `data/*.json` (9 villes).
 - `remotion/` : le projet Remotion qui fabrique la vidéo.
   - `src/Promo.tsx` : les 9 scènes et leur minutage ; `src/components.tsx` et `src/theme.ts` : soleil, logo, téléphone, couleurs de l'app.
   - `public/` : captures 3D (`hero/`, `app/`), captures de La Mère Michel, dont sa fiche avec photo (`ui/`), musique.
-  - `capture/` : scripts Playwright qui ont pris les captures de l'app (`sweep2.js`, `sweep_app.js`, `lib.js`) et générateur de la musique (`music.py`).
+  - `capture/` : scripts Playwright qui ont pris les captures de l'app (`sweep2.js`, `sweep4.js`, `sweep_app.js`, `lib.js`) et générateur de la musique (`music.py`).
 
 Modifier et refaire la vidéo :
 ```bash

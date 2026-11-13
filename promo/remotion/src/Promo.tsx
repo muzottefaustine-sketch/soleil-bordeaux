@@ -6,9 +6,16 @@ import { useT, Sun, Wordmark, Eyebrow, Dot, H, Muted, Phone, ImageSequence, Cove
 export const FPS = 30;
 export const DURATION_S = 40;
 
-const HERO = Array.from({ length: 40 }, (_, i) => `hero/${String(i).padStart(3, "0")}.jpg`); // 7h15 → 20h45, place Meynard
-const APP = Array.from({ length: 24 }, (_, i) => `app/${String(i).padStart(3, "0")}.jpg`); // app UI, 8h → 20h
-const GRAND = "hero/030.jpg"; // ≈ 17h30
+const seq = (dir: string, n: number, from = 0) => Array.from({ length: n }, (_, i) => `${dir}/${String(from + i).padStart(3, "0")}.jpg`);
+// The hour runs from 7h15 to 20h45 across three places, 14 frames each (one frame ≈ 21 min).
+const PLACES = [
+  { name: "Cathédrale Saint-André", files: seq("hero/andre", 14) },     // 7h15 → 11h45
+  { name: "Place du Parlement", files: seq("hero/parlement", 14) },     // 11h45 → 16h15
+  { name: "Place Meynard · Saint-Michel", files: seq("hero/meynard", 14, 26) }, // 16h15 → 20h45
+];
+const HERO = PLACES.flatMap((pl) => pl.files);
+const APP = seq("app-centre", 7); // app UI over the city centre, 8h → 19h30
+const GRAND = "hero/grand.jpg"; // quais & place de la Bourse, 17h30
 
 // Scene windows in seconds [start, end]. Scenes overlap so each one fades in over the previous.
 const SC = {
@@ -19,6 +26,11 @@ const SC = {
 const Scene: React.FC<{ win: readonly [number, number]; children: React.ReactNode }> = ({ win, children }) => {
   const { fps } = useVideoConfig();
   return <Sequence from={Math.round(win[0] * fps)} durationInFrames={Math.round((win[1] - win[0]) * fps)}>{children}</Sequence>;
+};
+/** Holds each frame, then cross-fades quickly to the next, so the app's clock stays readable. */
+const stepped = (k: number, steps: number) => {
+  const f = clamp(k) * steps, i = Math.min(steps - 1, Math.floor(f));
+  return (i + clamp((f - i - 0.35) / 0.3)) / steps;
 };
 const fadeInOpacity = (t: number, start: number, d = 0.4) => easeInOut(prog(t, start, start + d));
 const phoneIn = (t: number, t0: number): React.CSSProperties => {
@@ -78,10 +90,13 @@ const Shadows: React.FC = () => {
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 7.6) }}>
       <ImageSequence files={HERO} k={k} style={{ transform: `scale(${lerp(1.04, 1.12, k)})` }} />
-      <div style={{ position: "absolute", left: 260, top: 110, width: 560, padding: "30px 46px 34px", background: "rgba(255,255,255,0.94)",
+      <div style={{ position: "absolute", left: 200, top: 110, width: 680, padding: "30px 46px 34px", background: "rgba(255,255,255,0.94)",
         borderRadius: 36, boxShadow: "0 18px 50px rgba(15,23,42,0.16)", fontFamily: FONT, ...fadeUp(t, 8.0, 0.6, -30) }}>
         <div style={{ textAlign: "center", fontWeight: 800, fontSize: 64, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums", color: C.ink }}>
           <span style={{ color: "#F5A524" }}>☀</span>&nbsp;{hourLabel(hv)}
+          <div style={{ marginTop: 6, fontSize: 26, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.ink3 }}>
+            {PLACES[Math.min(2, Math.floor((k * (HERO.length - 1) + 0.5) / 14))].name}
+          </div>
         </div>
         <div style={{ position: "relative", height: 10, background: "#E5E7EB", borderRadius: 6, marginTop: 22 }}>
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${pct}%`, background: C.accent, borderRadius: 6 }} />
@@ -108,7 +123,7 @@ const App: React.FC = () => {
         <Eyebrow style={fadeUp(t, 14.2, 0.5, 30)}>L’appli</Eyebrow>
         <H size={88} style={{ marginTop: 24, ...fadeUp(t, 14.4, 0.6, 30) }}>Toutes les terrasses<br /><Muted>autour de toi.</Muted></H>
       </div>
-      <Phone style={phoneIn(t, 14.1)}><ImageSequence files={APP} k={easeInOut(prog(t, 14.6, 17.9))} /></Phone>
+      <Phone style={phoneIn(t, 14.1)}><ImageSequence files={APP} k={stepped(prog(t, 14.5, 18.0), APP.length - 1)} /></Phone>
     </AbsoluteFill>
   );
 };
