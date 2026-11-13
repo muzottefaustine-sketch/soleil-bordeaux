@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, Audio, Img, OffthreadVideo, Sequence, staticFile, useVideoConfig, interpolate } from "remotion";
 import { C, FONT, clamp, lerp, prog, easeOut, easeInOut, fadeUp, hourLabel, formatFr } from "./theme";
-import { useT, Sun, Wordmark, Eyebrow, Dot, H, Muted, Phone, ImageSequence, Cover } from "./components";
+import { useT, Sun, Wordmark, Eyebrow, Dot, H, Phone, ImageSequence, Cover } from "./components";
 
 export const FPS = 30;
 export const DURATION_S = 40;
@@ -39,6 +39,39 @@ const Scene: React.FC<{ win: readonly [number, number]; children: React.ReactNod
 const stepped = (k: number, steps: number) => {
   const f = clamp(k) * steps, i = Math.min(steps - 1, Math.floor(f));
   return (i + clamp((f - i - 0.35) / 0.3)) / steps;
+};
+const expo = (x: number) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * clamp(x)));
+const back = (x: number) => { const c = 2.4, y = clamp(x) - 1; return 1 + (c + 1) * y * y * y + c * y * y; };
+type Line = { text: string; muted?: boolean; dot?: boolean; accent?: string };
+/** Kinetic headline: each word rises from behind a mask, one after the other; the yellow dot pops in last. */
+const Kinetic: React.FC<{ t: number; t0: number; tOut?: number; stagger?: number; lines: Line[] }> = ({ t, t0, tOut, stagger = 0.075, lines }) => {
+  let n = 0;
+  const mask: React.CSSProperties = { display: "inline-block", overflow: "hidden", verticalAlign: "top", paddingBottom: "0.18em", marginBottom: "-0.18em" };
+  return (
+    <>
+      {lines.map((line, li) => {
+        const words = line.text.split(" ");
+        return (
+          <div key={li} style={{ color: line.muted ? C.ink3 : undefined, whiteSpace: "nowrap" }}>
+            {words.map((w, wi) => {
+              const a = t0 + n++ * stagger;
+              const k = expo(prog(t, a, a + 0.7));
+              const ko = tOut === undefined ? 0 : easeInOut(prog(t, tOut + li * 0.05, tOut + li * 0.05 + 0.3));
+              const last = wi === words.length - 1;
+              return (
+                <span key={wi} style={{ ...mask, marginRight: last ? 0 : "0.2em" }}>
+                  <span style={{ display: "inline-block", transform: `translateY(${(1 - k) * 112 - ko * 112}%)`, color: line.accent && w.startsWith(line.accent) ? C.accent : undefined }}>
+                    {w}
+                    {last && line.dot && <span style={{ display: "inline-block", color: C.accent, transform: `scale(${back(prog(t, a + 0.3, a + 0.75))})`, transformOrigin: "50% 85%" }}>.</span>}
+                  </span>
+                </span>
+              );
+            })}
+          </div>
+        );
+      })}
+    </>
+  );
 };
 const fadeInOpacity = (t: number, start: number, d = 0.4) => easeInOut(prog(t, start, start + d));
 const phoneIn = (t: number, t0: number): React.CSSProperties => {
@@ -81,7 +114,7 @@ const Grand: React.FC = () => {
         transform: `scale(${lerp(1.0, 1.07, k)})`, transformOrigin: "60% 65%" }} />
       <div style={{ position: "absolute", left: 60, right: 60, top: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)", ...fadeUp(t, 4.4, 0.5, -40) }}>
         <Eyebrow color={C.ink2} style={fadeUp(t, 4.4, 0.5, 30)}>Bordeaux · en terrasse</Eyebrow>
-        <H size={150} style={{ marginTop: 26, lineHeight: 0.98, ...fadeUp(t, 4.6, 0.6, 50) }}>Grand<br />soleil<Dot /></H>
+        <H size={150} style={{ marginTop: 26, lineHeight: 0.98 }}><Kinetic t={t} t0={4.6} stagger={0.14} lines={[{ text: "Grand" }, { text: "soleil", dot: true }]} /></H>
         <div style={{ marginTop: 30, fontFamily: FONT, fontWeight: 600, fontSize: 48, whiteSpace: "nowrap", color: C.ink2, ...fadeUp(t, 5.8, 0.6, 30) }}>
           Reste à trouver la bonne terrasse.
         </div>
@@ -124,11 +157,11 @@ const Shadows: React.FC = () => {
       <ImageSequence files={HERO} k={k} style={{ transform: `scale(${lerp(1.04, 1.12, k)})` }} />
       <div style={{ position: "absolute", left: 60, right: 60, top: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)", ...fadeUp(t, 8.0, 0.5, -40) }}>
         <Eyebrow color={C.ink2} style={fadeUp(t, 8.1, 0.5, 30)}>Calcul d’ombres 3D</Eyebrow>
-        <H size={118} style={{ marginTop: 26, ...fadeUp(t, 8.3, 0.6, 40) }}>Chaque immeuble<Dot /></H>
-        <H size={118} style={{ color: C.ink3, ...fadeUp(t, 9.0, 0.6, 40) }}>Chaque heure<Dot /></H>
+        <H size={104} style={{ marginTop: 26 }}><Kinetic t={t} t0={8.3} stagger={0.12} lines={[{ text: "Chaque immeuble", dot: true }]} /></H>
+        <H size={104}><Kinetic t={t} t0={9.0} stagger={0.12} lines={[{ text: "Chaque heure", muted: true, dot: true }]} /></H>
       </div>
       {/* location pill, as in the app */}
-      <div style={{ position: "absolute", top: 676, left: 0, right: 0, display: "flex", justifyContent: "center", ...fadeUp(t, 8.4, 0.5, -20) }}>
+      <div style={{ position: "absolute", top: 536, left: 0, right: 0, display: "flex", justifyContent: "center", ...fadeUp(t, 8.4, 0.5, -20) }}>
         <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "20px 34px", borderRadius: 999, background: "rgba(255,255,255,0.9)",
           backdropFilter: "blur(50px)", boxShadow: "0 22px 66px rgba(15,23,42,0.18)", fontFamily: FONT, fontWeight: 800, fontSize: 36, color: C.ink }}>
           <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#007AFF", boxShadow: "0 0 0 11px rgba(0,122,255,0.14)" }} />
@@ -147,7 +180,7 @@ const App: React.FC = () => {
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 14.0) }}>
       <div style={{ position: "absolute", left: 80, right: 80, top: 130, textAlign: "center" }}>
         <Eyebrow style={fadeUp(t, 14.2, 0.5, 30)}>L’appli</Eyebrow>
-        <H size={88} style={{ marginTop: 24, ...fadeUp(t, 14.4, 0.6, 30) }}>Toutes les terrasses<br /><Muted>autour de toi.</Muted></H>
+        <H size={88} style={{ marginTop: 24 }}><Kinetic t={t} t0={14.35} lines={[{ text: "Toutes les terrasses" }, { text: "autour de toi.", muted: true }]} /></H>
       </div>
       <Phone style={phoneIn(t, 14.1)}><ImageSequence files={APP} k={stepped(prog(t, 14.5, 18.0), APP.length - 1)} /></Phone>
     </AbsoluteFill>
@@ -237,10 +270,10 @@ const Count: React.FC = () => {
 };
 
 /* 7 ─ Gratuit. Sans compte. Zéro donnée. */
-const TRIO: [React.ReactNode, string][] = [
-  [<>Gratuit<Dot /></>, "Ouvre, regarde, profite."],
-  [<>Sans<br />compte<Dot /></>, "Pas d’inscription, pas d’email."],
-  [<>Zéro<br />donnée<Dot /></>, "Ta position reste sur ton téléphone."],
+const TRIO: [Line[], string][] = [
+  [[{ text: "Gratuit", dot: true }], "Ouvre, regarde, profite."],
+  [[{ text: "Sans" }, { text: "compte", dot: true }], "Pas d’inscription, pas d’email."],
+  [[{ text: "Zéro" }, { text: "donnée", dot: true }], "Ta position reste sur ton téléphone."],
 ];
 const Trio: React.FC = () => {
   const t = useT(SC.trio[0]);
@@ -248,14 +281,13 @@ const Trio: React.FC = () => {
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 26.0, 0.25), fontFamily: FONT }}>
       {TRIO.map(([big, sub], i) => {
         const t0 = 26.0 + i * 1.25;
-        const k = easeOut(prog(t, t0, t0 + 0.45));
         const ko = i < 2 ? easeInOut(prog(t, t0 + 1.1, t0 + 1.3)) : 0;
         return (
           <div key={i} style={{ position: "absolute", left: 110, right: 110, top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center",
-            opacity: k * (1 - ko), transform: `translateY(${(1 - k) * 90 - ko * 90}px)` }}>
-            <div style={{ fontWeight: 700, fontSize: 34, color: C.ink3, letterSpacing: "0.1em", marginBottom: 40, fontVariantNumeric: "tabular-nums" }}>0{i + 1} / 03</div>
-            <div style={{ fontWeight: 900, fontSize: 190, letterSpacing: "-0.055em", lineHeight: 0.95, color: C.ink }}>{big}</div>
-            <div style={{ marginTop: 40, fontWeight: 600, fontSize: 50, color: C.ink2 }}>{sub}</div>
+            opacity: t < t0 ? 0 : 1 - ko, transform: `translateY(${-ko * 90}px)` }}>
+            <div style={{ fontWeight: 700, fontSize: 34, color: C.ink3, letterSpacing: "0.1em", marginBottom: 40, fontVariantNumeric: "tabular-nums", ...fadeUp(t, t0, 0.4, 20) }}>0{i + 1} / 03</div>
+            <div style={{ fontWeight: 900, fontSize: 190, letterSpacing: "-0.055em", lineHeight: 0.95, color: C.ink }}><Kinetic t={t} t0={t0 + 0.05} stagger={0.12} lines={big} /></div>
+            <div style={{ marginTop: 40, fontWeight: 600, fontSize: 50, color: C.ink2, ...fadeUp(t, t0 + 0.4, 0.45, 30) }}>{sub}</div>
           </div>
         );
       })}
@@ -282,9 +314,9 @@ const Pro: React.FC = () => {
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 29.6) }}>
       <div style={{ position: "absolute", left: 80, right: 80, top: 130 }}>
         <Eyebrow style={fadeUp(t, 29.8, 0.5, 30)}>Restaurateurs</Eyebrow>
-        <H size={84} style={{ marginTop: 24, ...fadeUp(t, 30.0, 0.6, 30, 31.2) }}>Votre terrasse,<br /><Muted>en étoile sur la 3D.</Muted></H>
-        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58, ...fadeUp(t, 31.5, 0.6, 30, 33.2) }}>Votre fiche avec photo,<br /><Muted>réservation et appel.</Muted></H>
-        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58, ...fadeUp(t, 33.5, 0.6, 30) }}>Rejoignez<br /><Muted>la Sélection.</Muted></H>
+        <H size={84} style={{ marginTop: 24 }}><Kinetic t={t} t0={29.95} tOut={31.1} lines={[{ text: "Votre terrasse," }, { text: "en étoile sur la 3D.", muted: true }]} /></H>
+        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Kinetic t={t} t0={31.45} tOut={33.1} lines={[{ text: "Votre fiche avec photo," }, { text: "réservation et appel.", muted: true }]} /></H>
+        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Kinetic t={t} t0={33.45} lines={[{ text: "Rejoignez" }, { text: "la Sélection.", muted: true }]} /></H>
       </div>
       <Phone style={phoneIn(t, 29.7)}>
         <Cover file="app/014.jpg" style={{ transform: `scale(${z})`, transformOrigin: "50% 30%" }} />
@@ -310,8 +342,8 @@ const End: React.FC = () => {
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 33.0), alignItems: "center", justifyContent: "center", fontFamily: FONT }}>
       <Sun size={220} style={{ opacity: ks, transform: `scale(${lerp(0.85, 1, ks) * (1 + 0.035 * pulse)}) rotate(${3 * pulse}deg)` }} />
       <Wordmark size={108} style={{ marginTop: 60, ...fadeUp(t, 33.7, 0.7, 30) }} />
-      <div style={{ marginTop: 34, fontWeight: 700, fontSize: 66, letterSpacing: "-0.045em", color: C.ink2, ...fadeUp(t, 34.3, 0.7, 30) }}>
-        Le soleil, c’est <span style={{ color: C.accent }}>maintenant</span>.
+      <div style={{ marginTop: 34, fontWeight: 700, fontSize: 66, letterSpacing: "-0.045em", color: C.ink2 }}>
+        <Kinetic t={t} t0={34.25} stagger={0.1} lines={[{ text: "Le soleil, c’est maintenant.", accent: "maintenant" }]} />
       </div>
       <div style={{ marginTop: 90, display: "flex", flexDirection: "column", alignItems: "center", gap: 30, ...fadeUp(t, 35.0, 0.7, 30) }}>
         <div style={{ padding: "26px 54px", borderRadius: 999, background: C.ink, color: C.white, fontWeight: 700, fontSize: 42 }}>Lien en bio ↗</div>
