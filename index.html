@@ -2634,6 +2634,8 @@ function openExternalLink(link,event){
 function isEmbeddedIosWebView(){
   const ua=navigator.userAgent||'';
   const ios=/iPhone|iPad|iPod/i.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  // L'appli iPhone à partir de la 1.0.1 sait lancer les appels : pas de panneau.
+  if(/SoleilEnTerrasse\//.test(ua)) return false;
   return ios && !/Safari\//i.test(ua) && navigator.standalone!==true;
 }
 function readablePhoneNumber(telHref){
