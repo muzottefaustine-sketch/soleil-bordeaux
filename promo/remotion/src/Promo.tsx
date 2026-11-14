@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Audio, Img, OffthreadVideo, Sequence, staticFile, useVideoConfig, interpolate } from "remotion";
+import { AbsoluteFill, Audio, Img, Sequence, staticFile, useVideoConfig, interpolate } from "remotion";
 import { C, FONT, clamp, lerp, prog, easeOut, easeInOut, fadeUp, hourLabel, formatFr } from "./theme";
 import { useT, Sun, Wordmark, Eyebrow, Dot, H, Phone, ImageSequence, Cover } from "./components";
 
@@ -10,8 +10,8 @@ const seq = (dir: string, n: number, from = 0) => Array.from({ length: n }, (_, 
 // Close-ups of tall buildings whose shadows move. Each place covers a slice of the day.
 const PLACES = [
   { name: "Cathédrale Saint-André", files: seq("hero/andre", 14), from: 7.25, to: 11.75 },
-  { name: "Cathédrale Saint-André", files: seq("hero/andre2", 11), from: 11.75, to: 15.85 },
-  { name: "Flèche Saint-Michel", files: seq("hero/fleche", 8, 1), from: 16, to: 19.5 },
+  { name: "Cathédrale Saint-André", files: seq("hero/andre2", 12), from: 11.75, to: 16.25 },
+  { name: "Place Meynard · Saint-Michel", files: seq("hero/meynard", 14, 26), from: 16.25, to: 20.75 },
 ];
 const HERO = PLACES.flatMap((pl) => pl.files);
 /** Place and hour shown at progress k of the HERO sequence. */
@@ -23,6 +23,7 @@ const heroAt = (k: number) => {
   }
   return { name: "", hour: 0 };
 };
+const FLECHE = seq("hero/fleche", 9); // flèche Saint-Michel, 15h30 → 19h30
 const APP = seq("app-centre", 7); // app UI over the city centre, 8h → 19h30
 
 // Scene windows in seconds [start, end]. Scenes overlap so each one fades in over the previous.
@@ -42,7 +43,7 @@ const stepped = (k: number, steps: number) => {
 };
 const expo = (x: number) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * clamp(x)));
 const back = (x: number) => { const c = 2.4, y = clamp(x) - 1; return 1 + (c + 1) * y * y * y + c * y * y; };
-type Line = { text: string; muted?: boolean; dot?: boolean; accent?: string };
+type Line = { text: string; muted?: boolean; dot?: boolean; accent?: string; mark?: boolean };
 /** Kinetic headline: each word rises from behind a mask, one after the other; the yellow dot pops in last. */
 const Kinetic: React.FC<{ t: number; t0: number; tOut?: number; stagger?: number; lines: Line[] }> = ({ t, t0, tOut, stagger = 0.075, lines }) => {
   let n = 0;
@@ -53,13 +54,16 @@ const Kinetic: React.FC<{ t: number; t0: number; tOut?: number; stagger?: number
         const words = line.text.split(" ");
         return (
           <div key={li} style={{ color: line.muted ? C.ink3 : undefined, whiteSpace: "nowrap" }}>
+           <span style={{ position: "relative", display: "inline-block" }}>
+            {line.mark && <span style={{ position: "absolute", left: "-0.08em", right: "-0.08em", bottom: "0.1em", height: "0.34em", borderRadius: "0.06em", background: "#FFE566",
+              transformOrigin: "0 50%", transform: `scaleX(${expo(prog(t, t0 + (n + words.length) * stagger + 0.15, t0 + (n + words.length) * stagger + 0.85)) * (tOut === undefined ? 1 : 1 - easeInOut(prog(t, tOut, tOut + 0.25)))})` }} />}
             {words.map((w, wi) => {
               const a = t0 + n++ * stagger;
               const k = expo(prog(t, a, a + 0.7));
               const ko = tOut === undefined ? 0 : easeInOut(prog(t, tOut + li * 0.05, tOut + li * 0.05 + 0.3));
               const last = wi === words.length - 1;
               return (
-                <span key={wi} style={{ ...mask, marginRight: last ? 0 : "0.2em" }}>
+                <span key={wi} style={{ ...mask, position: "relative", marginRight: last ? 0 : "0.2em" }}>
                   <span style={{ display: "inline-block", transform: `translateY(${(1 - k) * 112 - ko * 112}%)`, color: line.accent && w.startsWith(line.accent) ? C.accent : undefined }}>
                     {w}
                     {last && line.dot && <span style={{ display: "inline-block", color: C.accent, transform: `scale(${back(prog(t, a + 0.3, a + 0.75))})`, transformOrigin: "50% 85%" }}>.</span>}
@@ -67,11 +71,17 @@ const Kinetic: React.FC<{ t: number; t0: number; tOut?: number; stagger?: number
                 </span>
               );
             })}
+           </span>
           </div>
         );
       })}
     </>
   );
+};
+/** Small label that fades in while its letters tighten. */
+const trackIn = (t: number, t0: number): React.CSSProperties => {
+  const k = expo(prog(t, t0, t0 + 0.9));
+  return { opacity: prog(t, t0, t0 + 0.3), letterSpacing: `${lerp(0.5, 0.16, k)}em`, whiteSpace: "nowrap" };
 };
 const fadeInOpacity = (t: number, start: number, d = 0.4) => easeInOut(prog(t, start, start + d));
 const phoneIn = (t: number, t0: number): React.CSSProperties => {
@@ -104,21 +114,21 @@ const Splash: React.FC = () => {
   );
 };
 
-/* 2 ─ Grand soleil : a real Bordeaux terrace (filmed by the owner) */
+/* 2 ─ Grand soleil : close-up of the Saint-Michel spire in the app's 3D, shadow turning */
 const Grand: React.FC = () => {
   const t = useT(SC.grand[0]);
   const k = prog(t, 4.0, 8.0);
   return (
     <AbsoluteFill style={{ background: C.white }}>
-      <OffthreadVideo src={staticFile("terrasse.mp4")} muted style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
-        transform: `scale(${lerp(1.0, 1.07, k)})`, transformOrigin: "60% 65%" }} />
+      <ImageSequence files={FLECHE} k={k} style={{ transform: `scale(${lerp(1.14, 1.04, easeOut(k))})` }} />
       <div style={{ position: "absolute", left: 60, right: 60, top: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)", ...fadeUp(t, 4.4, 0.5, -40) }}>
-        <Eyebrow color={C.ink2} style={fadeUp(t, 4.4, 0.5, 30)}>Bordeaux · en terrasse</Eyebrow>
+        <Eyebrow color={C.ink2} style={trackIn(t, 4.5)}>Bordeaux · {hourLabel(lerp(15.5, 19.5, k))}</Eyebrow>
         <H size={150} style={{ marginTop: 26, lineHeight: 0.98 }}><Kinetic t={t} t0={4.6} stagger={0.14} lines={[{ text: "Grand" }, { text: "soleil", dot: true }]} /></H>
-        <div style={{ marginTop: 30, fontFamily: FONT, fontWeight: 600, fontSize: 48, whiteSpace: "nowrap", color: C.ink2, ...fadeUp(t, 5.8, 0.6, 30) }}>
-          Reste à trouver la bonne terrasse.
+        <div style={{ marginTop: 30, fontFamily: FONT, fontWeight: 600, fontSize: 48, color: C.ink2 }}>
+          <Kinetic t={t} t0={5.7} stagger={0.06} lines={[{ text: "Reste à trouver la bonne terrasse." }]} />
         </div>
       </div>
+      <TimePanel hour={lerp(15.5, 19.5, k)} style={fadeUp(t, 4.6, 0.6, 60)} />
     </AbsoluteFill>
   );
 };
@@ -156,12 +166,14 @@ const Shadows: React.FC = () => {
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 7.6) }}>
       <ImageSequence files={HERO} k={k} style={{ transform: `scale(${lerp(1.04, 1.12, k)})` }} />
       <div style={{ position: "absolute", left: 60, right: 60, top: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)", ...fadeUp(t, 8.0, 0.5, -40) }}>
-        <Eyebrow color={C.ink2} style={fadeUp(t, 8.1, 0.5, 30)}>Calcul d’ombres 3D</Eyebrow>
-        <H size={104} style={{ marginTop: 26 }}><Kinetic t={t} t0={8.3} stagger={0.12} lines={[{ text: "Chaque immeuble", dot: true }]} /></H>
-        <H size={104}><Kinetic t={t} t0={9.0} stagger={0.12} lines={[{ text: "Chaque heure", muted: true, dot: true }]} /></H>
+        <Eyebrow color={C.ink2} style={trackIn(t, 8.1)}>Calcul d’ombres 3D</Eyebrow>
+        <H size={98} style={{ marginTop: 26 }}><Kinetic t={t} t0={8.3} stagger={0.1} lines={[{ text: "L’ombre de" }, { text: "chaque immeuble.", mark: true }]} /></H>
+        <div style={{ marginTop: 30, fontFamily: FONT, fontWeight: 600, fontSize: 48, color: C.ink2 }}>
+          <Kinetic t={t} t0={9.1} stagger={0.06} lines={[{ text: "Calculée en 3D, heure par heure." }]} />
+        </div>
       </div>
       {/* location pill, as in the app */}
-      <div style={{ position: "absolute", top: 536, left: 0, right: 0, display: "flex", justifyContent: "center", ...fadeUp(t, 8.4, 0.5, -20) }}>
+      <div style={{ position: "absolute", top: 640, left: 0, right: 0, display: "flex", justifyContent: "center", ...fadeUp(t, 8.4, 0.5, -20) }}>
         <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "20px 34px", borderRadius: 999, background: "rgba(255,255,255,0.9)",
           backdropFilter: "blur(50px)", boxShadow: "0 22px 66px rgba(15,23,42,0.18)", fontFamily: FONT, fontWeight: 800, fontSize: 36, color: C.ink }}>
           <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#007AFF", boxShadow: "0 0 0 11px rgba(0,122,255,0.14)" }} />
@@ -179,8 +191,8 @@ const App: React.FC = () => {
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 14.0) }}>
       <div style={{ position: "absolute", left: 80, right: 80, top: 130, textAlign: "center" }}>
-        <Eyebrow style={fadeUp(t, 14.2, 0.5, 30)}>L’appli</Eyebrow>
-        <H size={88} style={{ marginTop: 24 }}><Kinetic t={t} t0={14.35} lines={[{ text: "Toutes les terrasses" }, { text: "autour de toi.", muted: true }]} /></H>
+        <Eyebrow style={trackIn(t, 14.2)}>L’appli</Eyebrow>
+        <H size={88} style={{ marginTop: 24 }}><Kinetic t={t} t0={14.35} lines={[{ text: "Toutes les terrasses" }, { text: "autour de toi.", mark: true }]} /></H>
       </div>
       <Phone style={phoneIn(t, 14.1)}><ImageSequence files={APP} k={stepped(prog(t, 14.5, 18.0), APP.length - 1)} /></Phone>
     </AbsoluteFill>
@@ -195,7 +207,7 @@ const Filters: React.FC = () => {
   const active = clamp(Math.floor((t - s0) / beat), 0, 3);
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 18.0, 0.3), fontFamily: FONT }}>
-      <Eyebrow style={{ position: "absolute", top: 200, left: 0, right: 0, textAlign: "center", ...fadeUp(t, 18.1, 0.5, 30) }}>Filtre ce qui te fait envie</Eyebrow>
+      <Eyebrow style={{ position: "absolute", top: 200, left: 0, right: 0, textAlign: "center", ...trackIn(t, 18.1) }}>Filtre ce qui te fait envie</Eyebrow>
       <div style={{ position: "absolute", top: 560, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 12 }}>
         {FILTERS.map(([emoji, label], j) => {
           const k = easeOut(prog(t, 18.15 + j * 0.08, 18.6 + j * 0.08));
@@ -242,7 +254,7 @@ const Count: React.FC = () => {
   const pop = easeOut(prog(t, 25.3, 25.6)) * (1 - easeOut(prog(t, 25.6, 26.0)));
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 22.0), fontFamily: FONT }}>
-      <Eyebrow style={{ position: "absolute", top: 200, left: 0, right: 0, textAlign: "center", ...fadeUp(t, 22.1, 0.5, 30) }}>Partout en France</Eyebrow>
+      <Eyebrow style={{ position: "absolute", top: 200, left: 0, right: 0, textAlign: "center", ...trackIn(t, 22.1) }}>Partout en France</Eyebrow>
       <div style={{ position: "absolute", left: 0, right: 0, top: 330, height: 560, overflow: "hidden",
         WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%)" }}>
         {rows.map(([c, n], i) => {
@@ -313,10 +325,10 @@ const Pro: React.FC = () => {
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 29.6) }}>
       <div style={{ position: "absolute", left: 80, right: 80, top: 130 }}>
-        <Eyebrow style={fadeUp(t, 29.8, 0.5, 30)}>Restaurateurs</Eyebrow>
-        <H size={84} style={{ marginTop: 24 }}><Kinetic t={t} t0={29.95} tOut={31.1} lines={[{ text: "Votre terrasse," }, { text: "en étoile sur la 3D.", muted: true }]} /></H>
-        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Kinetic t={t} t0={31.45} tOut={33.1} lines={[{ text: "Votre fiche avec photo," }, { text: "réservation et appel.", muted: true }]} /></H>
-        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Kinetic t={t} t0={33.45} lines={[{ text: "Rejoignez" }, { text: "la Sélection.", muted: true }]} /></H>
+        <Eyebrow style={trackIn(t, 29.8)}>Restaurateurs</Eyebrow>
+        <H size={84} style={{ marginTop: 24 }}><Kinetic t={t} t0={29.95} tOut={31.1} lines={[{ text: "Votre terrasse," }, { text: "en étoile sur la 3D.", mark: true }]} /></H>
+        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Kinetic t={t} t0={31.45} tOut={33.1} lines={[{ text: "Votre fiche avec photo," }, { text: "réservation et appel." }]} /></H>
+        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Kinetic t={t} t0={33.45} lines={[{ text: "Rejoignez" }, { text: "la Sélection.", mark: true }]} /></H>
       </div>
       <Phone style={phoneIn(t, 29.7)}>
         <Cover file="app/014.jpg" style={{ transform: `scale(${z})`, transformOrigin: "50% 30%" }} />
