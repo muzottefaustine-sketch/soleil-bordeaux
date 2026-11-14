@@ -239,47 +239,49 @@ const Filters: React.FC = () => {
   );
 };
 
-/* 6 ─ Partout en France : total from data/*.json, cities scroll past in bands */
+/* 6 ─ Partout en France : the counter adds each city as it passes (data/*.json) */
 const CITIES: [string, number][] = [["Bordeaux", 1531], ["Lyon", 2643], ["Marseille", 1420], ["Toulouse", 1356], ["Nice", 1126], ["Nantes", 1043], ["Lille", 1030], ["Strasbourg", 1015], ["Cannes", 318]];
 const TOTAL = CITIES.reduce((a, c) => a + c[1], 0); // 11 482
-const Band: React.FC<{ cities: [string, number][]; x: number }> = ({ cities, x }) => (
-  <div style={{ display: "flex", gap: 28, transform: `translateX(${x}px)`, whiteSpace: "nowrap" }}>
-    {[0, 1, 2, 3, 4].flatMap((r) => cities.map(([c, n]) => (
-      <div key={c + r} style={{ display: "flex", alignItems: "center", gap: 22, padding: "28px 44px", borderRadius: 999, background: C.white, border: `3px solid ${C.line}` }}>
-        <span style={{ fontWeight: 700, fontSize: 70, letterSpacing: "-0.03em", color: C.ink }}>{c}</span>
-        <span style={{ fontWeight: 700, fontSize: 44, color: C.gold, background: C.sunBg, padding: "8px 22px", borderRadius: 999 }}>+{formatFr(n)}</span>
-      </div>
-    )))}
-  </div>
-);
 const Count: React.FC = () => {
   const t = useT(SC.count[0]);
-  const cum = t >= 25.2 ? TOTAL : Math.round(TOTAL * easeInOut(prog(t, 22.3, 25.2)));
-  const pop = easeOut(prog(t, 25.2, 25.5)) * (1 - easeOut(prog(t, 25.5, 25.9)));
-  const drift = (t - 22) * 190;
+  const rows: [string, number][] = CITIES;
+  const pos = easeInOut(prog(t, 22.4, 25.3)) * (rows.length - 1);
+  const ip = Math.floor(pos), fr = pos - ip;
+  let cum = 0;
+  CITIES.forEach(([, n], i) => { if (i <= ip) cum += n; else if (i === ip + 1) cum += n * easeOut(fr); });
+  cum = Math.min(TOTAL, cum * easeOut(prog(t, 22.1, 22.5)));
+  if (t >= 25.3) cum = TOTAL;
+  const pop = easeOut(prog(t, 25.3, 25.6)) * (1 - easeOut(prog(t, 25.6, 26.0)));
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 22.0), fontFamily: FONT }}>
-      <Eyebrow style={{ position: "absolute", top: 300, left: 0, right: 0, textAlign: "center", ...trackIn(t, 22.1) }}>Partout en France</Eyebrow>
-      <div style={{ position: "absolute", top: 400, left: 0, right: 0, textAlign: "center", ...fadeUp(t, 22.15, 0.6, 50) }}>
-        <div style={{ fontWeight: 900, fontSize: 260, letterSpacing: "-0.05em", lineHeight: 1, color: C.ink, fontVariantNumeric: "tabular-nums", transform: `scale(${1 + 0.06 * pop})` }}>
-          {formatFr(cum)}
+      <Eyebrow style={{ position: "absolute", top: 200, left: 0, right: 0, textAlign: "center", ...trackIn(t, 22.1) }}>Partout en France</Eyebrow>
+      <div style={{ position: "absolute", left: 0, right: 0, top: 330, height: 560, overflow: "hidden",
+        WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%)" }}>
+        {rows.map(([c, n], i) => {
+          const d = i - pos, a = clamp(1 - Math.abs(d) * 0.55);
+          return (
+            <div key={c} style={{ position: "absolute", left: 0, right: 0, top: 280 - 56 + d * 112, height: 112, display: "flex", alignItems: "center",
+              justifyContent: "center", gap: 28, opacity: 0.25 + 0.75 * a, transform: `scale(${0.86 + 0.14 * a})` }}>
+              <span style={{ whiteSpace: "nowrap", fontWeight: 800, fontSize: 84, letterSpacing: "-0.04em", color: Math.abs(d) < 0.5 ? C.ink : C.ink3 }}>{c}</span>
+              {n > 0 && <span style={{ fontWeight: 700, fontSize: 40, color: C.gold, background: C.sunBg, padding: "8px 20px", borderRadius: 999 }}>+{formatFr(n)}</span>}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ position: "absolute", top: 960, left: 0, right: 0, textAlign: "center" }}>
+        <div style={{ fontWeight: 900, fontSize: 250, letterSpacing: "-0.05em", lineHeight: 1, color: C.ink, fontVariantNumeric: "tabular-nums", transform: `scale(${1 + 0.06 * pop})` }}>
+          {formatFr(Math.round(cum))}
         </div>
         <div style={{ width: 640, height: 8, margin: "44px auto 0", background: "#F1F2F4", borderRadius: 6, overflow: "hidden" }}>
           <div style={{ height: "100%", width: `${(cum / TOTAL) * 100}%`, background: C.sun }} />
         </div>
-        <div style={{ marginTop: 44, fontSize: 60, letterSpacing: "-0.03em", color: C.ink }}><span style={{ fontWeight: 500 }}>terrasses &amp; lieux </span><span style={{ fontWeight: 800 }}>référencés</span></div>
-      </div>
-      <div style={{ position: "absolute", top: 1130, left: 0, right: 0, display: "flex", flexDirection: "column", gap: 40,
-        WebkitMaskImage: "linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%)" }}>
-        {[CITIES.slice(0, 3), CITIES.slice(3, 6), CITIES.slice(6, 9)].map((row, i) => (
-          <div key={i} style={fadeUp(t, 22.4 + i * 0.15, 0.6, 50)}><Band cities={row} x={i % 2 === 0 ? -200 - drift : -2200 + drift} /></div>
-        ))}
+        <div style={{ marginTop: 44, fontWeight: 700, fontSize: 62, letterSpacing: "-0.03em", color: C.ink, opacity: easeOut(prog(t, 22.3, 22.8)) }}>terrasses &amp; lieux référencés</div>
       </div>
     </AbsoluteFill>
   );
 };
 
-/* 7 ─ Gratuit. Sans compte. Zéro donnée. — numbered cards sliding past, slightly tilted */
+/* 7 ─ Gratuit. Sans compte. Zéro donnée. */
 const TRIO: [Line[], string][] = [
   [[{ text: "Gratuit", dot: true }], "Ouvre, regarde, profite."],
   [[{ text: "Sans" }, { text: "compte", dot: true }], "Pas d’inscription, pas d’email."],
@@ -287,29 +289,20 @@ const TRIO: [Line[], string][] = [
 ];
 const Trio: React.FC = () => {
   const t = useT(SC.trio[0]);
-  const step = 1.25;
-  const cur = easeInOut(prog(t, 26.0 + step - 0.25, 26.0 + step + 0.2)) + easeInOut(prog(t, 26.0 + 2 * step - 0.25, 26.0 + 2 * step + 0.2));
-  const rise = expo(prog(t, 26.0, 26.8));
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 26.0, 0.25), fontFamily: FONT }}>
-      <Eyebrow style={{ position: "absolute", top: 300, left: 0, right: 0, textAlign: "center", ...trackIn(t, 26.1) }}>Sans contrainte</Eyebrow>
       {TRIO.map(([big, sub], i) => {
-        const d = i - cur, t0 = 26.0 + i * step - (i ? 0.1 : 0);
+        const t0 = 26.0 + i * 1.25;
+        const ko = i < 2 ? easeInOut(prog(t, t0 + 1.1, t0 + 1.3)) : 0;
         return (
-          <div key={i} style={{ position: "absolute", left: 150, top: 460, width: 780, height: 980, borderRadius: 72, background: C.ink, color: C.white, padding: "70px 70px",
-            display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 50px 100px rgba(15,23,42,0.22)",
-            transform: `translateX(${d * 800}px) translateY(${Math.abs(d) * 70 + (1 - rise) * 500}px) rotate(${d * 5}deg) scale(${1 - 0.06 * Math.min(1, Math.abs(d))})`, opacity: rise }}>
-            <div style={{ fontWeight: 500, fontSize: 150, letterSpacing: "-0.05em", lineHeight: 1, color: C.accent, fontVariantNumeric: "tabular-nums" }}>0{i + 1}</div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 150, letterSpacing: "-0.055em", lineHeight: 0.98 }}><Kinetic t={t} t0={t0 + 0.15} stagger={0.12} lines={big} /></div>
-              <div style={{ marginTop: 36, fontWeight: 500, fontSize: 37, whiteSpace: "nowrap", color: "#C5CAD3", ...fadeUp(t, t0 + 0.5, 0.45, 24) }}>{sub}</div>
-            </div>
+          <div key={i} style={{ position: "absolute", left: 110, right: 110, top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center",
+            opacity: t < t0 ? 0 : 1 - ko, transform: `translateY(${-ko * 90}px)` }}>
+            <div style={{ fontWeight: 700, fontSize: 34, color: C.ink3, letterSpacing: "0.1em", marginBottom: 40, fontVariantNumeric: "tabular-nums", ...fadeUp(t, t0, 0.4, 20) }}>0{i + 1} / 03</div>
+            <div style={{ fontWeight: 900, fontSize: 190, letterSpacing: "-0.055em", lineHeight: 0.95, color: C.ink }}><Kinetic t={t} t0={t0 + 0.05} stagger={0.12} lines={big} /></div>
+            <div style={{ marginTop: 40, fontWeight: 600, fontSize: 50, color: C.ink2, ...fadeUp(t, t0 + 0.4, 0.45, 30) }}>{sub}</div>
           </div>
         );
       })}
-      <div style={{ position: "absolute", top: 1530, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 14, ...fadeUp(t, 26.3, 0.5, 20) }}>
-        {[0, 1, 2].map((i) => { const on = clamp(1 - Math.abs(i - cur)); return <div key={i} style={{ height: 14, width: 14 + 42 * on, borderRadius: 7, background: on > 0.5 ? C.ink : C.line }} />; })}
-      </div>
     </AbsoluteFill>
   );
 };
