@@ -43,7 +43,7 @@ const stepped = (k: number, steps: number) => {
 };
 const expo = (x: number) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * clamp(x)));
 const back = (x: number) => { const c = 2.4, y = clamp(x) - 1; return 1 + (c + 1) * y * y * y + c * y * y; };
-type Line = { text: string; muted?: boolean; dot?: boolean; accent?: string; mark?: boolean };
+type Line = { text: string; muted?: boolean; dot?: boolean; accent?: string; mark?: boolean; light?: boolean };
 /** Kinetic headline: each word rises from behind a mask, one after the other; the yellow dot pops in last. */
 const Kinetic: React.FC<{ t: number; t0: number; tOut?: number; stagger?: number; lines: Line[] }> = ({ t, t0, tOut, stagger = 0.075, lines }) => {
   let n = 0;
@@ -53,7 +53,7 @@ const Kinetic: React.FC<{ t: number; t0: number; tOut?: number; stagger?: number
       {lines.map((line, li) => {
         const words = line.text.split(" ");
         return (
-          <div key={li} style={{ color: line.muted ? C.ink3 : undefined, whiteSpace: "nowrap" }}>
+          <div key={li} style={{ color: line.muted ? C.ink3 : undefined, fontWeight: line.light ? 500 : undefined, whiteSpace: "nowrap" }}>
            <span style={{ position: "relative", display: "inline-block" }}>
             {line.mark && <span style={{ position: "absolute", left: "-0.08em", right: "-0.08em", bottom: "0.1em", height: "0.34em", borderRadius: "0.06em", background: "#FFE566",
               transformOrigin: "0 50%", transform: `scaleX(${expo(prog(t, t0 + (n + words.length) * stagger + 0.15, t0 + (n + words.length) * stagger + 0.85)) * (tOut === undefined ? 1 : 1 - easeInOut(prog(t, tOut, tOut + 0.25)))})` }} />}
@@ -167,7 +167,7 @@ const Shadows: React.FC = () => {
       <ImageSequence files={HERO} k={k} style={{ transform: `scale(${lerp(1.04, 1.12, k)})` }} />
       <div style={{ position: "absolute", left: 60, right: 60, top: 110, padding: "48px 56px 56px", background: "rgba(255,255,255,0.94)", borderRadius: 48, boxShadow: "0 24px 60px rgba(15,23,42,0.18)", ...fadeUp(t, 8.0, 0.5, -40) }}>
         <Eyebrow color={C.ink2} style={trackIn(t, 8.1)}>Calcul d’ombres 3D</Eyebrow>
-        <H size={98} style={{ marginTop: 26 }}><Kinetic t={t} t0={8.3} stagger={0.1} lines={[{ text: "L’ombre de" }, { text: "chaque immeuble.", mark: true }]} /></H>
+        <H size={98} style={{ marginTop: 26 }}><Kinetic t={t} t0={8.3} stagger={0.1} lines={[{ text: "L’ombre de", light: true }, { text: "chaque immeuble.", mark: true }]} /></H>
         <div style={{ marginTop: 30, fontFamily: FONT, fontWeight: 600, fontSize: 48, color: C.ink2 }}>
           <Kinetic t={t} t0={9.1} stagger={0.06} lines={[{ text: "Calculée en 3D, heure par heure." }]} />
         </div>
@@ -192,7 +192,7 @@ const App: React.FC = () => {
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 14.0) }}>
       <div style={{ position: "absolute", left: 80, right: 80, top: 130, textAlign: "center" }}>
         <Eyebrow style={trackIn(t, 14.2)}>L’appli</Eyebrow>
-        <H size={88} style={{ marginTop: 24 }}><Kinetic t={t} t0={14.35} lines={[{ text: "Toutes les terrasses" }, { text: "autour de toi.", mark: true }]} /></H>
+        <H size={88} style={{ marginTop: 24 }}><Kinetic t={t} t0={14.35} lines={[{ text: "Toutes les terrasses", light: true }, { text: "autour de toi.", mark: true }]} /></H>
       </div>
       <Phone style={phoneIn(t, 14.1)}><ImageSequence files={APP} k={stepped(prog(t, 14.5, 18.0), APP.length - 1)} /></Phone>
     </AbsoluteFill>
@@ -200,21 +200,21 @@ const App: React.FC = () => {
 };
 
 /* 5 ─ Filtre ce qui te fait envie (typographic) */
-const FILTERS: [string, string, string][] = [["☕", "Cafés", "Un café"], ["🍴", "Restaurants", "Un déj’"], ["🍹", "Bars", "L’apéro"], ["🌊", "Canicule", "Au frais"]];
+const FILTERS: [string, string, string][] = [["☕", "Cafés", "Un café"], ["🍴", "Restaurants", "Un déj’"], ["🍹", "Bars", "L’apéro"]];
 const Filters: React.FC = () => {
   const t = useT(SC.filters[0]);
-  const beat = 0.95, s0 = 18.4;
-  const active = clamp(Math.floor((t - s0) / beat), 0, 3);
+  const beat = 1.25, s0 = 18.4;
+  const active = clamp(Math.floor((t - s0) / beat), 0, FILTERS.length - 1);
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 18.0, 0.3), fontFamily: FONT }}>
       <Eyebrow style={{ position: "absolute", top: 200, left: 0, right: 0, textAlign: "center", ...trackIn(t, 18.1) }}>Filtre ce qui te fait envie</Eyebrow>
-      <div style={{ position: "absolute", top: 560, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 12 }}>
+      <div style={{ position: "absolute", top: 560, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 20 }}>
         {FILTERS.map(([emoji, label], j) => {
           const k = easeOut(prog(t, 18.15 + j * 0.08, 18.6 + j * 0.08));
           const on = j === active && t >= s0;
           return (
-            <div key={label} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "14px 22px", whiteSpace: "nowrap", borderRadius: 999,
-              fontWeight: 700, fontSize: 31, background: on ? C.ink : C.white, color: on ? C.white : C.ink, border: `2px solid ${on ? C.ink : C.line}`,
+            <div key={label} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "18px 30px", whiteSpace: "nowrap", borderRadius: 999,
+              fontWeight: 700, fontSize: 38, background: on ? C.ink : C.white, color: on ? C.white : C.ink, border: `2px solid ${on ? C.ink : C.line}`,
               opacity: k, transform: `translateY(${(1 - k) * 30}px)` }}><span>{emoji}</span>{label}</div>
           );
         })}
@@ -223,7 +223,7 @@ const Filters: React.FC = () => {
         {FILTERS.map(([, , word], j) => {
           const a = s0 + j * beat;
           const kin = easeOut(prog(t, a, a + 0.35));
-          const kout = j < 3 ? easeInOut(prog(t, a + beat, a + beat + 0.3)) : 0;
+          const kout = j < FILTERS.length - 1 ? easeInOut(prog(t, a + beat, a + beat + 0.3)) : 0;
           return (
             <div key={word} style={{ position: "absolute", left: 0, right: 0, textAlign: "center", fontSize: 230, lineHeight: "300px", fontWeight: 900,
               letterSpacing: "-0.055em", color: C.ink, opacity: t < a ? 0 : 1 - kout, transform: `translateY(${(1 - kin) * 300 - kout * 300}px)` }}>
@@ -239,49 +239,47 @@ const Filters: React.FC = () => {
   );
 };
 
-/* 6 ─ Partout en France : the counter adds each city as it passes (data/*.json) */
+/* 6 ─ Partout en France : total from data/*.json, cities scroll past in bands */
 const CITIES: [string, number][] = [["Bordeaux", 1531], ["Lyon", 2643], ["Marseille", 1420], ["Toulouse", 1356], ["Nice", 1126], ["Nantes", 1043], ["Lille", 1030], ["Strasbourg", 1015], ["Cannes", 318]];
 const TOTAL = CITIES.reduce((a, c) => a + c[1], 0); // 11 482
+const Band: React.FC<{ cities: [string, number][]; x: number }> = ({ cities, x }) => (
+  <div style={{ display: "flex", gap: 28, transform: `translateX(${x}px)`, whiteSpace: "nowrap" }}>
+    {[0, 1, 2, 3, 4].flatMap((r) => cities.map(([c, n]) => (
+      <div key={c + r} style={{ display: "flex", alignItems: "center", gap: 22, padding: "28px 44px", borderRadius: 999, background: C.white, border: `3px solid ${C.line}` }}>
+        <span style={{ fontWeight: 700, fontSize: 70, letterSpacing: "-0.03em", color: C.ink }}>{c}</span>
+        <span style={{ fontWeight: 700, fontSize: 44, color: C.gold, background: C.sunBg, padding: "8px 22px", borderRadius: 999 }}>+{formatFr(n)}</span>
+      </div>
+    )))}
+  </div>
+);
 const Count: React.FC = () => {
   const t = useT(SC.count[0]);
-  const rows: [string, number][] = [...CITIES, ["Paris · Montpellier", 0]];
-  const pos = easeInOut(prog(t, 22.4, 25.3)) * (rows.length - 1);
-  const ip = Math.floor(pos), fr = pos - ip;
-  let cum = 0;
-  CITIES.forEach(([, n], i) => { if (i <= ip) cum += n; else if (i === ip + 1) cum += n * easeOut(fr); });
-  cum = Math.min(TOTAL, cum * easeOut(prog(t, 22.1, 22.5)));
-  if (t >= 25.3) cum = TOTAL;
-  const pop = easeOut(prog(t, 25.3, 25.6)) * (1 - easeOut(prog(t, 25.6, 26.0)));
+  const cum = t >= 25.2 ? TOTAL : Math.round(TOTAL * easeInOut(prog(t, 22.3, 25.2)));
+  const pop = easeOut(prog(t, 25.2, 25.5)) * (1 - easeOut(prog(t, 25.5, 25.9)));
+  const drift = (t - 22) * 190;
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 22.0), fontFamily: FONT }}>
-      <Eyebrow style={{ position: "absolute", top: 200, left: 0, right: 0, textAlign: "center", ...trackIn(t, 22.1) }}>Partout en France</Eyebrow>
-      <div style={{ position: "absolute", left: 0, right: 0, top: 330, height: 560, overflow: "hidden",
-        WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%)" }}>
-        {rows.map(([c, n], i) => {
-          const d = i - pos, a = clamp(1 - Math.abs(d) * 0.55);
-          return (
-            <div key={c} style={{ position: "absolute", left: 0, right: 0, top: 280 - 56 + d * 112, height: 112, display: "flex", alignItems: "center",
-              justifyContent: "center", gap: 28, opacity: 0.25 + 0.75 * a, transform: `scale(${0.86 + 0.14 * a})` }}>
-              <span style={{ whiteSpace: "nowrap", fontWeight: 800, fontSize: 84, letterSpacing: "-0.04em", color: Math.abs(d) < 0.5 ? C.ink : C.ink3 }}>{c}</span>
-              {n > 0 && <span style={{ fontWeight: 700, fontSize: 40, color: C.gold, background: C.sunBg, padding: "8px 20px", borderRadius: 999 }}>+{formatFr(n)}</span>}
-            </div>
-          );
-        })}
-      </div>
-      <div style={{ position: "absolute", top: 960, left: 0, right: 0, textAlign: "center" }}>
-        <div style={{ fontWeight: 900, fontSize: 250, letterSpacing: "-0.05em", lineHeight: 1, color: C.ink, fontVariantNumeric: "tabular-nums", transform: `scale(${1 + 0.06 * pop})` }}>
-          {formatFr(Math.round(cum))}
+      <Eyebrow style={{ position: "absolute", top: 300, left: 0, right: 0, textAlign: "center", ...trackIn(t, 22.1) }}>Partout en France</Eyebrow>
+      <div style={{ position: "absolute", top: 400, left: 0, right: 0, textAlign: "center", ...fadeUp(t, 22.15, 0.6, 50) }}>
+        <div style={{ fontWeight: 900, fontSize: 260, letterSpacing: "-0.05em", lineHeight: 1, color: C.ink, fontVariantNumeric: "tabular-nums", transform: `scale(${1 + 0.06 * pop})` }}>
+          {formatFr(cum)}
         </div>
         <div style={{ width: 640, height: 8, margin: "44px auto 0", background: "#F1F2F4", borderRadius: 6, overflow: "hidden" }}>
           <div style={{ height: "100%", width: `${(cum / TOTAL) * 100}%`, background: C.sun }} />
         </div>
-        <div style={{ marginTop: 44, fontWeight: 700, fontSize: 62, letterSpacing: "-0.03em", color: C.ink, opacity: easeOut(prog(t, 22.3, 22.8)) }}>terrasses &amp; lieux référencés</div>
+        <div style={{ marginTop: 44, fontSize: 60, letterSpacing: "-0.03em", color: C.ink }}><span style={{ fontWeight: 500 }}>terrasses &amp; lieux </span><span style={{ fontWeight: 800 }}>référencés</span></div>
+      </div>
+      <div style={{ position: "absolute", top: 1130, left: 0, right: 0, display: "flex", flexDirection: "column", gap: 40,
+        WebkitMaskImage: "linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%)" }}>
+        {[CITIES.slice(0, 3), CITIES.slice(3, 6), CITIES.slice(6, 9)].map((row, i) => (
+          <div key={i} style={fadeUp(t, 22.4 + i * 0.15, 0.6, 50)}><Band cities={row} x={i % 2 === 0 ? -200 - drift : -2200 + drift} /></div>
+        ))}
       </div>
     </AbsoluteFill>
   );
 };
 
-/* 7 ─ Gratuit. Sans compte. Zéro donnée. */
+/* 7 ─ Gratuit. Sans compte. Zéro donnée. — numbered cards sliding past, slightly tilted */
 const TRIO: [Line[], string][] = [
   [[{ text: "Gratuit", dot: true }], "Ouvre, regarde, profite."],
   [[{ text: "Sans" }, { text: "compte", dot: true }], "Pas d’inscription, pas d’email."],
@@ -289,20 +287,29 @@ const TRIO: [Line[], string][] = [
 ];
 const Trio: React.FC = () => {
   const t = useT(SC.trio[0]);
+  const step = 1.25;
+  const cur = easeInOut(prog(t, 26.0 + step - 0.25, 26.0 + step + 0.2)) + easeInOut(prog(t, 26.0 + 2 * step - 0.25, 26.0 + 2 * step + 0.2));
+  const rise = expo(prog(t, 26.0, 26.8));
   return (
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 26.0, 0.25), fontFamily: FONT }}>
+      <Eyebrow style={{ position: "absolute", top: 300, left: 0, right: 0, textAlign: "center", ...trackIn(t, 26.1) }}>Sans contrainte</Eyebrow>
       {TRIO.map(([big, sub], i) => {
-        const t0 = 26.0 + i * 1.25;
-        const ko = i < 2 ? easeInOut(prog(t, t0 + 1.1, t0 + 1.3)) : 0;
+        const d = i - cur, t0 = 26.0 + i * step - (i ? 0.1 : 0);
         return (
-          <div key={i} style={{ position: "absolute", left: 110, right: 110, top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center",
-            opacity: t < t0 ? 0 : 1 - ko, transform: `translateY(${-ko * 90}px)` }}>
-            <div style={{ fontWeight: 700, fontSize: 34, color: C.ink3, letterSpacing: "0.1em", marginBottom: 40, fontVariantNumeric: "tabular-nums", ...fadeUp(t, t0, 0.4, 20) }}>0{i + 1} / 03</div>
-            <div style={{ fontWeight: 900, fontSize: 190, letterSpacing: "-0.055em", lineHeight: 0.95, color: C.ink }}><Kinetic t={t} t0={t0 + 0.05} stagger={0.12} lines={big} /></div>
-            <div style={{ marginTop: 40, fontWeight: 600, fontSize: 50, color: C.ink2, ...fadeUp(t, t0 + 0.4, 0.45, 30) }}>{sub}</div>
+          <div key={i} style={{ position: "absolute", left: 150, top: 460, width: 780, height: 980, borderRadius: 72, background: C.ink, color: C.white, padding: "70px 70px",
+            display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 50px 100px rgba(15,23,42,0.22)",
+            transform: `translateX(${d * 800}px) translateY(${Math.abs(d) * 70 + (1 - rise) * 500}px) rotate(${d * 5}deg) scale(${1 - 0.06 * Math.min(1, Math.abs(d))})`, opacity: rise }}>
+            <div style={{ fontWeight: 500, fontSize: 150, letterSpacing: "-0.05em", lineHeight: 1, color: C.accent, fontVariantNumeric: "tabular-nums" }}>0{i + 1}</div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 150, letterSpacing: "-0.055em", lineHeight: 0.98 }}><Kinetic t={t} t0={t0 + 0.15} stagger={0.12} lines={big} /></div>
+              <div style={{ marginTop: 36, fontWeight: 500, fontSize: 37, whiteSpace: "nowrap", color: "#C5CAD3", ...fadeUp(t, t0 + 0.5, 0.45, 24) }}>{sub}</div>
+            </div>
           </div>
         );
       })}
+      <div style={{ position: "absolute", top: 1530, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 14, ...fadeUp(t, 26.3, 0.5, 20) }}>
+        {[0, 1, 2].map((i) => { const on = clamp(1 - Math.abs(i - cur)); return <div key={i} style={{ height: 14, width: 14 + 42 * on, borderRadius: 7, background: on > 0.5 ? C.ink : C.line }} />; })}
+      </div>
     </AbsoluteFill>
   );
 };
@@ -326,9 +333,9 @@ const Pro: React.FC = () => {
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 29.6) }}>
       <div style={{ position: "absolute", left: 80, right: 80, top: 130 }}>
         <Eyebrow style={trackIn(t, 29.8)}>Restaurateurs</Eyebrow>
-        <H size={84} style={{ marginTop: 24 }}><Kinetic t={t} t0={29.95} tOut={31.1} lines={[{ text: "Votre terrasse," }, { text: "en étoile sur la 3D.", mark: true }]} /></H>
-        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Kinetic t={t} t0={31.45} tOut={33.1} lines={[{ text: "Votre fiche avec photo," }, { text: "réservation et appel." }]} /></H>
-        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Kinetic t={t} t0={33.45} lines={[{ text: "Rejoignez" }, { text: "la Sélection.", mark: true }]} /></H>
+        <H size={84} style={{ marginTop: 24 }}><Kinetic t={t} t0={29.95} tOut={31.1} lines={[{ text: "Votre terrasse,", light: true }, { text: "mise en avant.", mark: true }]} /></H>
+        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Kinetic t={t} t0={31.45} tOut={33.1} lines={[{ text: "Votre fiche avec photo," }, { text: "réservation et appel.", light: true }]} /></H>
+        <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Kinetic t={t} t0={33.45} lines={[{ text: "Rejoignez", light: true }, { text: "la Sélection.", mark: true }]} /></H>
       </div>
       <Phone style={phoneIn(t, 29.7)}>
         <Cover file="app/014.jpg" style={{ transform: `scale(${z})`, transformOrigin: "50% 30%" }} />
@@ -358,7 +365,8 @@ const End: React.FC = () => {
         <Kinetic t={t} t0={34.25} stagger={0.1} lines={[{ text: "Le soleil, c’est maintenant.", accent: "maintenant" }]} />
       </div>
       <div style={{ marginTop: 90, display: "flex", flexDirection: "column", alignItems: "center", gap: 30, ...fadeUp(t, 35.0, 0.7, 30) }}>
-        <div style={{ padding: "26px 54px", borderRadius: 999, background: C.ink, color: C.white, fontWeight: 700, fontSize: 42 }}>Lien en bio ↗</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 28, padding: "18px 18px 18px 54px", borderRadius: 999, background: C.ink, color: C.white, fontWeight: 700, fontSize: 42 }}>Lien en bio
+          <span style={{ width: 76, height: 76, borderRadius: "50%", background: C.sun, color: C.ink, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44, fontWeight: 800 }}>↗</span></div>
         <div style={{ fontSize: 34, color: C.ink3, fontWeight: 600 }}>Gratuit sur l’App Store</div>
       </div>
       <AbsoluteFill style={{ background: "#000", opacity: prog(t, 37.2, 38) }} />

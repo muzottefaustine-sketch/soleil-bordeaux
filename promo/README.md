@@ -10,10 +10,10 @@ Design épuré, fond blanc, centré sur la 3D en gros plan. Textes inspirés du 
 | 4–8 s | Gros plan 3D sur la flèche Saint-Michel, ombre qui tourne, curseur d’heure de l’app : « Grand soleil. Reste à trouver la bonne terrasse. » |
 | 8–14 s | Calcul d’ombres 3D : « L’ombre de chaque immeuble. Calculée en 3D, heure par heure. », de 7h à 21h (cathédrale Saint-André sous deux angles, place Meynard) |
 | 14–18 s | L’appli sur le centre-ville : « Toutes les terrasses autour de toi. » |
-| 18–22 s | Filtre ce qui te fait envie : Un café. Un déj’. L’apéro. Au frais. |
-| 22–26 s | Partout en France : compteur jusqu’à 11 482 terrasses et lieux, villes qui défilent |
-| 26–30 s | Gratuit. Sans compte. Zéro donnée. |
-| 30–35 s | Restaurateurs : La Mère Michel en étoile sur la 3D, sa fiche avec photo (badge Sélection, Réserver) puis « Rejoignez la Sélection. » |
+| 18–22 s | Filtre ce qui te fait envie : Un café. Un déj’. L’apéro. |
+| 22–26 s | Partout en France : compteur jusqu’à 11 482 terrasses et lieux, bandeaux de villes qui défilent |
+| 26–30 s | Cartes numérotées en carrousel : Gratuit. Sans compte. Zéro donnée. |
+| 30–35 s | Restaurateurs : « Votre terrasse, mise en avant. » avec La Mère Michel, sa fiche avec photo (badge Sélection, Réserver) puis « Rejoignez la Sélection. » |
 | 35–40 s | « Le soleil, c’est maintenant. » · Lien en bio |
 
 Le chiffre 11 482 est la somme des fichiers `data/*.json` (9 villes).
