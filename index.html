@@ -673,6 +673,128 @@
     .city-suggestion-meta { font-weight:500; }
     .phone-btn { border-radius:12px; font-weight:600; }
     .phone-btn.primary { background:var(--ink); }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V3 — codes d'une appli iOS : matière translucide, formes en
+       capsule, grands titres, listes à chevrons, contrôle segmenté.
+       Apparence uniquement ; se retire d'un seul tenant, comme la V2.
+       ═══════════════════════════════════════════════════════════════ */
+    :root {
+      --ink:#000000; --ink-2:rgba(60,60,67,.72); --ink-3:rgba(60,60,67,.45);
+      --line:rgba(60,60,67,.14); --surface-2:#F2F2F7; --fill:rgba(118,118,128,.12);
+      --sun:#FFB800; --sun-soft:#FFF2C2; --sun-ink:#5C4300;
+      --material:rgba(255,255,255,.78);
+      --elev:0 0 0 .5px rgba(0,0,0,.06), 0 6px 20px rgba(0,0,0,.12);
+    }
+    html, body { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; letter-spacing:-.01em; }
+
+    /* Commandes flottantes sur la carte : matière translucide, capsules */
+    .search-glass, .icon-btn, #btnGeo, .panel-map, #locationPill, #tooltip, #citySuggestions {
+      background:var(--material); border:0; box-shadow:var(--elev);
+      backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%);
+    }
+    .search-glass { height:46px; border-radius:23px; padding:0 16px; min-width:0; }
+    #searchInput { min-width:0; }
+    #searchInput { font-size:17px; letter-spacing:-.02em; }
+    #searchInput::placeholder { color:var(--ink-2); }
+    .icon-btn { width:46px; height:46px; border-radius:50%; }
+    #btnGeo { width:46px; height:46px; }
+    #locationPill { border-radius:15px; font-size:13px; font-weight:500; color:var(--ink); }
+
+    /* Curseur d'heure */
+    .panel-map { border-radius:26px; padding:14px 20px 14px; }
+    .panel-map h3 { margin-bottom:10px; align-items:baseline; }
+    .panel-map h3::before { content:'Soleil à'; font-size:15px; font-weight:400; color:var(--ink-2); }
+    .panel-map h3 .heure { font-size:22px; font-weight:700; letter-spacing:-.02em; }
+    .panel-map input[type=range] { height:4px; border-radius:2px; background:linear-gradient(to right, var(--sun) var(--pct,46%), rgba(120,120,128,.2) var(--pct,46%)); }
+    .panel-map input[type=range]::-webkit-slider-thumb { width:28px; height:28px; background:#fff; border:0; box-shadow:0 .5px 4px rgba(0,0,0,.12), 0 6px 13px rgba(0,0,0,.12); }
+    .panel-labels { font-size:12px; color:var(--ink-3); margin-top:6px; }
+
+    /* Bulle d'un lieu */
+    #tooltip { border-radius:20px; padding:16px 16px 14px; font-size:17px; font-weight:600; letter-spacing:-.02em; }
+    #tooltip .tt-type { font-size:15px; color:var(--ink-2); margin-top:2px; }
+    #tooltip #ttMaps { background:var(--fill) !important; border-radius:12px !important; padding:11px 14px !important; font-size:15px !important; font-weight:600; }
+
+    /* Liste : feuille iOS, grand titre, champ de recherche gris, chevrons */
+    @media (max-width:640px) { #drawer { border-radius:14px 14px 0 0; height:88vh; border-top:0; } }
+    .drawer-handle { padding:6px 0 2px; }
+    .drawer-bar { width:36px; height:5px; border-radius:3px; background:rgba(60,60,67,.3); }
+    .drawer-header { padding:6px 16px 0; }
+    .drawer-top { margin-bottom:8px; }
+    .drawer-title { font-size:28px; font-weight:700; letter-spacing:-.02em; }
+    .drawer-title em, .drawer-title span { font-weight:700; }
+    #btnClose { width:30px; height:30px; background:var(--fill); color:rgba(60,60,67,.6); font-size:13px; font-weight:700; }
+    .drawer-search { height:36px; border-radius:10px; background:var(--fill); padding:0 8px; gap:6px; margin-bottom:10px; }
+    .drawer-search svg { opacity:.5; }
+    #drawerSearch { font-size:17px; letter-spacing:-.02em; }
+    #drawerSearch::placeholder { color:var(--ink-2); }
+    .filter-chips { padding:0 16px 10px; gap:8px; }
+    .filter-chip { height:32px; padding:0 14px; border:0; background:var(--fill); color:var(--ink); font-size:15px; font-weight:500; letter-spacing:-.01em; }
+    .filter-chip.active { background:var(--ink); color:#fff; }
+    .section-title { padding:8px 16px 6px; }
+    .section-label, .list-divider, .sel-head .sel-title { font-size:13px; font-weight:400; color:var(--ink-2); text-transform:uppercase; letter-spacing:.02em; }
+    .count-pill { font-size:13px; font-weight:400; color:var(--ink-2); }
+    .list { padding:0 0 32px 16px; }
+    .list-divider { padding:22px 0 6px; border-bottom:.5px solid var(--line); }
+    .card, .card.compact { position:relative; padding:11px 40px 11px 0; border-bottom:.5px solid var(--line); }
+    .card::after { content:''; position:absolute; right:14px; top:50%; width:14px; height:14px; margin-top:-7px; background:rgba(60,60,67,.3); -webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%205l7%207-7%207%22/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%205l7%207-7%207%22/%3E%3C/svg%3E") center/contain no-repeat; }
+    .card:active, .card.active { background:rgba(60,60,67,.08); }
+    .card-name, .card.compact .card-name { font-size:17px; font-weight:400; letter-spacing:-.02em; margin-bottom:1px; }
+    .card-sub, .card.compact .card-sub { font-size:15px; color:var(--ink-2); letter-spacing:-.01em; }
+    .card.partner .card-name { font-weight:600; }
+    .partner-tag { font-size:12px; font-weight:500; border-radius:5px; }
+    .sel-wrap { margin:0 0 0 -16px; padding:4px 0 4px; }
+    .sel-head { padding:8px 16px 8px; }
+    .sel-scroll { padding:0 16px 4px; gap:10px; }
+    .sel-card, .sel-card.partner { flex:0 0 220px; width:220px; }
+    .sel-photo-wrap, .sel-photo { height:136px; border-radius:12px; }
+    .sel-name { font-size:17px; font-weight:600; letter-spacing:-.02em; }
+    .sel-sub { font-size:15px; color:var(--ink-2); }
+    .drawer-footer { padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px)); border-top:.5px solid var(--line); }
+    .footer-text, .privacy-link { font-size:12px; }
+
+    /* Fiche d'un lieu */
+    .ps-back { font-size:17px; font-weight:400; color:var(--ink); letter-spacing:-.02em; }
+    .ps-back span { font-size:30px; font-weight:300; margin-top:-4px; }
+    .ps-summary { padding:16px 16px 12px; }
+    #placeSheet .ps-badge { font-size:12px; font-weight:600; border-radius:6px; padding:3px 8px; }
+    #placeSheet .ps-name { font-size:28px; font-weight:700; letter-spacing:-.02em; line-height:1.15; }
+    #placeSheet .ps-sub { font-size:15px; color:var(--ink-2); }
+    #placeSheet .ps-rating, #placeSheet .ps-happy { background:var(--fill); font-size:13px; font-weight:500; border-radius:8px; padding:5px 9px; }
+    /* Onglets → contrôle segmenté iOS */
+    .ps-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0; margin:0 16px; padding:2px; border-bottom:0; border-radius:9px; background:var(--fill); }
+    .ps-tab { min-height:32px; border:0; border-radius:7px; font-size:13px; font-weight:500; color:var(--ink); letter-spacing:-.01em; }
+    .ps-tab[aria-selected="true"] { background:#fff; border:0; font-weight:600; box-shadow:0 3px 8px rgba(0,0,0,.12), 0 3px 1px rgba(0,0,0,.04); }
+    .ps-panel { padding:16px 16px; }
+    /* Actions : icône au-dessus du libellé, comme dans Plans */
+    #placeSheet .ps-overview-actions { gap:8px; margin-bottom:18px; }
+    #placeSheet .ps-overview-actions .ps-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-height:62px; padding:9px 4px 8px; border-radius:13px; font-size:13px; font-weight:500; letter-spacing:-.01em; background:var(--fill); color:var(--ink); }
+    #placeSheet .ps-overview-actions .ps-btn::before { content:''; width:22px; height:22px; background:currentColor; -webkit-mask:var(--ic) center/contain no-repeat; mask:var(--ic) center/contain no-repeat; }
+    #placeSheet .ps-overview-actions .ps-btn.reserve { --ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%224%22%20y%3D%225.500%22%20width%3D%2216%22%20height%3D%2214.500%22%20rx%3D%223%22/%3E%3Cpath%20d%3D%22M4%2010h16M8.500%203.500v4M15.500%203.500v4%22/%3E%3C/svg%3E"); background:var(--sun); color:#000; font-weight:600; }
+    #placeSheet .ps-overview-actions .ps-btn.tel { --ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204H5.800A1.800%201.800%200%200%200%204%205.900C4.500%2013.700%2010.300%2019.500%2018.100%2020A1.800%201.800%200%200%200%2020%2018.200V16a1.200%201.200%200%200%200-.850-1.150l-3.100-1a1.200%201.200%200%200%200-1.250.330l-1.400%201.550a10.500%2010.500%200%200%201-5.130-5.130l1.550-1.400a1.200%201.200%200%200%200%20.330-1.250l-1-3.100A1.200%201.200%200%200%200%208%204z%22/%3E%3C/svg%3E"); }
+    #placeSheet .ps-overview-actions .ps-btn.site { --ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7%203.500v6a2.500%202.500%200%200%200%205%200v-6M9.500%203.500v17M17%203.500c-1.800%201.800-2.500%204.200-2.500%207.500H17zm0%207.500v9.500%22/%3E%3C/svg%3E"); }
+    #placeSheet .ps-info-rows { background:var(--surface-2); border-radius:12px; padding:0 0 0 14px; }
+    .ps-info-row { grid-template-columns:22px minmax(0,1fr); gap:12px; padding:11px 14px 11px 0; border-bottom:.5px solid var(--line); }
+    .ps-row-icon, .ps-row-icon svg { width:22px; height:22px; }
+    .ps-row-icon { color:var(--ink-2); }
+    .ps-row-label { font-size:13px; font-weight:400; color:var(--ink-2); }
+    .ps-row-value { font-size:17px; font-weight:400; letter-spacing:-.02em; }
+    #placeSheet .ps-secondary-actions .ps-btn { min-height:50px; border-radius:12px; font-size:17px; font-weight:400; background:var(--fill); color:var(--ink); letter-spacing:-.02em; }
+    .ps-tag { background:var(--fill); color:var(--ink); font-size:13px; border-radius:8px; }
+    .ps-hours { background:var(--surface-2); border-radius:12px; padding:0 14px; }
+    .ps-hours li { font-size:17px; letter-spacing:-.02em; padding:11px 0; border-bottom:.5px solid var(--line); }
+    .ps-hours li:last-child { border-bottom:0; }
+    .ps-inline-note, .ps-empty { font-size:13px; color:var(--ink-2); }
+
+    /* Villes proposées, panneau d'appel */
+    #citySuggestions { top:54px; border-radius:16px; }
+    .city-suggestion { border-bottom:.5px solid var(--line); }
+    .city-suggestion-label { font-size:17px; font-weight:400; letter-spacing:-.02em; }
+    .city-suggestion-meta { font-size:13px; font-weight:400; color:var(--ink-2); }
+    .phone-card { border-radius:14px 14px 0 0; }
+    .phone-number { font-weight:700; letter-spacing:-.01em; }
+    .phone-btn { min-height:50px; border-radius:12px; font-size:17px; font-weight:400; background:var(--fill); letter-spacing:-.02em; }
+    .phone-btn.primary { background:var(--sun); color:#000; font-weight:600; }
   </style>
 </head>
 <body>
@@ -778,7 +900,7 @@
   <div class="drawer-handle" id="drawerHandle"><div class="drawer-bar"></div></div>
   <div class="drawer-header">
     <div class="drawer-top">
-      <div class="drawer-title"><em>Soleil</em><span>enterrasse</span></div>
+      <div class="drawer-title">Terrasses</div>
       <button id="btnClose" onclick="closeDrawer()">✕</button>
     </div>
     <div class="drawer-search">
@@ -2919,7 +3041,7 @@ function renderPlaceSheetContent(t,ref,details={}){
   const overviewActions=[
     sheetLink('ps-btn reserve',p.bookingUrl||p.websiteUrl||p.mapsUrl,'Réserver','Ouvrir la réservation ou le site du restaurant','psReserve'),
     phoneUrl ? sheetLink('ps-btn tel',phoneUrl,'Appeler','Appeler directement le restaurant','psCall') : sheetLink('ps-btn tel',p.mapsUrl,'Téléphone','Voir le numéro du restaurant sur Google','psCall'),
-    sheetLink('ps-btn site',p.menuUrl||p.websiteUrl||p.mapsUrl,'Carte',p.menuUrl?'Ouvrir la carte du restaurant':'Consulter la carte sur le site ou la fiche du restaurant','psMenu')
+    sheetLink('ps-btn site',p.menuUrl||p.websiteUrl||p.mapsUrl,'Menu',p.menuUrl?'Ouvrir la carte du restaurant':'Consulter la carte sur le site ou la fiche du restaurant','psMenu')
   ].filter(Boolean).join('');
   const secondary=[
     sheetLink('ps-btn maps',p.directionsUrl,'Y aller','Ouvrir l’itinéraire Maps','psDirections'),
