@@ -536,6 +536,143 @@
     .phone-actions { display:grid; gap:8px; }
     .phone-btn { display:flex; align-items:center; justify-content:center; min-height:50px; border:0; border-radius:14px; background:#F2F2F7; color:var(--text); font-family:inherit; font-size:15px; font-weight:750; text-decoration:none; cursor:pointer; touch-action:manipulation; }
     .phone-btn.primary { background:var(--green); color:#fff; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V2 — plus sobre : une seule couleur d'accent (jaune soleil),
+       surfaces blanches pleines, typographie système, moins d'ombres.
+       Ce bloc ne change que l'apparence ; il se retire d'un seul tenant.
+       ═══════════════════════════════════════════════════════════════ */
+    :root {
+      --ink:#14161A; --ink-2:#5C636F; --ink-3:#98A0AD;
+      --line:#E8EAEE; --surface:#FFFFFF; --surface-2:#F4F5F7;
+      --sun:#F5B301; --sun-soft:#FFF4CC; --sun-ink:#6B4E00;
+      --text:var(--ink); --text-2:var(--ink-2); --text-3:var(--ink-3); --divider:var(--line);
+      --elev:0 1px 2px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.10);
+    }
+    html, body { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing:antialiased; }
+
+    /* Barre du haut */
+    #topBar { gap:8px; }
+    .search-glass, .icon-btn, #btnGeo, .panel-map, #locationPill {
+      background:var(--surface); backdrop-filter:none; -webkit-backdrop-filter:none;
+      border:1px solid rgba(16,24,40,.06); box-shadow:var(--elev);
+    }
+    .search-glass { height:48px; border-radius:14px; padding:0 14px; }
+    .search-glass svg { opacity:.45; }
+    #searchInput { font-size:16px; }
+    .icon-btn { width:48px; height:48px; border-radius:14px; }
+    .icon-btn:hover { transform:none; }
+    #btnGeo { width:44px; height:44px; border-radius:50%; bottom:calc(env(safe-area-inset-bottom,34px) + 128px); }
+    #locationPill { top:calc(env(safe-area-inset-top,44px) + 68px); height:30px; font-size:12px; font-weight:600; color:var(--ink-2); }
+    .location-dot { background:var(--sun); box-shadow:none; }
+
+    /* Curseur d'heure */
+    .panel-map { width:calc(100% - 32px); max-width:420px; padding:14px 18px 12px; border-radius:18px; }
+    .panel-map h3 { font-size:0; margin:0 0 12px; gap:8px; justify-content:space-between; }
+    .panel-map h3::before { content:'Ensoleillement à'; font-size:13px; font-weight:500; color:var(--ink-2); }
+    .panel-map h3 .heure { font-size:17px; font-weight:700; letter-spacing:-.2px; font-variant-numeric:tabular-nums; }
+    .panel-map input[type=range] { height:4px; background:linear-gradient(to right, var(--sun) var(--pct,46%), #E3E6EB var(--pct,46%)); }
+    .panel-map input[type=range]::-webkit-slider-thumb { width:22px; height:22px; border:0; background:#fff; box-shadow:0 0 0 1px rgba(16,24,40,.08), 0 2px 6px rgba(16,24,40,.25); }
+    .panel-labels { margin-top:8px; font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums; }
+
+    /* Bulle d'un lieu sur la carte */
+    #tooltip { background:var(--surface); color:var(--ink); border:1px solid rgba(16,24,40,.06); border-radius:16px; padding:14px 16px 12px; box-shadow:var(--elev); backdrop-filter:none; font-size:16px; font-weight:650; letter-spacing:-.1px; }
+    #tooltip .tt-type { font-family:inherit; font-size:13px; color:var(--ink-2); margin-top:2px; }
+    #tooltip .tt-sun { font-family:inherit; }
+    #tooltip #ttMaps { background:var(--surface-2) !important; color:var(--ink) !important; border-radius:10px !important; padding:10px 14px !important; font-size:14px !important; font-weight:600; margin-top:12px !important; }
+
+    /* Liste */
+    #drawer { background:var(--surface); box-shadow:0 -8px 40px rgba(16,24,40,.18); }
+    .drawer-bar { background:#D9DDE3; width:36px; }
+    .drawer-header { padding:8px 20px 0; }
+    .drawer-top { margin-bottom:12px; }
+    .drawer-title { font-size:20px; font-weight:700; letter-spacing:-.3px; }
+    .drawer-title em { font-style:normal; font-weight:700; }
+    .drawer-title span { color:var(--ink); font-weight:700; }
+    #btnClose { background:var(--surface-2); width:32px; height:32px; color:var(--ink-2); }
+    .drawer-search { height:44px; border:0; background:var(--surface-2); border-radius:12px; box-shadow:none; margin-bottom:12px; }
+    #drawerSearch { font-size:16px; }
+    .filter-chips { gap:8px; padding:0 20px 12px; }
+    .filter-chip { height:34px; padding:0 14px; font-size:14px; font-weight:550; color:var(--ink); background:var(--surface); border:1px solid var(--line); box-shadow:none; }
+    .filter-chip:hover { transform:none; }
+    .filter-chip.active { background:var(--ink); border-color:var(--ink); color:#fff; }
+    .section-title { padding:6px 20px 8px; }
+    .section-label { font-size:13px; font-weight:600; color:var(--ink-2); text-transform:none; letter-spacing:0; }
+    .count-pill { background:none; color:var(--ink-3); font-size:13px; font-weight:500; padding:0; }
+    .list { padding:0 20px 32px; }
+    .list-divider { padding:18px 0 4px; font-size:13px; font-weight:600; color:var(--ink-2); text-transform:none; letter-spacing:0; }
+    .card, .card.compact { min-height:0; gap:12px; padding:14px 0; margin:0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:none; box-shadow:none; }
+    .card:hover { transform:none; box-shadow:none; }
+    .card:active, .card.active { transform:none; background:var(--surface-2); border-color:var(--line); box-shadow:none; }
+    .card-name, .card.compact .card-name { font-size:16px; font-weight:600; letter-spacing:-.1px; margin-bottom:2px; }
+    .card-sub, .card.compact .card-sub { font-size:14px; color:var(--ink-2); }
+    .card.partner { background:none; border-color:var(--line); }
+    .card.partner .card-photo-wrap { width:56px; height:56px; border:0; border-radius:12px; }
+    .card.partner .card-name::after { content:none; }
+    .partner-tag { background:var(--sun-soft); color:var(--sun-ink); font-size:11px; font-weight:600; border-radius:6px; padding:2px 6px; }
+    .partner-sun { display:none; }
+    .photo-error::before { content:''; background:var(--surface-2); }
+    .category-icon { box-shadow:none; border:0; }
+    .utility-tag.heat { background:var(--surface-2); color:var(--ink-2); font-weight:500; font-size:12px; height:auto; padding:3px 8px; }
+    .no-results { color:var(--ink-2); font-size:14px; }
+    .drawer-footer { background:var(--surface); backdrop-filter:none; border-top:1px solid var(--line); }
+    .footer-text, .privacy-link { font-size:12px; color:var(--ink-3); }
+    .live-dot { display:none; }
+
+    /* Sélection */
+    .sel-wrap { padding:4px 0 6px; margin:0 -20px; }
+    .sel-head { padding:6px 20px 10px; }
+    .sel-head .sel-emoji { display:none; }
+    .sel-head .sel-title { font-size:13px; font-weight:600; color:var(--ink-2); }
+    .sel-scroll { gap:12px; padding:0 20px 4px; }
+    .sel-card, .sel-card.partner { flex:0 0 200px; width:200px; min-width:0; border:0; border-radius:14px; box-shadow:none; background:none; overflow:visible; }
+    .sel-card:hover { transform:none; }
+    .sel-photo-wrap { height:124px; border-radius:14px; background:var(--surface-2); }
+    .sel-photo { height:124px; }
+    .sel-info { padding:8px 2px 0; overflow:hidden; }
+    .sel-name { font-size:15px; font-weight:600; }
+    .sel-sub { font-size:13px; color:var(--ink-2); margin-top:1px; }
+    .sel-happy { background:var(--sun-soft); color:var(--sun-ink); }
+    .photo-credit { font-size:10px; background:rgba(0,0,0,.45); border-radius:6px; }
+
+    /* Fiche d'un lieu */
+    #placeSheet .ps-sheet-head { border-bottom:0; min-height:calc(48px + env(safe-area-inset-top,0px)); }
+    .ps-back { font-size:15px; font-weight:600; padding:0 4px; gap:4px; }
+    .ps-back span { font-size:26px; line-height:1; margin-top:-3px; }
+    .ps-header-label, #placeSheet .ps-close { display:none; }
+    #placeSheet .ps-hero, #placeSheet .ps-photo { background:var(--surface-2); }
+    .ps-hero::after { background:none; }
+    .ps-summary { padding:16px 20px 12px; }
+    #placeSheet .ps-badge { background:var(--sun-soft); color:var(--sun-ink); font-size:11px; font-weight:600; letter-spacing:0; text-transform:none; padding:3px 8px; border-radius:6px; margin-bottom:8px; }
+    #placeSheet .ps-name { font-family:inherit; font-size:26px; font-weight:700; letter-spacing:-.5px; margin-bottom:4px; }
+    #placeSheet .ps-sub { font-size:14px; color:var(--ink-2); }
+    #placeSheet .ps-meta { margin-top:10px; gap:6px; }
+    #placeSheet .ps-rating, #placeSheet .ps-happy { background:var(--surface-2); color:var(--ink); font-size:13px; font-weight:550; padding:5px 10px; border-radius:8px; }
+    .ps-tabs { padding:0 20px; gap:20px; display:flex; }
+    .ps-tab { min-height:44px; padding:0; font-size:15px; font-weight:600; color:var(--ink-3); border-radius:0; border-bottom:2px solid transparent; }
+    .ps-tab[aria-selected="true"] { color:var(--ink); background:none; border-bottom-color:var(--ink); }
+    .ps-panel { padding:18px 20px; }
+    #placeSheet .ps-overview-actions { gap:8px; margin-bottom:20px; }
+    #placeSheet .ps-btn { border-radius:12px; font-size:15px; font-weight:600; box-shadow:none; }
+    #placeSheet .ps-btn.reserve { background:var(--ink); color:#fff; }
+    #placeSheet .ps-btn.tel, #placeSheet .ps-btn.site, #placeSheet .ps-btn.maps { background:var(--surface-2); color:var(--ink); }
+    #placeSheet .ps-info-rows { gap:0; }
+    .ps-info-row { grid-template-columns:20px minmax(0,1fr); gap:14px; align-items:center; padding:13px 0; border-bottom:1px solid var(--line); }
+    .ps-info-row:last-child { border-bottom:0; }
+    .ps-row-icon { width:20px; height:20px; background:none; border-radius:0; color:var(--ink-3); }
+    .ps-row-icon svg { width:20px; height:20px; display:block; }
+    .ps-row-label { font-size:12px; font-weight:500; color:var(--ink-3); margin-bottom:1px; }
+    .ps-row-value { font-size:15px; font-weight:500; color:var(--ink); }
+    .ps-tag { background:var(--surface-2); color:var(--ink-2); font-size:13px; font-weight:500; padding:6px 10px; border-radius:8px; }
+    .ps-hours li { font-size:15px; padding:12px 0; border-bottom:1px solid var(--line); }
+    .ps-inline-note, .ps-empty { font-size:14px; color:var(--ink-2); }
+
+    /* Villes proposées, panneau d'appel */
+    #citySuggestions { top:56px; border:1px solid rgba(16,24,40,.06); border-radius:14px; background:var(--surface); backdrop-filter:none; box-shadow:var(--elev); }
+    .city-suggestion-label { font-weight:600; font-size:15px; }
+    .city-suggestion-meta { font-weight:500; }
+    .phone-btn { border-radius:12px; font-weight:600; }
+    .phone-btn.primary { background:var(--ink); }
   </style>
 </head>
 <body>
@@ -586,7 +723,7 @@
 <div class="panel-map">
   <h3>☀️ <span class="heure" id="heureAffichee">14h00</span></h3>
   <input type="range" id="timeSlider" min="6" max="21" value="14" step="0.25">
-  <div class="panel-labels"><span>6h</span><span>20h</span></div>
+  <div class="panel-labels"><span>6h</span><span>21h</span></div>
 </div>
 <div id="tooltip" role="status" aria-live="polite">
   <div id="ttName"></div>
@@ -598,7 +735,7 @@
 <div id="psOverlay" onclick="hidePlaceSheet()"></div>
 <div id="placeSheet" role="dialog" aria-modal="true" aria-label="Fiche du lieu" aria-hidden="true" inert>
   <div class="ps-sheet-head">
-    <button class="ps-back" id="psBack" type="button"><span aria-hidden="true">‹</span> Retour à la carte</button>
+    <button class="ps-back" id="psBack" type="button"><span aria-hidden="true">‹</span> Carte</button>
     <span class="ps-header-label">Soleilenterrasse</span>
     <button class="ps-close" id="psClose" type="button" aria-label="Fermer la fiche" title="Fermer la fiche">×</button>
   </div>
@@ -1540,29 +1677,27 @@ async function runShadow(){
   if(shadowPending) scheduleShadow();
 }
 function makeSunIcon(sunny){
-  const c=document.createElement('canvas'); c.width=20; c.height=20; const ctx=c.getContext('2d');
-  if(sunny===true){
-    ctx.strokeStyle='#FFD600'; ctx.lineWidth=1.5; ctx.lineCap='round';
-    for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(10+Math.cos(a)*6.5,10+Math.sin(a)*6.5);ctx.lineTo(10+Math.cos(a)*9,10+Math.sin(a)*9);ctx.stroke();}
-    ctx.beginPath();ctx.arc(10,10,4.5,0,Math.PI*2);ctx.fillStyle='#FFD600';ctx.fill();
-    ctx.beginPath();ctx.arc(10,10,4.5,0,Math.PI*2);ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();
-  }else if(sunny===false){
-    ctx.beginPath();ctx.arc(10,10,5,0,Math.PI*2);ctx.fillStyle='#8E9BAD';ctx.fill();
-    ctx.beginPath();ctx.arc(10,10,5,0,Math.PI*2);ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();
-  }else{
-    ctx.beginPath();ctx.arc(10,10,5,0,Math.PI*2);ctx.fillStyle='#F8FAFC';ctx.fill();
-    ctx.beginPath();ctx.arc(10,10,5,0,Math.PI*2);ctx.strokeStyle='#98A2B3';ctx.lineWidth=1.5;ctx.stroke();
-  }
+  // Pastille pleine cerclée de blanc, dessinée 3× plus grande que sa taille
+  // d'affichage pour rester nette sur les écrans Retina.
+  const S=66, c=document.createElement('canvas'); c.width=S; c.height=S; const ctx=c.getContext('2d');
+  const fill = sunny===true ? '#F5B301' : sunny===false ? '#8A93A2' : '#C9CED6';
+  ctx.shadowColor='rgba(16,24,40,0.35)'; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
+  ctx.beginPath(); ctx.arc(S/2,S/2,21,0,Math.PI*2); ctx.fillStyle='#FFFFFF'; ctx.fill();
+  ctx.shadowColor='transparent';
+  ctx.beginPath(); ctx.arc(S/2,S/2,15,0,Math.PI*2); ctx.fillStyle=fill; ctx.fill();
   return c.toDataURL();
 }
 const DOT_SUN=makeSunIcon(true),DOT_SHADE=makeSunIcon(false),DOT_UNKNOWN=makeSunIcon(null);
 function makeFeaturedIcon(){
-  const c=document.createElement('canvas'); c.width=40; c.height=40; const ctx=c.getContext('2d');
-  ctx.shadowColor='rgba(154,114,0,0.28)'; ctx.shadowBlur=7; ctx.shadowOffsetY=3;
-  ctx.beginPath(); ctx.arc(20,20,15,0,Math.PI*2); ctx.fillStyle='#F8C83E'; ctx.fill();
+  // Lieu de la sélection : pastille sombre avec une étoile jaune.
+  const S=108, c=document.createElement('canvas'); c.width=S; c.height=S; const ctx=c.getContext('2d');
+  ctx.shadowColor='rgba(16,24,40,0.38)'; ctx.shadowBlur=12; ctx.shadowOffsetY=5;
+  ctx.beginPath(); ctx.arc(S/2,S/2,40,0,Math.PI*2); ctx.fillStyle='#FFFFFF'; ctx.fill();
   ctx.shadowColor='transparent';
-  ctx.beginPath(); ctx.arc(20,20,15,0,Math.PI*2); ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
-  ctx.fillStyle='#7A5200'; ctx.font='bold 19px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('★',20,21);
+  ctx.beginPath(); ctx.arc(S/2,S/2,33,0,Math.PI*2); ctx.fillStyle='#14161A'; ctx.fill();
+  ctx.fillStyle='#F5B301'; ctx.beginPath();
+  for(let i=0;i<10;i++){ const r=i%2?9.5:22, ang=-Math.PI/2+i*Math.PI/5; ctx[i?'lineTo':'moveTo'](S/2+Math.cos(ang)*r, S/2+1+Math.sin(ang)*r); }
+  ctx.closePath(); ctx.fill();
   return c.toDataURL();
 }
 const DOT_FEATURED=makeFeaturedIcon();
@@ -1592,8 +1727,8 @@ function markerImageForPlace(t){
   return s===true?DOT_SUN:s===false?DOT_SHADE:DOT_UNKNOWN;
 }
 function markerSizeForPlace(t){
-  if(findReferenced(t)) return 34;
-  return isFoodPlace(t) ? 18 : 26;
+  if(findReferenced(t)) return 36;
+  return isFoodPlace(t) ? 22 : 26;
 }
 // Les icônes restent aux coordonnées de leur établissement : aucun regroupement,
 // déplacement artificiel ou animation. En perspective, on masque simplement celles
@@ -2690,6 +2825,14 @@ document.addEventListener('click',event=>{
 document.addEventListener('keydown',event=>{
   if(event.key==='Escape' && document.getElementById('phonePanel')?.hidden===false) closePhonePanel();
 });
+// Icônes au trait (design v2) pour les lignes d'information d'une fiche.
+const ROW_ICON = {
+  pin:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 18s6-5.2 6-10A6 6 0 0 0 4 8c0 4.8 6 10 6 10z"/><circle cx="10" cy="8" r="2.2"/></svg>',
+  phone:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 3H4.5A1.5 1.5 0 0 0 3 4.6c.4 6.6 5.8 12 12.400 12.400A1.5 1.5 0 0 0 17 15.500v-2.100a1 1 0 0 0-.700-.950l-2.700-.900a1 1 0 0 0-1.050.280l-1.150 1.300a9 9 0 0 1-4.830-4.830l1.300-1.150a1 1 0 0 0 .280-1.050l-.900-2.700A1 1 0 0 0 6.600 3z"/></svg>',
+  price:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M12.6 7.300a3.300 3.300 0 1 0 0 5.400M6.500 9.200h4.500M6.500 10.800h4.500"/></svg>',
+  food:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v5a2 2 0 0 0 4 0V3M8 3v14M14 3c-1.500 1.500-2 3.500-2 6h2zm0 6v8"/></svg>',
+  info:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 9.200v4M10 6.500v.200"/></svg>'
+};
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
   return `<div class="ps-info-row"><div class="ps-row-icon">${icon}</div><div><div class="ps-row-label">${escapeHTML(label)}</div><div class="ps-row-value ${extraClass}">${escapeHTML(value)}</div></div></div>`;
@@ -2760,10 +2903,10 @@ function renderPlaceSheetContent(t,ref,details={}){
   content.querySelectorAll('[data-place-panel]').forEach(panel=>{ panelPositions[panel.dataset.placePanel]=panel.scrollTop; });
   const dist=distKm(t.lat,t.lng);
   const practical=[
-    infoRow('⌖','Adresse',p.address),
-    infoRow('☎','Téléphone',p.tel),
-    infoRow('€','Budget',p.price),
-    infoRow('♧','Cuisine',p.cuisine)
+    infoRow(ROW_ICON.pin,'Adresse',p.address),
+    infoRow(ROW_ICON.phone,'Téléphone',p.tel),
+    infoRow(ROW_ICON.price,'Budget',p.price),
+    infoRow(ROW_ICON.food,'Cuisine',p.cuisine)
   ].filter(Boolean).join('');
   const tags=p.tags.length ? `<div class="ps-tags">${p.tags.map(tag=>`<span class="ps-tag">${escapeHTML(tag)}</span>`).join('')}</div>` : '';
   const meta=[
@@ -2803,7 +2946,7 @@ function renderPlaceSheetContent(t,ref,details={}){
       <div class="ps-panels">
         <section class="ps-panel" id="psPanel-overview" role="tabpanel" aria-labelledby="psTab-overview" data-place-panel="overview" tabindex="0">
           <div class="ps-overview-actions" aria-label="Actions du restaurant">${overviewActions}</div>
-          <div class="ps-info-rows">${practical||infoRow('i','Informations','Les informations détaillées arrivent bientôt.')}</div>
+          <div class="ps-info-rows">${practical||infoRow(ROW_ICON.info,'Informations','Les informations détaillées arrivent bientôt.')}</div>
           ${tags}
           ${p.bookingNote?`<p class="ps-inline-note">${escapeHTML(p.bookingNote)}</p>`:''}
         </section>
@@ -3362,7 +3505,7 @@ init();
       profile.bookingUrl?sheetLink('ps-btn reserve',profile.bookingUrl,'Réserver','Ouvrir la réservation','placeGoogleReserve'):'',
       profile.menuUrl?sheetLink('ps-btn site',profile.menuUrl,'Voir la carte','Ouvrir la carte du restaurant','placeGoogleMenu'):''
     ].filter(Boolean).join('');
-    const rows=[infoRow('⌖','Adresse',profile.address),infoRow('☎','Téléphone',profile.tel),infoRow('€','Budget',profile.price)].filter(Boolean).join('');
+    const rows=[infoRow(ROW_ICON.pin,'Adresse',profile.address),infoRow(ROW_ICON.phone,'Téléphone',profile.tel),infoRow(ROW_ICON.price,'Budget',profile.price)].filter(Boolean).join('');
     const markup=`${profile.photo?`<img id="placeGooglePhoto" class="place-google-photo" src="${escapeAttr(profile.photo)}" alt="${escapeAttr(place.nom)}" decoding="async">`:''}
       ${profile.photoCredit?`<p id="placeGoogleCredit">${escapeHTML(profile.photoCredit)}</p>`:''}
       <h3 id="placeGoogleName">${escapeHTML(place.nom)}</h3>
