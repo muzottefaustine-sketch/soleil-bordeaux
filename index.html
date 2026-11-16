@@ -798,6 +798,13 @@
     .phone-number { font-weight:700; letter-spacing:-.01em; }
     .phone-btn { min-height:50px; border-radius:12px; font-size:17px; font-weight:400; background:var(--fill); letter-spacing:-.02em; }
     .phone-btn.primary { background:var(--sun); color:#000; font-weight:600; }
+
+    /* Bouton ▶ : fait défiler la journée du lever au coucher du soleil. */
+    .panel-map h3 { justify-content:flex-start; gap:12px; }
+    .panel-map h3 .heure { margin-left:auto; font-variant-numeric:tabular-nums; }
+    #btnPlayDay { flex:0 0 auto; width:34px; height:34px; border:0; border-radius:50%; padding:0; background:var(--sun); color:#000; display:grid; place-items:center; cursor:pointer; touch-action:manipulation; box-shadow:0 1px 3px rgba(0,0,0,.18); transition:transform .15s ease, opacity .15s ease; align-self:center; }
+    #btnPlayDay:active { transform:scale(.92); opacity:.85; }
+    #btnPlayDay svg { width:14px; height:14px; fill:currentColor; display:block; }
   </style>
 </head>
 <body>
@@ -3448,7 +3455,6 @@ slider.addEventListener('pointerdown',()=>{ if(playDayFrame!==null) stopPlayDay(
 document.addEventListener('visibilitychange',()=>{ if(document.hidden && playDayFrame!==null) stopPlayDay(true,true); });
 setPlayDayButton(false);
 // ── fin Journée défilante ───────────────────────────────────────────
-
 const handler=new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 handler.setInputAction(click=>{
   const picked=viewer.scene.pick(click.position);
