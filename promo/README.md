@@ -22,7 +22,7 @@ Le chiffre 11 482 est la somme des fichiers `data/*.json` (9 villes).
 - `remotion/` : le projet Remotion qui fabrique la vidéo.
   - `src/Promo.tsx` : les 9 scènes et leur minutage ; `src/components.tsx` et `src/theme.ts` : soleil, logo, téléphone, couleurs de l'app.
   - `public/` : captures 3D (`hero/`, `app/`), captures de La Mère Michel, dont sa fiche avec photo (`ui/`), musique.
-  - `capture/` : scripts Playwright qui ont pris les captures de l'app (`sweep2.js`, `sweep5.js`, `sweep_app.js`, `lib.js`) et générateur de la musique (`music.py`).
+  - `capture/` : scripts Playwright qui ont pris les captures de l'app (`sweep6.js`, `lib.js`) et générateur de la musique (`music.py`).
 
 Modifier et refaire la vidéo :
 ```bash
@@ -30,3 +30,5 @@ cd promo/remotion && npm install
 npm run studio   # aperçu interactif
 npm run render   # → out/soleil-en-terrasse-promo.mp4
 ```
+
+Les captures de l'app datent du design v6 (octobre-novembre 2026). Pour les refaire après un nouveau design : lancer un serveur sur la racine du dépôt (`python3 -m http.server 8080`), puis `node remotion/capture/sweep6.js <dossier> ui` et `... hero`.

@@ -9,9 +9,9 @@ export const DURATION_S = 40;
 const seq = (dir: string, n: number, from = 0) => Array.from({ length: n }, (_, i) => `${dir}/${String(from + i).padStart(3, "0")}.jpg`);
 // Close-ups of tall buildings whose shadows move. Each place covers a slice of the day.
 const PLACES = [
-  { name: "Cathédrale Saint-André", files: seq("hero/andre", 14), from: 7.25, to: 11.75 },
+  { name: "Cathédrale Saint-André", files: seq("hero/andre", 12), from: 7.25, to: 11.75 },
   { name: "Cathédrale Saint-André", files: seq("hero/andre2", 12), from: 11.75, to: 16.25 },
-  { name: "Place Meynard · Saint-Michel", files: seq("hero/meynard", 14, 26), from: 16.25, to: 20.75 },
+  { name: "Place Meynard · Saint-Michel", files: seq("hero/meynard", 12), from: 16.25, to: 20.75 },
 ];
 const HERO = PLACES.flatMap((pl) => pl.files);
 /** Place and hour shown at progress k of the HERO sequence. */
@@ -133,25 +133,29 @@ const Grand: React.FC = () => {
   );
 };
 
-/** The app's time slider (.panel-map in index.html), scaled 393 px → 1080 px. It moves in 15-minute steps like the real one. */
+/** The app's time slider (.panel-map in index.html, design v6), scaled 393 px → 1080 px. It moves in 15-minute steps like the real one. */
+const APP_SUN = "#FFB800";
 const TimePanel: React.FC<{ hour: number; style?: React.CSSProperties }> = ({ hour, style }) => {
   const q = Math.round(hour * 4) / 4;
   const pct = clamp((q - 6) / 15);
-  const W = 886 - 2 * 66, THUMB = 66;
+  const W = 992 - 2 * 55, THUMB = 60;
   return (
-    <div style={{ position: "absolute", left: 97, bottom: 137, width: 886, padding: "44px 66px 38px", borderRadius: 60, background: "rgba(255,255,255,0.9)",
-      backdropFilter: "blur(66px) saturate(1.15)", border: "3px solid rgba(255,255,255,0.7)",
-      boxShadow: "0 38px 104px rgba(15,23,42,0.13), inset 0 3px 0 rgba(255,255,255,0.86)", fontFamily: FONT, ...style }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 22, marginBottom: 33 }}>
-        <Sun size={58} />
-        <span style={{ fontSize: 50, fontWeight: 800, color: C.ink, fontVariantNumeric: "tabular-nums" }}>{hourLabel(q)}</span>
+    <div style={{ position: "absolute", left: 44, bottom: 120, width: 992, padding: "38px 55px", borderRadius: 71, background: "rgba(255,255,255,0.66)",
+      backdropFilter: "blur(66px) saturate(1.8)", boxShadow: "0 0 0 1.5px rgba(0,0,0,0.06), 0 16px 55px rgba(0,0,0,0.12)", fontFamily: FONT, ...style }}>
+      <div style={{ position: "relative", height: 93, marginBottom: 27, display: "flex", alignItems: "center", justifyContent: "center", gap: 20 }}>
+        <span style={{ fontSize: 41, lineHeight: 1 }}>☀️</span>
+        <span style={{ fontSize: 60, fontWeight: 700, letterSpacing: "-1.2px", color: "#000", fontVariantNumeric: "tabular-nums" }}>{hourLabel(q)}</span>
+        <div style={{ position: "absolute", right: 0, top: 0, width: 93, height: 93, borderRadius: "50%", background: APP_SUN, boxShadow: "0 3px 8px rgba(0,0,0,0.18)",
+          display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg viewBox="0 0 14 14" width={38} height={38}><path d="M3 1.5v11l9-5.5z" fill="#000" /></svg>
+        </div>
       </div>
       <div style={{ position: "relative", height: THUMB, display: "flex", alignItems: "center" }}>
-        <div style={{ width: "100%", height: 11, borderRadius: 6, background: `linear-gradient(to right, ${C.accent} ${pct * 100}%, rgba(0,0,0,0.1) ${pct * 100}%)` }} />
+        <div style={{ width: "100%", height: 11, borderRadius: 6, background: `linear-gradient(to right, ${APP_SUN} ${pct * 100}%, rgba(120,120,128,0.2) ${pct * 100}%)` }} />
         <div style={{ position: "absolute", left: pct * (W - THUMB), top: 0, width: THUMB, height: THUMB, borderRadius: "50%", background: C.white,
-          border: `8px solid ${C.accent}`, boxShadow: "0 11px 44px rgba(0,0,0,0.18)" }} />
+          boxShadow: "0 0 0 3px rgba(16,24,40,0.08), 0 5px 16px rgba(16,24,40,0.25)" }} />
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, fontSize: 27, fontWeight: 500, color: C.ink3 }}><span>6h</span><span>20h</span></div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, fontSize: 33, fontWeight: 500, color: "rgba(60,60,67,0.45)", fontVariantNumeric: "tabular-nums" }}><span>6h</span><span>21h</span></div>
     </div>
   );
 };
@@ -174,9 +178,9 @@ const Shadows: React.FC = () => {
       </div>
       {/* location pill, as in the app */}
       <div style={{ position: "absolute", top: 640, left: 0, right: 0, display: "flex", justifyContent: "center", ...fadeUp(t, 8.4, 0.5, -20) }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "20px 34px", borderRadius: 999, background: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(50px)", boxShadow: "0 22px 66px rgba(15,23,42,0.18)", fontFamily: FONT, fontWeight: 800, fontSize: 36, color: C.ink }}>
-          <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#007AFF", boxShadow: "0 0 0 11px rgba(0,122,255,0.14)" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 19, height: 82, padding: "0 33px", borderRadius: 41, background: "rgba(255,255,255,0.78)",
+          backdropFilter: "blur(66px) saturate(1.8)", boxShadow: "0 0 0 1.5px rgba(0,0,0,0.06), 0 16px 55px rgba(0,0,0,0.12)", fontFamily: FONT, fontWeight: 500, fontSize: 36, color: "#000" }}>
+          <span style={{ width: 22, height: 22, borderRadius: "50%", background: APP_SUN }} />
           {here.name}
         </div>
       </div>
@@ -209,13 +213,13 @@ const Filters: React.FC = () => {
     <AbsoluteFill style={{ background: C.white, opacity: fadeInOpacity(t, 18.0, 0.3), fontFamily: FONT }}>
       <Eyebrow style={{ position: "absolute", top: 200, left: 0, right: 0, textAlign: "center", ...trackIn(t, 18.1) }}>Filtre ce qui te fait envie</Eyebrow>
       <div style={{ position: "absolute", top: 560, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 20 }}>
-        {FILTERS.map(([emoji, label], j) => {
+        {FILTERS.map(([, label], j) => {
           const k = easeOut(prog(t, 18.15 + j * 0.08, 18.6 + j * 0.08));
           const on = j === active && t >= s0;
           return (
-            <div key={label} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "18px 30px", whiteSpace: "nowrap", borderRadius: 999,
-              fontWeight: 700, fontSize: 38, background: on ? C.ink : C.white, color: on ? C.white : C.ink, border: `2px solid ${on ? C.ink : C.line}`,
-              opacity: k, transform: `translateY(${(1 - k) * 30}px)` }}><span>{emoji}</span>{label}</div>
+            <div key={label} style={{ display: "inline-flex", alignItems: "center", height: 92, padding: "0 40px", whiteSpace: "nowrap", borderRadius: 999,
+              fontWeight: 500, fontSize: 42, letterSpacing: "-0.4px", background: on ? "#000" : "rgba(118,118,128,0.12)", color: on ? C.white : "#000",
+              opacity: k, transform: `translateY(${(1 - k) * 30}px)` }}>{label}</div>
           );
         })}
       </div>
@@ -308,11 +312,11 @@ const Trio: React.FC = () => {
 };
 
 /* 8 ─ Restaurateurs : La Mère Michel as the example */
-const S = 592 / 1179; // capture px → phone screen px
-const STAR = [489, 1329, 120, 120];
-// La Mère Michel's place page, screenshot from the app (978 px wide).
-const SHEET_S = 592 / 978;
-const BADGE = [40, 645, 445, 43], BOOK = [40, 1045, 286, 120];
+const S = 592 / 786; // capture px (393 css px @2x) → phone screen px
+const STAR = [338, 904, 60, 60]; // La Mère Michel's star on the map capture
+// La Mère Michel's place page (same 786 px capture scale).
+const SHEET_S = 592 / 786;
+const BADGE = [32, 504, 382, 44], BOOK = [32, 874, 230, 124];
 const Ring: React.FC<{ box: number[]; zoom: number; round?: boolean; opacity: number; scale?: number }> = ({ box: [x, y, w, h], zoom, round, opacity, scale = S }) => {
   const cx = 296, cy = 1283 * 0.3;
   const S_ = scale;
@@ -331,7 +335,7 @@ const Pro: React.FC = () => {
         <H size={84} style={{ position: "absolute", left: 0, right: 0, top: 58 }}><Kinetic t={t} t0={33.45} lines={[{ text: "Rejoignez", light: true }, { text: "la Sélection.", mark: true }]} /></H>
       </div>
       <Phone style={phoneIn(t, 29.7)}>
-        <Cover file="app/014.jpg" style={{ transform: `scale(${z})`, transformOrigin: "50% 30%" }} />
+        <Cover file="ui/meynard.jpg" style={{ transform: `scale(${z})`, transformOrigin: "50% 30%" }} />
         {/* the place page slides up like the app's sheet */}
         <AbsoluteFill style={{ background: C.white, zIndex: 3, transform: `translateY(${(1 - easeOut(prog(t, 31.3, 31.8))) * 1300}px)`,
           }}>
