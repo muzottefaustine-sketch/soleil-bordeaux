@@ -882,16 +882,6 @@
     .sk-s { height:12px; width:38%; }
     .sk-row:nth-child(3n) .sk-t { width:46%; } .sk-row:nth-child(3n+1) .sk-t { width:68%; } .sk-row:nth-child(2n) .sk-s { width:52%; }
     @keyframes shimmer { 0% { background-position:100% 50%; } 100% { background-position:0 50%; } }
-    /* Écran de lancement : le soleil respire doucement, sans tourner */
-    @keyframes splash-pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.04); } }
-    .splash-sun { animation-duration:3.2s; }
-    .splash-name { font-size:30px; letter-spacing:-.02em; }
-    .splash-tagline { font-size:14px; color:var(--ink-2); max-width:300px; text-wrap:balance; }
-    .splash-progress-wrap { width:120px; bottom:60px; }
-    .splash-progress-track { height:3px; border-radius:2px; background:rgba(120,120,128,.18); }
-    .splash-progress-bar { background:var(--sun); transition:width .5s var(--ios); }
-    .splash-status { font-size:12px; color:var(--ink-3); bottom:34px; }
-    #splash { transition:opacity .5s var(--ios); }
 
     /* Panneau de l'heure : à peine plus transparent, la carte se devine derrière. */
     .panel-map { background:rgba(255,255,255,.66); }
@@ -1954,7 +1944,7 @@ function markerImageForPlace(t){
 }
 function markerSizeForPlace(t){
   if(findReferenced(t) || isFavorite(t)) return 30;
-  return isFoodPlace(t) ? 22 : 26;
+  return isFoodPlace(t) ? 19 : 26;
 }
 // Les icônes restent aux coordonnées de leur établissement : aucun regroupement,
 // déplacement artificiel ou animation. En perspective, on masque simplement celles
