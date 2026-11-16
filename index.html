@@ -885,6 +885,12 @@
 
     /* Panneau de l'heure : à peine plus transparent, la carte se devine derrière. */
     .panel-map { background:rgba(255,255,255,.66); }
+
+    /* Panneau de l'heure : pas de libellé, l'heure au centre, le ▶ à droite. */
+    .panel-map h3::before { content:none; }
+    .panel-map h3 { display:grid; grid-template-columns:34px 1fr 34px; align-items:center; justify-content:stretch; gap:0; }
+    .panel-map h3 .heure { grid-column:2; justify-self:center; margin-left:0; font-size:22px; }
+    .panel-map h3 #btnPlayDay { grid-column:3; justify-self:end; }
   </style>
 </head>
 <body>
