@@ -526,6 +526,374 @@
     #placeLinkUrl { width:100%; padding:10px; border:1px solid var(--divider); border-radius:9px; color:var(--text-2); background:#fff; font-size:12px; }
     .place-link-copy { min-height:44px; border:0; background:none; color:#795800; font-size:13px; font-weight:750; cursor:pointer; }
     #placeLinkDialog :focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+    /* Panneau « Appeler » : affiche le numéro quand l'appel direct ne peut pas partir. */
+    #phonePanel[hidden] { display:none !important; }
+    #phonePanel { position:fixed; inset:0; z-index:3000; display:flex; align-items:flex-end; justify-content:center; background:rgba(15,23,42,.45); }
+    .phone-card { width:100%; max-width:440px; background:#fff; border-radius:22px 22px 0 0; padding:22px 20px calc(18px + env(safe-area-inset-bottom,0px)); text-align:center; box-shadow:0 -14px 40px rgba(15,23,42,.22); }
+    .phone-name { font-size:13px; font-weight:750; color:var(--text-2); margin-bottom:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .phone-number { display:block; font-size:28px; font-weight:800; letter-spacing:.5px; color:var(--text); margin-bottom:6px; user-select:all; -webkit-user-select:all; }
+    .phone-hint { font-size:12px; line-height:1.4; color:var(--text-2); margin-bottom:16px; }
+    .phone-actions { display:grid; gap:8px; }
+    .phone-btn { display:flex; align-items:center; justify-content:center; min-height:50px; border:0; border-radius:14px; background:#F2F2F7; color:var(--text); font-family:inherit; font-size:15px; font-weight:750; text-decoration:none; cursor:pointer; touch-action:manipulation; }
+    .phone-btn.primary { background:var(--green); color:#fff; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V2 — plus sobre : une seule couleur d'accent (jaune soleil),
+       surfaces blanches pleines, typographie système, moins d'ombres.
+       Ce bloc ne change que l'apparence ; il se retire d'un seul tenant.
+       ═══════════════════════════════════════════════════════════════ */
+    :root {
+      --ink:#14161A; --ink-2:#5C636F; --ink-3:#98A0AD;
+      --line:#E8EAEE; --surface:#FFFFFF; --surface-2:#F4F5F7;
+      --sun:#F5B301; --sun-soft:#FFF4CC; --sun-ink:#6B4E00;
+      --text:var(--ink); --text-2:var(--ink-2); --text-3:var(--ink-3); --divider:var(--line);
+      --elev:0 1px 2px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.10);
+    }
+    html, body { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing:antialiased; }
+
+    /* Barre du haut */
+    #topBar { gap:8px; }
+    .search-glass, .icon-btn, #btnGeo, .panel-map, #locationPill {
+      background:var(--surface); backdrop-filter:none; -webkit-backdrop-filter:none;
+      border:1px solid rgba(16,24,40,.06); box-shadow:var(--elev);
+    }
+    .search-glass { height:48px; border-radius:14px; padding:0 14px; }
+    .search-glass svg { opacity:.45; }
+    #searchInput { font-size:16px; }
+    .icon-btn { width:48px; height:48px; border-radius:14px; }
+    .icon-btn:hover { transform:none; }
+    #btnGeo { width:44px; height:44px; border-radius:50%; bottom:calc(env(safe-area-inset-bottom,34px) + 128px); }
+    #locationPill { top:calc(env(safe-area-inset-top,44px) + 68px); height:30px; font-size:12px; font-weight:600; color:var(--ink-2); }
+    .location-dot { background:var(--sun); box-shadow:none; }
+
+    /* Curseur d'heure */
+    .panel-map { width:calc(100% - 32px); max-width:420px; padding:14px 18px 12px; border-radius:18px; }
+    .panel-map h3 { font-size:0; margin:0 0 12px; gap:8px; justify-content:space-between; }
+    .panel-map h3::before { content:'Ensoleillement à'; font-size:13px; font-weight:500; color:var(--ink-2); }
+    .panel-map h3 .heure { font-size:17px; font-weight:700; letter-spacing:-.2px; font-variant-numeric:tabular-nums; }
+    .panel-map input[type=range] { height:4px; background:linear-gradient(to right, var(--sun) var(--pct,46%), #E3E6EB var(--pct,46%)); }
+    .panel-map input[type=range]::-webkit-slider-thumb { width:22px; height:22px; border:0; background:#fff; box-shadow:0 0 0 1px rgba(16,24,40,.08), 0 2px 6px rgba(16,24,40,.25); }
+    .panel-labels { margin-top:8px; font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums; }
+
+    /* Bulle d'un lieu sur la carte */
+    #tooltip { background:var(--surface); color:var(--ink); border:1px solid rgba(16,24,40,.06); border-radius:16px; padding:14px 16px 12px; box-shadow:var(--elev); backdrop-filter:none; font-size:16px; font-weight:650; letter-spacing:-.1px; }
+    #tooltip .tt-type { font-family:inherit; font-size:13px; color:var(--ink-2); margin-top:2px; }
+    #tooltip .tt-sun { font-family:inherit; }
+    #tooltip #ttMaps { background:var(--surface-2) !important; color:var(--ink) !important; border-radius:10px !important; padding:10px 14px !important; font-size:14px !important; font-weight:600; margin-top:12px !important; }
+
+    /* Liste */
+    #drawer { background:var(--surface); box-shadow:0 -8px 40px rgba(16,24,40,.18); }
+    .drawer-bar { background:#D9DDE3; width:36px; }
+    .drawer-header { padding:8px 20px 0; }
+    .drawer-top { margin-bottom:12px; }
+    .drawer-title { font-size:20px; font-weight:700; letter-spacing:-.3px; }
+    .drawer-title em { font-style:normal; font-weight:700; }
+    .drawer-title span { color:var(--ink); font-weight:700; }
+    #btnClose { background:var(--surface-2); width:32px; height:32px; color:var(--ink-2); }
+    .drawer-search { height:44px; border:0; background:var(--surface-2); border-radius:12px; box-shadow:none; margin-bottom:12px; }
+    #drawerSearch { font-size:16px; }
+    .filter-chips { gap:8px; padding:0 20px 12px; }
+    .filter-chip { height:34px; padding:0 14px; font-size:14px; font-weight:550; color:var(--ink); background:var(--surface); border:1px solid var(--line); box-shadow:none; }
+    .filter-chip:hover { transform:none; }
+    .filter-chip.active { background:var(--ink); border-color:var(--ink); color:#fff; }
+    .section-title { padding:6px 20px 8px; }
+    .section-label { font-size:13px; font-weight:600; color:var(--ink-2); text-transform:none; letter-spacing:0; }
+    .count-pill { background:none; color:var(--ink-3); font-size:13px; font-weight:500; padding:0; }
+    .list { padding:0 20px 32px; }
+    .list-divider { padding:18px 0 4px; font-size:13px; font-weight:600; color:var(--ink-2); text-transform:none; letter-spacing:0; }
+    .card, .card.compact { min-height:0; gap:12px; padding:14px 0; margin:0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:none; box-shadow:none; }
+    .card:hover { transform:none; box-shadow:none; }
+    .card:active, .card.active { transform:none; background:var(--surface-2); border-color:var(--line); box-shadow:none; }
+    .card-name, .card.compact .card-name { font-size:16px; font-weight:600; letter-spacing:-.1px; margin-bottom:2px; }
+    .card-sub, .card.compact .card-sub { font-size:14px; color:var(--ink-2); }
+    .card.partner { background:none; border-color:var(--line); }
+    .card.partner .card-photo-wrap { width:56px; height:56px; border:0; border-radius:12px; }
+    .card.partner .card-name::after { content:none; }
+    .partner-tag { background:var(--sun-soft); color:var(--sun-ink); font-size:11px; font-weight:600; border-radius:6px; padding:2px 6px; }
+    .partner-sun { display:none; }
+    .photo-error::before { content:''; background:var(--surface-2); }
+    .category-icon { box-shadow:none; border:0; }
+    .utility-tag.heat { background:var(--surface-2); color:var(--ink-2); font-weight:500; font-size:12px; height:auto; padding:3px 8px; }
+    .no-results { color:var(--ink-2); font-size:14px; }
+    .drawer-footer { background:var(--surface); backdrop-filter:none; border-top:1px solid var(--line); }
+    .footer-text, .privacy-link { font-size:12px; color:var(--ink-3); }
+    .live-dot { display:none; }
+
+    /* Sélection */
+    .sel-wrap { padding:4px 0 6px; margin:0 -20px; }
+    .sel-head { padding:6px 20px 10px; }
+    .sel-head .sel-emoji { display:none; }
+    .sel-head .sel-title { font-size:13px; font-weight:600; color:var(--ink-2); }
+    .sel-scroll { gap:12px; padding:0 20px 4px; }
+    .sel-card, .sel-card.partner { flex:0 0 200px; width:200px; min-width:0; border:0; border-radius:14px; box-shadow:none; background:none; overflow:visible; }
+    .sel-card:hover { transform:none; }
+    .sel-photo-wrap { height:124px; border-radius:14px; background:var(--surface-2); }
+    .sel-photo { height:124px; }
+    .sel-info { padding:8px 2px 0; overflow:hidden; }
+    .sel-name { font-size:15px; font-weight:600; }
+    .sel-sub { font-size:13px; color:var(--ink-2); margin-top:1px; }
+    .sel-happy { background:var(--sun-soft); color:var(--sun-ink); }
+    .photo-credit { font-size:10px; background:rgba(0,0,0,.45); border-radius:6px; }
+
+    /* Fiche d'un lieu */
+    #placeSheet .ps-sheet-head { border-bottom:0; min-height:calc(48px + env(safe-area-inset-top,0px)); }
+    .ps-back { font-size:15px; font-weight:600; padding:0 4px; gap:4px; }
+    .ps-back span { font-size:26px; line-height:1; margin-top:-3px; }
+    .ps-header-label, #placeSheet .ps-close { display:none; }
+    #placeSheet .ps-hero, #placeSheet .ps-photo { background:var(--surface-2); }
+    .ps-hero::after { background:none; }
+    .ps-summary { padding:16px 20px 12px; }
+    #placeSheet .ps-badge { background:var(--sun-soft); color:var(--sun-ink); font-size:11px; font-weight:600; letter-spacing:0; text-transform:none; padding:3px 8px; border-radius:6px; margin-bottom:8px; }
+    #placeSheet .ps-name { font-family:inherit; font-size:26px; font-weight:700; letter-spacing:-.5px; margin-bottom:4px; }
+    #placeSheet .ps-sub { font-size:14px; color:var(--ink-2); }
+    #placeSheet .ps-meta { margin-top:10px; gap:6px; }
+    #placeSheet .ps-rating, #placeSheet .ps-happy { background:var(--surface-2); color:var(--ink); font-size:13px; font-weight:550; padding:5px 10px; border-radius:8px; }
+    .ps-tabs { padding:0 20px; gap:20px; display:flex; }
+    .ps-tab { min-height:44px; padding:0; font-size:15px; font-weight:600; color:var(--ink-3); border-radius:0; border-bottom:2px solid transparent; }
+    .ps-tab[aria-selected="true"] { color:var(--ink); background:none; border-bottom-color:var(--ink); }
+    .ps-panel { padding:18px 20px; }
+    #placeSheet .ps-overview-actions { gap:8px; margin-bottom:20px; }
+    #placeSheet .ps-btn { border-radius:12px; font-size:15px; font-weight:600; box-shadow:none; }
+    #placeSheet .ps-btn.reserve { background:var(--ink); color:#fff; }
+    #placeSheet .ps-btn.tel, #placeSheet .ps-btn.site, #placeSheet .ps-btn.maps { background:var(--surface-2); color:var(--ink); }
+    #placeSheet .ps-info-rows { gap:0; }
+    .ps-info-row { grid-template-columns:20px minmax(0,1fr); gap:14px; align-items:center; padding:13px 0; border-bottom:1px solid var(--line); }
+    .ps-info-row:last-child { border-bottom:0; }
+    .ps-row-icon { width:20px; height:20px; background:none; border-radius:0; color:var(--ink-3); }
+    .ps-row-icon svg { width:20px; height:20px; display:block; }
+    .ps-row-label { font-size:12px; font-weight:500; color:var(--ink-3); margin-bottom:1px; }
+    .ps-row-value { font-size:15px; font-weight:500; color:var(--ink); }
+    .ps-tag { background:var(--surface-2); color:var(--ink-2); font-size:13px; font-weight:500; padding:6px 10px; border-radius:8px; }
+    .ps-hours li { font-size:15px; padding:12px 0; border-bottom:1px solid var(--line); }
+    .ps-inline-note, .ps-empty { font-size:14px; color:var(--ink-2); }
+
+    /* Villes proposées, panneau d'appel */
+    #citySuggestions { top:56px; border:1px solid rgba(16,24,40,.06); border-radius:14px; background:var(--surface); backdrop-filter:none; box-shadow:var(--elev); }
+    .city-suggestion-label { font-weight:600; font-size:15px; }
+    .city-suggestion-meta { font-weight:500; }
+    .phone-btn { border-radius:12px; font-weight:600; }
+    .phone-btn.primary { background:var(--ink); }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V3 — codes d'une appli iOS : matière translucide, formes en
+       capsule, grands titres, listes à chevrons, contrôle segmenté.
+       Apparence uniquement ; se retire d'un seul tenant, comme la V2.
+       ═══════════════════════════════════════════════════════════════ */
+    :root {
+      --ink:#000000; --ink-2:rgba(60,60,67,.72); --ink-3:rgba(60,60,67,.45);
+      --line:rgba(60,60,67,.14); --surface-2:#F2F2F7; --fill:rgba(118,118,128,.12);
+      --sun:#FFB800; --sun-soft:#FFF2C2; --sun-ink:#5C4300;
+      --material:rgba(255,255,255,.78);
+      --elev:0 0 0 .5px rgba(0,0,0,.06), 0 6px 20px rgba(0,0,0,.12);
+    }
+    html, body { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; letter-spacing:-.01em; }
+
+    /* Commandes flottantes sur la carte : matière translucide, capsules */
+    .search-glass, .icon-btn, #btnGeo, .panel-map, #locationPill, #tooltip, #citySuggestions {
+      background:var(--material); border:0; box-shadow:var(--elev);
+      backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%);
+    }
+    .search-glass { height:46px; border-radius:23px; padding:0 16px; min-width:0; }
+    #searchInput { min-width:0; }
+    #searchInput { font-size:17px; letter-spacing:-.02em; }
+    #searchInput::placeholder { color:var(--ink-2); }
+    .icon-btn { width:46px; height:46px; border-radius:50%; }
+    #btnGeo { width:46px; height:46px; }
+    #locationPill { border-radius:15px; font-size:13px; font-weight:500; color:var(--ink); }
+
+    /* Curseur d'heure */
+    .panel-map { border-radius:26px; padding:14px 20px 14px; }
+    .panel-map h3 { margin-bottom:10px; align-items:baseline; }
+    .panel-map h3::before { content:'Soleil à'; font-size:15px; font-weight:400; color:var(--ink-2); }
+    .panel-map h3 .heure { font-size:22px; font-weight:700; letter-spacing:-.02em; }
+    .panel-map input[type=range] { height:4px; border-radius:2px; background:linear-gradient(to right, var(--sun) var(--pct,46%), rgba(120,120,128,.2) var(--pct,46%)); }
+    .panel-map input[type=range]::-webkit-slider-thumb { width:28px; height:28px; background:#fff; border:0; box-shadow:0 .5px 4px rgba(0,0,0,.12), 0 6px 13px rgba(0,0,0,.12); }
+    .panel-labels { font-size:12px; color:var(--ink-3); margin-top:6px; }
+
+    /* Bulle d'un lieu */
+    #tooltip { border-radius:20px; padding:16px 16px 14px; font-size:17px; font-weight:600; letter-spacing:-.02em; }
+    #tooltip .tt-type { font-size:15px; color:var(--ink-2); margin-top:2px; }
+    #tooltip #ttMaps { background:var(--fill) !important; border-radius:12px !important; padding:11px 14px !important; font-size:15px !important; font-weight:600; }
+
+    /* Liste : feuille iOS, grand titre, champ de recherche gris, chevrons */
+    @media (max-width:640px) { #drawer { border-radius:14px 14px 0 0; height:88vh; border-top:0; } }
+    .drawer-handle { padding:6px 0 2px; }
+    .drawer-bar { width:36px; height:5px; border-radius:3px; background:rgba(60,60,67,.3); }
+    .drawer-header { padding:6px 16px 0; }
+    .drawer-top { margin-bottom:8px; }
+    .drawer-title { font-size:28px; font-weight:700; letter-spacing:-.02em; }
+    .drawer-title em, .drawer-title span { font-weight:700; }
+    #btnClose { width:30px; height:30px; background:var(--fill); color:rgba(60,60,67,.6); font-size:13px; font-weight:700; }
+    .drawer-search { height:36px; border-radius:10px; background:var(--fill); padding:0 8px; gap:6px; margin-bottom:10px; }
+    .drawer-search svg { opacity:.5; }
+    #drawerSearch { font-size:17px; letter-spacing:-.02em; }
+    #drawerSearch::placeholder { color:var(--ink-2); }
+    .filter-chips { padding:0 16px 10px; gap:8px; }
+    .filter-chip { height:32px; padding:0 14px; border:0; background:var(--fill); color:var(--ink); font-size:15px; font-weight:500; letter-spacing:-.01em; }
+    .filter-chip.active { background:var(--ink); color:#fff; }
+    .section-title { padding:8px 16px 6px; }
+    .section-label, .list-divider, .sel-head .sel-title { font-size:13px; font-weight:400; color:var(--ink-2); text-transform:uppercase; letter-spacing:.02em; }
+    .count-pill { font-size:13px; font-weight:400; color:var(--ink-2); }
+    .list { padding:0 0 32px 16px; }
+    .list-divider { padding:22px 0 6px; border-bottom:.5px solid var(--line); }
+    .card, .card.compact { position:relative; padding:11px 40px 11px 0; border-bottom:.5px solid var(--line); }
+    .card::after { content:''; position:absolute; right:14px; top:50%; width:14px; height:14px; margin-top:-7px; background:rgba(60,60,67,.3); -webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%205l7%207-7%207%22/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%205l7%207-7%207%22/%3E%3C/svg%3E") center/contain no-repeat; }
+    .card:active, .card.active { background:rgba(60,60,67,.08); }
+    .card-name, .card.compact .card-name { font-size:17px; font-weight:400; letter-spacing:-.02em; margin-bottom:1px; }
+    .card-sub, .card.compact .card-sub { font-size:15px; color:var(--ink-2); letter-spacing:-.01em; }
+    .card.partner .card-name { font-weight:600; }
+    .partner-tag { font-size:12px; font-weight:500; border-radius:5px; }
+    .sel-wrap { margin:0 0 0 -16px; padding:4px 0 4px; }
+    .sel-head { padding:8px 16px 8px; }
+    .sel-scroll { padding:0 16px 4px; gap:10px; }
+    .sel-card, .sel-card.partner { flex:0 0 220px; width:220px; }
+    .sel-photo-wrap, .sel-photo { height:136px; border-radius:12px; }
+    .sel-name { font-size:17px; font-weight:600; letter-spacing:-.02em; }
+    .sel-sub { font-size:15px; color:var(--ink-2); }
+    .drawer-footer { padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px)); border-top:.5px solid var(--line); }
+    .footer-text, .privacy-link { font-size:12px; }
+
+    /* Fiche d'un lieu */
+    .ps-back { font-size:17px; font-weight:400; color:var(--ink); letter-spacing:-.02em; }
+    .ps-back span { font-size:30px; font-weight:300; margin-top:-4px; }
+    .ps-summary { padding:16px 16px 12px; }
+    #placeSheet .ps-badge { font-size:12px; font-weight:600; border-radius:6px; padding:3px 8px; }
+    #placeSheet .ps-name { font-size:28px; font-weight:700; letter-spacing:-.02em; line-height:1.15; }
+    #placeSheet .ps-sub { font-size:15px; color:var(--ink-2); }
+    #placeSheet .ps-rating, #placeSheet .ps-happy { background:var(--fill); font-size:13px; font-weight:500; border-radius:8px; padding:5px 9px; }
+    /* Onglets → contrôle segmenté iOS */
+    .ps-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0; margin:0 16px; padding:2px; border-bottom:0; border-radius:9px; background:var(--fill); }
+    .ps-tab { min-height:32px; border:0; border-radius:7px; font-size:13px; font-weight:500; color:var(--ink); letter-spacing:-.01em; }
+    .ps-tab[aria-selected="true"] { background:#fff; border:0; font-weight:600; box-shadow:0 3px 8px rgba(0,0,0,.12), 0 3px 1px rgba(0,0,0,.04); }
+    .ps-panel { padding:16px 16px; }
+    /* Actions : icône au-dessus du libellé, comme dans Plans */
+    #placeSheet .ps-overview-actions { gap:8px; margin-bottom:18px; }
+    #placeSheet .ps-overview-actions .ps-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-height:62px; padding:9px 4px 8px; border-radius:13px; font-size:13px; font-weight:500; letter-spacing:-.01em; background:var(--fill); color:var(--ink); }
+    #placeSheet .ps-overview-actions .ps-btn::before { content:''; width:22px; height:22px; background:currentColor; -webkit-mask:var(--ic) center/contain no-repeat; mask:var(--ic) center/contain no-repeat; }
+    #placeSheet .ps-overview-actions .ps-btn.reserve { --ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%224%22%20y%3D%225.500%22%20width%3D%2216%22%20height%3D%2214.500%22%20rx%3D%223%22/%3E%3Cpath%20d%3D%22M4%2010h16M8.500%203.500v4M15.500%203.500v4%22/%3E%3C/svg%3E"); background:var(--sun); color:#000; font-weight:600; }
+    #placeSheet .ps-overview-actions .ps-btn.tel { --ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204H5.800A1.800%201.800%200%200%200%204%205.900C4.500%2013.700%2010.300%2019.500%2018.100%2020A1.800%201.800%200%200%200%2020%2018.200V16a1.200%201.200%200%200%200-.850-1.150l-3.100-1a1.200%201.200%200%200%200-1.250.330l-1.400%201.550a10.500%2010.500%200%200%201-5.130-5.130l1.550-1.400a1.200%201.200%200%200%200%20.330-1.250l-1-3.100A1.200%201.200%200%200%200%208%204z%22/%3E%3C/svg%3E"); }
+    #placeSheet .ps-overview-actions .ps-btn.site { --ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7%203.500v6a2.500%202.500%200%200%200%205%200v-6M9.500%203.500v17M17%203.500c-1.800%201.800-2.500%204.200-2.500%207.500H17zm0%207.500v9.500%22/%3E%3C/svg%3E"); }
+    #placeSheet .ps-info-rows { background:var(--surface-2); border-radius:12px; padding:0 0 0 14px; }
+    .ps-info-row { grid-template-columns:22px minmax(0,1fr); gap:12px; padding:11px 14px 11px 0; border-bottom:.5px solid var(--line); }
+    .ps-row-icon, .ps-row-icon svg { width:22px; height:22px; }
+    .ps-row-icon { color:var(--ink-2); }
+    .ps-row-label { font-size:13px; font-weight:400; color:var(--ink-2); }
+    .ps-row-value { font-size:17px; font-weight:400; letter-spacing:-.02em; }
+    #placeSheet .ps-secondary-actions .ps-btn { min-height:50px; border-radius:12px; font-size:17px; font-weight:400; background:var(--fill); color:var(--ink); letter-spacing:-.02em; }
+    .ps-tag { background:var(--fill); color:var(--ink); font-size:13px; border-radius:8px; }
+    .ps-hours { background:var(--surface-2); border-radius:12px; padding:0 14px; }
+    .ps-hours li { font-size:17px; letter-spacing:-.02em; padding:11px 0; border-bottom:.5px solid var(--line); }
+    .ps-hours li:last-child { border-bottom:0; }
+    .ps-inline-note, .ps-empty { font-size:13px; color:var(--ink-2); }
+
+    /* Villes proposées, panneau d'appel */
+    #citySuggestions { top:54px; border-radius:16px; }
+    .city-suggestion { border-bottom:.5px solid var(--line); }
+    .city-suggestion-label { font-size:17px; font-weight:400; letter-spacing:-.02em; }
+    .city-suggestion-meta { font-size:13px; font-weight:400; color:var(--ink-2); }
+    .phone-card { border-radius:14px 14px 0 0; }
+    .phone-number { font-weight:700; letter-spacing:-.01em; }
+    .phone-btn { min-height:50px; border-radius:12px; font-size:17px; font-weight:400; background:var(--fill); letter-spacing:-.02em; }
+    .phone-btn.primary { background:var(--sun); color:#000; font-weight:600; }
+
+    /* Bouton ▶ : fait défiler la journée du lever au coucher du soleil. */
+    .panel-map h3 { justify-content:flex-start; gap:12px; }
+    .panel-map h3 .heure { margin-left:auto; font-variant-numeric:tabular-nums; }
+    #btnPlayDay { flex:0 0 auto; width:34px; height:34px; border:0; border-radius:50%; padding:0; background:var(--sun); color:#000; display:grid; place-items:center; cursor:pointer; touch-action:manipulation; box-shadow:0 1px 3px rgba(0,0,0,.18); transition:transform .15s ease, opacity .15s ease; align-self:center; }
+    #btnPlayDay:active { transform:scale(.92); opacity:.85; }
+    #btnPlayDay svg { width:14px; height:14px; fill:currentColor; display:block; }
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V5 — mouvements naturels, grand titre qui se réduit,
+       cartes de sélection façon App Store, fiche qu'on ferme en la glissant.
+       Se retire d'un seul tenant, comme les blocs précédents.
+       ═══════════════════════════════════════════════════════════════ */
+    :root { --spring:cubic-bezier(.34,1.56,.64,1); --ios:cubic-bezier(.32,.72,0,1); }
+
+    /* 1. Mouvements : courbe iOS pour les feuilles, léger ressort au toucher */
+    #drawer { transition:transform .5s var(--ios); }
+    #placeSheet { transition:transform .45s var(--ios), visibility .45s; }
+    #tooltip { transform:translateY(8px) scale(.96); transition:opacity .2s ease, transform .45s var(--spring); }
+    #tooltip.visible { transform:none; }
+    .ps-btn, .filter-chip, .icon-btn, #btnGeo, .phone-btn, #btnPlayDay, .ps-tab, .sel-card, .city-suggestion {
+      transition:transform .4s var(--spring), background-color .2s ease, opacity .2s ease, box-shadow .2s ease;
+    }
+    .ps-btn:active, .filter-chip:active, .icon-btn:active, #btnGeo:active, .phone-btn:active, #btnPlayDay:active, .sel-card:active {
+      transform:scale(.96); transition-duration:.1s;
+    }
+    .sel-card:hover { transform:none; }
+
+    /* 2. Grand titre de la liste : il se réduit quand on fait défiler */
+    .drawer-title { transition:font-size .3s var(--ios), letter-spacing .3s var(--ios); }
+    .drawer-header, .filter-chips { transition:box-shadow .25s ease; }
+    #drawer.scrolled .drawer-title { font-size:17px; font-weight:600; }
+    #drawer.scrolled .drawer-top { margin-bottom:6px; }
+    #drawer.scrolled .drawer-search { margin-bottom:8px; }
+    #drawer.scrolled .filter-chips { padding-bottom:10px; box-shadow:0 .5px 0 var(--line); }
+
+    /* 3. Sélection : grandes cartes photo, titre par-dessus */
+    .sel-scroll { gap:12px; padding:2px 16px 12px; scroll-snap-type:x mandatory; scroll-padding-left:16px; }
+    .sel-card, .sel-card.partner {
+      position:relative; flex:0 0 min(268px,76vw); width:min(268px,76vw); height:198px; border-radius:20px; overflow:hidden;
+      background:linear-gradient(160deg,#FFE9A8,#F2F3F6); scroll-snap-align:start;
+      box-shadow:0 1px 2px rgba(0,0,0,.08), 0 10px 24px rgba(0,0,0,.14);
+    }
+    .sel-photo-wrap { position:absolute; inset:0; height:auto; border-radius:0; background:none; }
+    .sel-photo { width:100%; height:100%; object-fit:cover; -webkit-user-drag:none; }
+    .sel-card::after { content:''; position:absolute; inset:0; pointer-events:none;
+      background:linear-gradient(to top, rgba(0,0,0,.68) 0%, rgba(0,0,0,.30) 40%, rgba(0,0,0,0) 66%); }
+    .sel-info { position:absolute; left:0; right:0; bottom:0; z-index:1; padding:14px 16px; }
+    .sel-name { color:#fff; font-size:21px; font-weight:700; letter-spacing:-.02em; line-height:1.15; white-space:normal;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-shadow:0 1px 8px rgba(0,0,0,.25); }
+    .sel-sub { color:rgba(255,255,255,.85); font-size:14px; margin-top:3px; }
+    .sel-happy { background:rgba(255,255,255,.22); color:#fff; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+    /* La mention de l'auteur de la photo reste affichée, en haut à droite. */
+    .sel-photo-wrap .photo-credit { top:10px; right:10px; bottom:auto; max-width:70%; z-index:2; }
+
+    /* 4. Fiche : poignée et glissé vers le bas pour fermer */
+    #placeSheet .ps-sheet-head::before { content:''; position:absolute; top:calc(env(safe-area-inset-top,0px) + 6px); left:50%; width:36px; height:5px; margin-left:-18px; border-radius:3px; background:rgba(60,60,67,.3); }
+    #placeSheet .ps-sheet-head, #placeSheet .ps-hero { touch-action:none; }
+    #placeSheet .ps-photo { -webkit-user-drag:none; user-select:none; -webkit-user-select:none; }
+    #placeSheet.dragging { border-radius:14px 14px 0 0; box-shadow:0 -10px 40px rgba(0,0,0,.28); }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V6 — finitions : étoile des favoris, touchers, défilement.
+       ═══════════════════════════════════════════════════════════════ */
+    * { -webkit-tap-highlight-color:transparent; }
+    #topBar, .panel-map, .panel-labels, button, .filter-chip, .card, .sel-card, .drawer-title, .section-label, .list-divider, .sel-head, .ps-tab, .ps-back, #tooltip {
+      -webkit-user-select:none; user-select:none;
+    }
+    button, .filter-chip, .card, .sel-card, .ps-btn, a { touch-action:manipulation; }
+    .list { overscroll-behavior:contain; }
+    #btnClose { position:relative; }
+    #btnClose::after { content:''; position:absolute; inset:-7px; }
+    .sel-card::before { content:'★'; position:absolute; top:12px; left:12px; z-index:2; width:30px; height:30px; border-radius:50%;
+      background:var(--sun); color:#000; display:grid; place-items:center; font-size:16px; line-height:1; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+    #placeSheet .ps-badge::before { content:'★'; margin-right:5px; color:#E09A00; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V7 — chargement en squelette, écran de lancement plus calme.
+       ═══════════════════════════════════════════════════════════════ */
+    #loadingState { align-items:stretch; justify-content:flex-start; gap:0; padding:6px 0 0 16px; overflow:hidden; }
+    .sk-row { padding:15px 16px 15px 0; border-bottom:.5px solid var(--line); }
+    .sk { display:block; border-radius:6px;
+      background:linear-gradient(90deg, rgba(120,120,128,.10) 25%, rgba(120,120,128,.20) 40%, rgba(120,120,128,.10) 60%); background-size:400% 100%;
+      animation:shimmer 1.5s ease-in-out infinite; }
+    .sk-t { height:16px; width:60%; margin-bottom:9px; }
+    .sk-s { height:12px; width:38%; }
+    .sk-row:nth-child(3n) .sk-t { width:46%; } .sk-row:nth-child(3n+1) .sk-t { width:68%; } .sk-row:nth-child(2n) .sk-s { width:52%; }
+    @keyframes shimmer { 0% { background-position:100% 50%; } 100% { background-position:0 50%; } }
+
+    /* Panneau de l'heure : à peine plus transparent, la carte se devine derrière. */
+    .panel-map { background:rgba(255,255,255,.66); }
+
+    /* Panneau de l'heure : pas de libellé, l'heure au centre, le ▶ à droite. */
+    .panel-map h3::before { content:none; }
+    .panel-map h3 { display:grid; grid-template-columns:34px 1fr 34px; align-items:center; justify-content:stretch; gap:0; }
+    .panel-map h3 .heure { grid-column:2; justify-self:center; margin-left:0; font-size:22px; }
+    .panel-map h3 #btnPlayDay { grid-column:3; justify-self:end; }
+
+    /* Le soleil devant l'heure, l'ensemble restant centré. */
+    .panel-map h3 .heure::before { content:'☀️'; font-size:15px; font-weight:400; margin-right:8px; }
   </style>
 </head>
 <body>
@@ -560,7 +928,7 @@
 <div id="topBar">
   <div class="search-glass">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#1C1C1E" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <input type="text" id="searchInput" placeholder="Recherche ta terrasse ou ta ville…" autocomplete="off" aria-autocomplete="list" aria-controls="citySuggestions">
+    <input type="text" id="searchInput" placeholder="Recherche ta ville…" aria-label="Rechercher une ville" autocomplete="off" aria-autocomplete="list" aria-controls="citySuggestions">
     <button class="search-clear-btn" id="searchClear">✕</button>
   </div>
   <div id="citySuggestions" role="listbox" aria-label="Villes proposées"></div>
@@ -574,21 +942,23 @@
 <div id="locationPill"><span class="location-dot"></span><span id="locationPillText">Position détectée</span></div>
 <div id="mode3dPill">Test 3D: clé Map Tiles non renseignée</div>
 <div class="panel-map">
-  <h3>☀️ <span class="heure" id="heureAffichee">14h00</span></h3>
+  <h3>☀️ <span class="heure" id="heureAffichee">14h00</span>
+    <button id="btnPlayDay" type="button" aria-label="Lancer la journée" aria-pressed="false" title="Voir la journée défiler"></button>
+  </h3>
   <input type="range" id="timeSlider" min="6" max="21" value="14" step="0.25">
-  <div class="panel-labels"><span>6h</span><span>20h</span></div>
+  <div class="panel-labels"><span>6h</span><span>21h</span></div>
 </div>
 <div id="tooltip" role="status" aria-live="polite">
   <div id="ttName"></div>
   <div class="tt-type" id="ttType"></div>
   <div class="tt-sun" id="ttSun"></div>
-  <a id="ttMaps" href="#" target="_blank" rel="noopener noreferrer" onclick="return openExternalLink(this,event)" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;">Ouvrir dans Maps</a>
+  <a id="ttMaps" href="#" target="_self" style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:10px;font-size:12px;text-align:center;text-decoration:none;">Ouvrir dans Plans</a>
 </div>
 <!-- Fiche lieu (Foursquare + partenaires) -->
 <div id="psOverlay" onclick="hidePlaceSheet()"></div>
 <div id="placeSheet" role="dialog" aria-modal="true" aria-label="Fiche du lieu" aria-hidden="true" inert>
   <div class="ps-sheet-head">
-    <button class="ps-back" id="psBack" type="button"><span aria-hidden="true">‹</span> Retour à la carte</button>
+    <button class="ps-back" id="psBack" type="button"><span aria-hidden="true">‹</span> Carte</button>
     <span class="ps-header-label">Soleilenterrasse</span>
     <button class="ps-close" id="psClose" type="button" aria-label="Fermer la fiche" title="Fermer la fiche">×</button>
   </div>
@@ -631,7 +1001,7 @@
   <div class="drawer-handle" id="drawerHandle"><div class="drawer-bar"></div></div>
   <div class="drawer-header">
     <div class="drawer-top">
-      <div class="drawer-title"><em>Soleil</em><span>enterrasse</span></div>
+      <div class="drawer-title">Terrasses</div>
       <button id="btnClose" onclick="closeDrawer()">✕</button>
     </div>
     <div class="drawer-search">
@@ -647,7 +1017,7 @@
     <button class="filter-chip" data-filter="heatwave" type="button">Canicule</button>
   </div>
   <div class="section-title"><span class="section-label">Résultats</span><span class="count-pill" id="resultCount">0</span></div>
-  <div id="loadingState"><div class="spinner"></div><span>Chargement…</span></div>
+  <div id="loadingState" role="status" aria-label="Chargement des lieux"><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div></div>
   <div class="list" id="terrasseList" style="display:none;"></div>
   <div class="drawer-footer">
     <div class="live-dot"></div>
@@ -736,7 +1106,7 @@ async function fetchAreaName(lat,lng,expectedId){
     currentCity.nom = detectedName || currentCity.nom || 'Autour de vous';
     currentCity.localDataIds = localDataCandidateIds(...(currentCity.localDataIds || []), currentCity.id, currentCity.nom, detectedName);
     updateLocationPill();
-    if(terrasses.length) document.getElementById('footerText').textContent=`${terrasses.length} lieux · ${currentCity.nom}`;
+    if(terrasses.length) document.getElementById('footerText').textContent=`${terrasses.length.toLocaleString('fr-FR')} lieux · ${currentCity.nom}`;
     const local = await localTerrassesForCurrentArea();
     if(currentCity.id === expectedId && local.length > 80){
       const merged=mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...localFallbackTerrasses()])).slice(0,MAX_TERRASSES);
@@ -1275,20 +1645,10 @@ function osmDataToTerrasses(data, source='osm'){
 }
 const cityDataCache = {};
 const cityScriptPromises = {};
+const BUNDLED_CITY_IDS = new Set(['bordeaux','cannes','lille','lyon','marseille','nantes','nice','strasbourg','toulouse']);
 function localDataPaths(id, ext){
-  const variants = uniq([
-    id,
-    id.replace(/-/g,''),
-    `restaurants-${id}`,
-    `${id}-restaurants`,
-    `restos-${id}`,
-    `${id}-restos`,
-    `terrasses-${id}`,
-    `${id}-terrasses`
-  ]);
-  const names = variants.flatMap(name=>[`data/${name}.${ext}`, `${name}.${ext}`, `outputs/data/${name}.${ext}`]);
-  if(location.protocol === 'file:') return names;
-  return [...variants.flatMap(name=>[`/data/${name}.${ext}`, `/outputs/data/${name}.${ext}`]), ...names];
+  const path=`data/${id}.${ext}`;
+  return [location.protocol==='file:' ? path : `/${path}`];
 }
 async function loadCityDataScript(id){
   if(window.LOCAL_OSM_DATA?.[id]) return window.LOCAL_OSM_DATA[id];
@@ -1296,12 +1656,23 @@ async function loadCityDataScript(id){
   cityScriptPromises[id] = new Promise(resolve => {
     const paths = localDataPaths(id, 'js');
     let index = 0;
+    let script=null;
+    let done=false;
+    const finish=value=>{
+      if(done) return;
+      done=true;
+      clearTimeout(timer);
+      if(!value) script?.remove();
+      resolve(value);
+    };
+    const timer=setTimeout(()=>finish(null),1500);
     const tryNext = () => {
-      if(index >= paths.length){ resolve(null); return; }
-      const script = document.createElement('script');
+      if(done) return;
+      if(index >= paths.length){ finish(null); return; }
+      script = document.createElement('script');
       script.src = paths[index++];
       script.async = true;
-      script.onload = () => resolve(window.LOCAL_OSM_DATA?.[id] || null);
+      script.onload = () => finish(window.LOCAL_OSM_DATA?.[id] || null);
       script.onerror = () => { script.remove(); tryNext(); };
       document.head.appendChild(script);
     };
@@ -1315,20 +1686,24 @@ async function fetchLocalCityData(id){
     cityDataCache[id] = window.LOCAL_OSM_DATA[id];
     return cityDataCache[id];
   }
+  // Les autres communes utilisent directement la recherche en ligne.
+  // Ne pas chercher des dizaines de fichiers inexistants avant de la lancer.
+  if(!BUNDLED_CITY_IDS.has(id)) return null;
   if(location.protocol === 'file:'){
     cityDataCache[id] = await loadCityDataScript(id);
     if(cityDataCache[id]) return cityDataCache[id];
   }
   for(const path of localDataPaths(id, 'json')){
     try{
-      const res = await fetch(path, {cache:'force-cache'});
+      const res = await fetchWithTimeout(path, {cache:'force-cache'},4500);
       if(!res.ok) throw new Error();
-      cityDataCache[id] = await res.json();
+      const data=await res.json();
+      if(!Array.isArray(data?.features) && !Array.isArray(data?.elements)) continue;
+      cityDataCache[id] = data;
       return cityDataCache[id];
     }catch(e){}
   }
-  cityDataCache[id] = await loadCityDataScript(id);
-  return cityDataCache[id];
+  return null;
 }
 async function localTerrassesForCurrentArea(){
   const localCity = currentCity.dynamic
@@ -1337,12 +1712,12 @@ async function localTerrassesForCurrentArea(){
   const ids = uniq([
     ...(currentCity.localDataIds || []),
     ...localDataCandidateIds(currentCity.id, currentCity.nom, localCity?.id, localCity?.nom)
-  ]);
+  ]).filter(id=>BUNDLED_CITY_IDS.has(id) || window.LOCAL_OSM_DATA?.[id]);
   for(const id of ids){
     try{
       const localData = await fetchLocalCityData(id);
       const places = localData ? osmDataToTerrasses(localData,`local-${id}`) : [];
-      if(places.length > 20) return places.filter(t=>placeCategory(t)!=='parking');
+      if(places.length) return places.filter(t=>placeCategory(t)!=='parking');
     }catch(e){}
   }
   return [];
@@ -1525,29 +1900,29 @@ async function runShadow(){
   if(shadowPending) scheduleShadow();
 }
 function makeSunIcon(sunny){
-  const c=document.createElement('canvas'); c.width=20; c.height=20; const ctx=c.getContext('2d');
-  if(sunny===true){
-    ctx.strokeStyle='#FFD600'; ctx.lineWidth=1.5; ctx.lineCap='round';
-    for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(10+Math.cos(a)*6.5,10+Math.sin(a)*6.5);ctx.lineTo(10+Math.cos(a)*9,10+Math.sin(a)*9);ctx.stroke();}
-    ctx.beginPath();ctx.arc(10,10,4.5,0,Math.PI*2);ctx.fillStyle='#FFD600';ctx.fill();
-    ctx.beginPath();ctx.arc(10,10,4.5,0,Math.PI*2);ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();
-  }else if(sunny===false){
-    ctx.beginPath();ctx.arc(10,10,5,0,Math.PI*2);ctx.fillStyle='#8E9BAD';ctx.fill();
-    ctx.beginPath();ctx.arc(10,10,5,0,Math.PI*2);ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();
-  }else{
-    ctx.beginPath();ctx.arc(10,10,5,0,Math.PI*2);ctx.fillStyle='#F8FAFC';ctx.fill();
-    ctx.beginPath();ctx.arc(10,10,5,0,Math.PI*2);ctx.strokeStyle='#98A2B3';ctx.lineWidth=1.5;ctx.stroke();
-  }
+  // Pastille pleine cerclée de blanc, dessinée 3× plus grande que sa taille
+  // d'affichage pour rester nette sur les écrans Retina.
+  const S=66, c=document.createElement('canvas'); c.width=S; c.height=S; const ctx=c.getContext('2d');
+  const fill = sunny===true ? '#F5B301' : sunny===false ? '#8A93A2' : '#C9CED6';
+  ctx.shadowColor='rgba(16,24,40,0.35)'; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
+  ctx.beginPath(); ctx.arc(S/2,S/2,21,0,Math.PI*2); ctx.fillStyle='#FFFFFF'; ctx.fill();
+  ctx.shadowColor='transparent';
+  ctx.beginPath(); ctx.arc(S/2,S/2,15,0,Math.PI*2); ctx.fillStyle=fill; ctx.fill();
   return c.toDataURL();
 }
 const DOT_SUN=makeSunIcon(true),DOT_SHADE=makeSunIcon(false),DOT_UNKNOWN=makeSunIcon(null);
 function makeFeaturedIcon(){
-  const c=document.createElement('canvas'); c.width=40; c.height=40; const ctx=c.getContext('2d');
-  ctx.shadowColor='rgba(154,114,0,0.28)'; ctx.shadowBlur=7; ctx.shadowOffsetY=3;
-  ctx.beginPath(); ctx.arc(20,20,15,0,Math.PI*2); ctx.fillStyle='#F8C83E'; ctx.fill();
+  // Lieu de la sélection : grosse étoile jaune aux angles arrondis, cernée de blanc.
+  // Dessinée 3× plus grande que sa taille d'affichage pour rester nette sur Retina.
+  const S=150, cx=S/2, cy=S/2+3, R=58, r=29, c=document.createElement('canvas'); c.width=S; c.height=S; const ctx=c.getContext('2d');
+  ctx.beginPath();
+  for(let i=0;i<10;i++){ const rad=i%2?r:R, a=-Math.PI/2+i*Math.PI/5; ctx[i?'lineTo':'moveTo'](cx+Math.cos(a)*rad, cy+Math.sin(a)*rad); }
+  ctx.closePath(); ctx.lineJoin='round';
+  ctx.shadowColor='rgba(16,24,40,0.40)'; ctx.shadowBlur=12; ctx.shadowOffsetY=5;
+  ctx.lineWidth=24; ctx.strokeStyle='#FFFFFF'; ctx.stroke();
   ctx.shadowColor='transparent';
-  ctx.beginPath(); ctx.arc(20,20,15,0,Math.PI*2); ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
-  ctx.fillStyle='#7A5200'; ctx.font='bold 19px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('★',20,21);
+  ctx.lineWidth=12; ctx.strokeStyle='#FFB800'; ctx.stroke();
+  ctx.fillStyle='#FFB800'; ctx.fill();
   return c.toDataURL();
 }
 const DOT_FEATURED=makeFeaturedIcon();
@@ -1571,14 +1946,14 @@ const DOT_CATEGORY={
 };
 function markerImageForPlace(t){
   const ref=findReferenced(t);
-  if(ref) return DOT_FEATURED;
+  if(ref || isFavorite(t)) return DOT_FEATURED;
   if(!isFoodPlace(t)) return DOT_CATEGORY[placeCategory(t)] || DOT_CATEGORY.cool;
   const s=sunStates[t.id];
   return s===true?DOT_SUN:s===false?DOT_SHADE:DOT_UNKNOWN;
 }
 function markerSizeForPlace(t){
-  if(findReferenced(t)) return 34;
-  return isFoodPlace(t) ? 18 : 26;
+  if(findReferenced(t) || isFavorite(t)) return 30;
+  return isFoodPlace(t) ? 19 : 26;
 }
 // Les icônes restent aux coordonnées de leur établissement : aucun regroupement,
 // déplacement artificiel ou animation. En perspective, on masque simplement celles
@@ -1706,12 +2081,14 @@ function showTooltip(t,x,y,nameOnly=false){
   const w=Math.min(260,window.innerWidth-20);
   tooltip.style.width=w+'px';
   tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
-  tooltip.style.top=Math.min(Math.max(y-130,10),window.innerHeight-180)+'px';
+  // La bulle se pose juste au-dessus du point, quelle que soit sa hauteur (adresse sur 1 ou 2 lignes).
+  const th=tooltip.offsetHeight||130;
+  tooltip.style.top=Math.min(Math.max(y-th-18,10),window.innerHeight-th-170)+'px';
   tooltip.classList.add('visible'); if(navigator.vibrate) navigator.vibrate(10);
   const ml=document.getElementById('ttMaps'); if(ml) ml.href=`https://maps.apple.com/?q=${encodeURIComponent(t.nom+', '+currentCity.nom)}&ll=${t.lat},${t.lng}`;
-  clearTimeout(ttTimeout); ttTimeout=setTimeout(()=>tooltip.classList.remove('visible'),6000);
+  clearTimeout(ttTimeout); ttTimeout=setTimeout(hideTooltip,6000);
 }
-function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');}
+function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');clearSelectionRing();}
 // ══════════════════════════════════════════════
 // CAFÉS RÉFÉRENCÉS — ta sélection mise en avant
 // Les anciens lieux restent disponibles comme lieux ordinaires.
@@ -1817,6 +2194,7 @@ const CURATED_PLACES = [
     happyHours: "",
     reservationUrl: "https://www.google.com/maps/search/?api=1&query=Bistrot%20Le%20Nansouty%20Bordeaux",
     googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Bistrot%20Le%20Nansouty%20Bordeaux",
+    tel: "+33556217131",
     priceLevel: "€€"
   },
   {
@@ -1973,9 +2351,8 @@ function fallbackPhotoForPlace(t){
 }
 function neutralPhotoForPlace(t){
   // Une image illustrative peut faire croire qu'il s'agit de la vraie terrasse.
-  // On préfère un fond neutre pendant que Places récupère la photo du lieu.
-  const label=String(t.nom||'Restaurant').slice(0,32).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="760" viewBox="0 0 1100 760"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F8F4E9"/><stop offset="1" stop-color="#E6EEF7"/></linearGradient></defs><rect width="1100" height="760" fill="url(#g)"/><circle cx="550" cy="312" r="74" fill="#FFFFFF" fill-opacity=".72"/><path d="M510 334h80v18h-80zM525 286h50l-7 39h-36z" fill="#C38C25"/><text x="550" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#4A4A4A">${label}</text><text x="550" y="491" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#777">Photo du lieu en chargement</text></svg>`;
+  // On préfère un fond doux et sans texte pendant que Places récupère la photo du lieu.
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="760" viewBox="0 0 1100 760"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFEFB8"/><stop offset="1" stop-color="#E9EDF4"/></linearGradient></defs><rect width="1100" height="760" fill="url(#g)"/><circle cx="550" cy="330" r="62" fill="#FFB800" fill-opacity=".9"/></svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 function cachedDetailsForPlace(t){
@@ -2219,11 +2596,46 @@ function googleNearbySearch(service, type){
     service.nearbySearch(request, collect);
   });
 }
+const googleNearbyAreaCache = new Map();
 async function fetchGoogleNearbyTerrasses(){
-  const service = await getGooglePlacesService();
-  if(!service) return [];
-  const groups = await Promise.all(GOOGLE_NEARBY_TYPES.map(type => googleNearbySearch(service, type)));
-  return mergePlacesByIdentity(groups.flat());
+  if(!hasGoogleMapsKey()) return [];
+  const area={lat:currentCity.lat,lng:currentCity.lng};
+  const key=`${area.lat.toFixed(4)}:${area.lng.toFixed(4)}`;
+  const cached=googleNearbyAreaCache.get(key);
+  if(cached && Date.now()-cached.time<300000) return cached.request;
+  // La clé autorise Places API (New), pas l'ancien PlacesService.nearbySearch.
+  // Chaque type conserve sa propre recherche pour ne pas masquer bars et cafés.
+  const request=Promise.allSettled(GOOGLE_NEARBY_TYPES.map(async type=>{
+    const response=await fetchWithTimeout('https://places.googleapis.com/v1/places:searchNearby',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Goog-Api-Key':GOOGLE_MAPS_API_KEY.trim(),
+        'X-Goog-FieldMask':'places.id,places.displayName,places.location,places.formattedAddress,places.types'
+      },
+      body:JSON.stringify({
+        includedTypes:[type],maxResultCount:20,languageCode:'fr',rankPreference:'DISTANCE',
+        locationRestriction:{circle:{center:{latitude:area.lat,longitude:area.lng},radius:GOOGLE_NEARBY_RADIUS_METERS}}
+      })
+    },8000);
+    if(!response.ok) throw new Error(`Google nearby ${response.status}`);
+    const data=await response.json();
+    return (data.places||[]).filter(place=>place.id && place.displayName?.text
+      && Number.isFinite(place.location?.latitude) && Number.isFinite(place.location?.longitude))
+      .map(place=>({
+        id:`google-${place.id}`,nom:place.displayName.text,
+        adresse:place.formattedAddress||'',type:googlePlaceTypeLabel(place,type),category:'food',
+        lat:place.location.latitude,lng:place.location.longitude,source:'google',
+        googlePlaceId:place.id,googleDetails:normalizeGoogleApiPlace(place)
+      }));
+  })).then(groups=>{
+    const places=mergePlacesByIdentity(groups.filter(group=>group.status==='fulfilled').flatMap(group=>group.value));
+    if(!places.length) googleNearbyAreaCache.delete(key);
+    return places;
+  });
+  googleNearbyAreaCache.set(key,{time:Date.now(),request});
+  if(googleNearbyAreaCache.size>12) googleNearbyAreaCache.delete(googleNearbyAreaCache.keys().next().value);
+  return request;
 }
 function mergePlacesByIdentity(items){
   const clean = (items || []).filter(t => t && t.nom && Number.isFinite(t.lat) && Number.isFinite(t.lng));
@@ -2459,6 +2871,7 @@ let activePlaceTab='overview';
 let placeSheetReturnFocus=null;
 let placeSheetRequest=0;
 function hidePlaceSheet(){
+  clearSelectionRing();
   activePlaceId=null;
   placeSheetRequest++;
   const sheet=document.getElementById('placeSheet');
@@ -2550,12 +2963,103 @@ function sheetLink(className, href, label, ariaLabel='', id=''){
   const safeHref=/^tel:/i.test(raw) ? telephoneUrl(raw.slice(4)) : externalWebUrl(raw);
   if(!safeHref) return '';
   const labelAttr=ariaLabel ? ` aria-label="${escapeAttr(ariaLabel)}"` : '';
-  const target=/^tel:/i.test(safeHref)?'_self':'_blank';
-  return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}" target="${target}" rel="noopener noreferrer" onclick="return openExternalLink(this,event)"${labelAttr}>${escapeHTML(label)}</a>`;
+  const isPhone=/^tel:/i.test(safeHref);
+  const target=isPhone?'_self':'_blank';
+  // Un appel reste une navigation téléphonique native, jamais une page web.
+  const clickHandler=isPhone?'':' onclick="return openExternalLink(this,event)"';
+  return `<a${id?` id="${escapeAttr(id)}"`:''} class="${className}" href="${escapeAttr(safeHref)}" target="${target}" rel="noopener noreferrer"${clickHandler}${labelAttr}>${escapeHTML(label)}</a>`;
 }
 function openExternalLink(link,event){
   return window.SoleilLinks ? window.SoleilLinks.activate(link,event) : true;
 }
+// ── Bouton « Appeler » ──────────────────────────────────────────────
+// Dans l'appli iPhone (page affichée dans une vue web intégrée), un lien tel:
+// peut ne rien déclencher. Dans ce cas on affiche le numéro en grand, avec
+// « Appeler » et « Copier le numéro », pour que le toucher ne reste jamais sans effet.
+// Dans Safari, Chrome ou sur Android, l'appel direct reste inchangé.
+function isEmbeddedIosWebView(){
+  const ua=navigator.userAgent||'';
+  const ios=/iPhone|iPad|iPod/i.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  // L'appli iPhone à partir de la 1.0.1 sait lancer les appels : pas de panneau.
+  if(/SoleilEnTerrasse\//.test(ua)) return false;
+  return ios && !/Safari\//i.test(ua) && navigator.standalone!==true;
+}
+function readablePhoneNumber(telHref){
+  const digits=String(telHref||'').replace(/^tel:/i,'');
+  const national=digits.startsWith('+33') ? '0'+digits.slice(3) : digits;
+  return /^0\d{9}$/.test(national) ? national.replace(/(\d{2})(?=\d)/g,'$1 ') : digits;
+}
+function closePhonePanel(){
+  const panel=document.getElementById('phonePanel');
+  if(panel) panel.hidden=true;
+}
+function showPhonePanel(telHref,name){
+  let panel=document.getElementById('phonePanel');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='phonePanel';
+    panel.setAttribute('role','dialog');
+    panel.setAttribute('aria-modal','true');
+    panel.setAttribute('aria-label','Appeler le restaurant');
+    panel.innerHTML=`<div class="phone-card">
+      <div class="phone-name" id="phonePanelName"></div>
+      <span class="phone-number" id="phonePanelNumber"></span>
+      <div class="phone-hint" id="phonePanelHint">Si l’appel ne se lance pas, copie le numéro.</div>
+      <div class="phone-actions">
+        <a class="phone-btn primary" id="phonePanelCall" data-direct-call="1" target="_self">Appeler</a>
+        <button class="phone-btn" id="phonePanelCopy" type="button">Copier le numéro</button>
+        <button class="phone-btn" id="phonePanelClose" type="button">Fermer</button>
+      </div></div>`;
+    document.body.appendChild(panel);
+    panel.addEventListener('click',event=>{ if(event.target===panel) closePhonePanel(); });
+    panel.querySelector('#phonePanelClose').addEventListener('click',closePhonePanel);
+    panel.querySelector('#phonePanelCopy').addEventListener('click',async()=>{
+      const number=panel.dataset.number||'';
+      const button=panel.querySelector('#phonePanelCopy');
+      try{
+        await navigator.clipboard.writeText(number);
+        button.textContent='Numéro copié';
+      }catch(error){
+        // Presse-papiers refusé : le numéro reste sélectionnable à la main.
+        const range=document.createRange();
+        range.selectNodeContents(panel.querySelector('#phonePanelNumber'));
+        const selection=window.getSelection();
+        selection.removeAllRanges(); selection.addRange(range);
+        button.textContent='Appuie longtemps sur le numéro pour le copier';
+      }
+    });
+  }
+  const readable=readablePhoneNumber(telHref);
+  panel.dataset.number=readable;
+  panel.querySelector('#phonePanelName').textContent=name||'';
+  panel.querySelector('#phonePanelNumber').textContent=readable;
+  panel.querySelector('#phonePanelCall').href=telHref;
+  panel.querySelector('#phonePanelCopy').textContent='Copier le numéro';
+  panel.hidden=false;
+}
+document.addEventListener('click',event=>{
+  const link=event.target.closest?.('a[href^="tel:"]');
+  if(!link || link.dataset.directCall) return;
+  // Appel direct seulement là où il est sûr de partir : vrai navigateur de téléphone.
+  // Ailleurs (appli iPhone, ordinateur), on montre le numéro.
+  if(supportsDirectPhoneCall() && !isEmbeddedIosWebView()) return;
+  const href=telephoneUrl(link.getAttribute('href').slice(4));
+  if(!href) return;
+  event.preventDefault();
+  const place=terrasses.find(x=>String(x.id)===String(activePlaceId));
+  showPhonePanel(href,place?.nom||'');
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape' && document.getElementById('phonePanel')?.hidden===false) closePhonePanel();
+});
+// Icônes au trait (design v2) pour les lignes d'information d'une fiche.
+const ROW_ICON = {
+  pin:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 18s6-5.2 6-10A6 6 0 0 0 4 8c0 4.8 6 10 6 10z"/><circle cx="10" cy="8" r="2.2"/></svg>',
+  phone:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 3H4.5A1.5 1.5 0 0 0 3 4.6c.4 6.6 5.8 12 12.400 12.400A1.5 1.5 0 0 0 17 15.500v-2.100a1 1 0 0 0-.700-.950l-2.700-.900a1 1 0 0 0-1.050.280l-1.150 1.300a9 9 0 0 1-4.830-4.830l1.300-1.150a1 1 0 0 0 .280-1.050l-.900-2.700A1 1 0 0 0 6.600 3z"/></svg>',
+  price:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M12.6 7.300a3.300 3.300 0 1 0 0 5.400M6.500 9.200h4.500M6.500 10.800h4.500"/></svg>',
+  food:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v5a2 2 0 0 0 4 0V3M8 3v14M14 3c-1.500 1.500-2 3.500-2 6h2zm0 6v8"/></svg>',
+  info:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 9.200v4M10 6.500v.200"/></svg>'
+};
 function infoRow(icon,label,value,extraClass=''){
   if(!value) return '';
   return `<div class="ps-info-row"><div class="ps-row-icon">${icon}</div><div><div class="ps-row-label">${escapeHTML(label)}</div><div class="ps-row-value ${extraClass}">${escapeHTML(value)}</div></div></div>`;
@@ -2626,10 +3130,10 @@ function renderPlaceSheetContent(t,ref,details={}){
   content.querySelectorAll('[data-place-panel]').forEach(panel=>{ panelPositions[panel.dataset.placePanel]=panel.scrollTop; });
   const dist=distKm(t.lat,t.lng);
   const practical=[
-    infoRow('⌖','Adresse',p.address),
-    infoRow('☎','Téléphone',p.tel),
-    infoRow('€','Budget',p.price),
-    infoRow('♧','Cuisine',p.cuisine)
+    infoRow(ROW_ICON.pin,'Adresse',p.address),
+    infoRow(ROW_ICON.phone,'Téléphone',p.tel),
+    infoRow(ROW_ICON.price,'Budget',p.price),
+    infoRow(ROW_ICON.food,'Cuisine',p.cuisine)
   ].filter(Boolean).join('');
   const tags=p.tags.length ? `<div class="ps-tags">${p.tags.map(tag=>`<span class="ps-tag">${escapeHTML(tag)}</span>`).join('')}</div>` : '';
   const meta=[
@@ -2642,7 +3146,7 @@ function renderPlaceSheetContent(t,ref,details={}){
   const overviewActions=[
     sheetLink('ps-btn reserve',p.bookingUrl||p.websiteUrl||p.mapsUrl,'Réserver','Ouvrir la réservation ou le site du restaurant','psReserve'),
     phoneUrl ? sheetLink('ps-btn tel',phoneUrl,'Appeler','Appeler directement le restaurant','psCall') : sheetLink('ps-btn tel',p.mapsUrl,'Téléphone','Voir le numéro du restaurant sur Google','psCall'),
-    sheetLink('ps-btn site',p.menuUrl||p.websiteUrl||p.mapsUrl,'Carte',p.menuUrl?'Ouvrir la carte du restaurant':'Consulter la carte sur le site ou la fiche du restaurant','psMenu')
+    sheetLink('ps-btn site',p.menuUrl||p.websiteUrl||p.mapsUrl,'Menu',p.menuUrl?'Ouvrir la carte du restaurant':'Consulter la carte sur le site ou la fiche du restaurant','psMenu')
   ].filter(Boolean).join('');
   const secondary=[
     sheetLink('ps-btn maps',p.directionsUrl,'Y aller','Ouvrir l’itinéraire Maps','psDirections'),
@@ -2669,7 +3173,7 @@ function renderPlaceSheetContent(t,ref,details={}){
       <div class="ps-panels">
         <section class="ps-panel" id="psPanel-overview" role="tabpanel" aria-labelledby="psTab-overview" data-place-panel="overview" tabindex="0">
           <div class="ps-overview-actions" aria-label="Actions du restaurant">${overviewActions}</div>
-          <div class="ps-info-rows">${practical||infoRow('i','Informations','Les informations détaillées arrivent bientôt.')}</div>
+          <div class="ps-info-rows">${practical||infoRow(ROW_ICON.info,'Informations','Les informations détaillées arrivent bientôt.')}</div>
           ${tags}
           ${p.bookingNote?`<p class="ps-inline-note">${escapeHTML(p.bookingNote)}</p>`:''}
         </section>
@@ -2779,10 +3283,49 @@ function focusPlace(t,duration=0.75){
 function selectTerrasse(t,card){
   document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
   if(card) card.classList.add('active');
+  openPlaceFromList(t);
+}
+// Choisir un lieu dans la liste emmène l'utilisateur dessus : la caméra se centre
+// sur le lieu, qui est entouré d'un halo jaune, puis son nom ou sa fiche s'affiche.
+// Un toucher sur un point de la carte, lui, ne déplace jamais la caméra.
+let selectionRing=null, listFlightToken=0;
+function clearSelectionRing(){
+  if(selectionRing){ viewer.entities.remove(selectionRing); selectionRing=null; }
+}
+function showSelectionRing(t){
+  clearSelectionRing();
+  selectionRing=viewer.entities.add({
+    position:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,0),
+    ellipse:{
+      semiMajorAxis:15, semiMinorAxis:15,
+      material:Cesium.Color.fromCssColorString('#FFB800').withAlpha(0.42),
+      heightReference:Cesium.HeightReference.CLAMP_TO_GROUND
+    }
+  });
+  viewer.scene.requestRender();
+}
+function openPlaceFromList(t){
   closeDrawer();
-  // Ouvrir une fiche ne touche jamais à la caméra : l'utilisateur garde
-  // exactement le quartier et le niveau de zoom qu'il regardait.
-  showPlaceSheet(t);
+  hideTooltip();
+  const token=++listFlightToken;
+  frameArea(t.lng,t.lat,{animate:true,range:300});
+  if(findReferenced(t)){
+    // Les lieux de la sélection ouvrent leur fiche : la carte se recentre derrière.
+    showPlaceSheet(t);
+    showSelectionRing(t);
+    return;
+  }
+  // Les autres lieux affichent leur nom au-dessus du point, une fois la caméra arrivée.
+  setTimeout(()=>{
+    if(token!==listFlightToken) return;
+    const project=Cesium.SceneTransforms.wgs84ToWindowCoordinates || Cesium.SceneTransforms.worldToWindowCoordinates;
+    const ground=viewer.scene.globe.getHeight(Cesium.Cartographic.fromDegrees(t.lng,t.lat));
+    const point=project(viewer.scene,Cesium.Cartesian3.fromDegrees(t.lng,t.lat,(Number.isFinite(ground)?ground:0)+2));
+    const x=point&&Number.isFinite(point.x)?point.x:window.innerWidth/2;
+    const y=point&&Number.isFinite(point.y)?point.y:window.innerHeight/2;
+    showPlaceSheet(t,{x,y});
+    showSelectionRing(t);
+  },1100);
 }
 function renderList(h,query){
   const list=document.getElementById('terrasseList');
@@ -2806,7 +3349,7 @@ function renderList(h,query){
     return distMeters(a.lat,a.lng)-distMeters(b.lat,b.lng);
   });
   const counter=document.getElementById('resultCount');
-  if(counter) counter.textContent=String(sorted.length);
+  if(counter) counter.textContent=sorted.length.toLocaleString('fr-FR');
   list.innerHTML='';
   const fragment=document.createDocumentFragment();
   // ── Section "Sélection" : uniquement les cafés référencés (avec photo) ──
@@ -2823,7 +3366,7 @@ function renderList(h,query){
       const happy=ref.happyHours?`<span class="sel-happy">🍹 ${escapeHTML(ref.happyHours)}</span>`:'';
       const c=document.createElement('div'); c.className='sel-card partner';
       c.innerHTML=`${photo}<div class="sel-info"><div class="sel-name">${escapeHTML(t.nom)}</div><div class="sel-sub">${escapeHTML(preferredPlaceType(t,ref))}${ref.priceLevel?' · '+escapeHTML(ref.priceLevel):''}${dist?' · '+escapeHTML(dist):''}</div>${happy}</div>`;
-      c.addEventListener('click',()=>{ closeDrawer(); showPlaceSheet(t); });
+      c.addEventListener('click',()=>openPlaceFromList(t));
       scroll.appendChild(c);
     });
     wrap.appendChild(scroll);
@@ -2961,6 +3504,110 @@ slider.addEventListener('blur',()=>{
   sliderIsDragging=false;
   commitSliderChange();
 });
+// ── Journée défilante ───────────────────────────────────────────────
+// Le bouton ▶ fait avancer le curseur tout seul, du lever au coucher du soleil,
+// en 10 secondes : on voit les ombres des bâtiments traverser la ville.
+// Même coût que de glisser le curseur à la main ; la liste et les icônes ne
+// sont mises à jour qu'à la fin ou à la pause.
+const PLAY_DAY_DURATION_MS = 10000;
+const PLAY_DAY_STEP_MS = 50;
+const ICON_PLAY  = '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9-5.5z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5h3v11H3zM8 1.5h3v11H8z"/></svg>';
+const btnPlayDay = document.getElementById('btnPlayDay');
+let playDayFrame = null, playDayPausedAt = null;
+function daylightRange(){
+  const lng=currentCity.lng, lat=currentCity.lat;
+  let first=null, last=null;
+  for(let h=6; h<=21; h+=0.25){
+    const d=new Date(currentDate);
+    d.setHours(Math.floor(h), Math.round((h%1)*60), 0, 0);
+    if(sunAboveHorizon(lng,lat,getSunDir(Cesium.JulianDate.fromDate(d)))){
+      if(first===null) first=h;
+      last=h;
+    }
+  }
+  return first===null ? [6,21] : [first,last];
+}
+function setPlayDayButton(playing){
+  btnPlayDay.innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+  btnPlayDay.setAttribute('aria-label', playing ? 'Mettre la journée en pause' : 'Lancer la journée');
+  btnPlayDay.setAttribute('aria-pressed', String(playing));
+}
+function stopPlayDay(commit=true, paused=false){
+  if(playDayFrame!==null){ cancelAnimationFrame(playDayFrame); playDayFrame=null; }
+  // Une pause (bouton) se reprend là où elle s'est arrêtée ; sinon on repart du lever.
+  playDayPausedAt = paused ? parseFloat(slider.value) : null;
+  setPlayDayButton(false);
+  if(commit) commitSliderChange();
+}
+function startPlayDay(){
+  const [start,end]=daylightRange();
+  let value=start;
+  if(playDayPausedAt!==null && Math.abs(parseFloat(slider.value)-playDayPausedAt)<0.3 && playDayPausedAt<end-0.25) value=playDayPausedAt;
+  playDayPausedAt=null;
+  const speed=(end-start)/PLAY_DAY_DURATION_MS; // heures par milliseconde
+  let last=performance.now(), lastApply=0;
+  setPlayDayButton(true);
+  const tick=now=>{
+    value=Math.min(end, value+(now-last)*speed);
+    last=now;
+    if(now-lastApply>=PLAY_DAY_STEP_MS || value>=end){
+      lastApply=now;
+      slider.value=value;
+      sliderPendingValue=value;
+      updateSliderLabel(value);
+      updateSliderClock(value);
+    }
+    if(value>=end){ playDayFrame=null; stopPlayDay(); return; }
+    playDayFrame=requestAnimationFrame(tick);
+  };
+  playDayFrame=requestAnimationFrame(tick);
+}
+btnPlayDay.addEventListener('click',()=>{ playDayFrame===null ? startPlayDay() : stopPlayDay(true,true); });
+// Toucher le curseur ou quitter la page met la lecture en pause.
+slider.addEventListener('pointerdown',()=>{ if(playDayFrame!==null) stopPlayDay(false); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden && playDayFrame!==null) stopPlayDay(true,true); });
+setPlayDayButton(false);
+// ── fin Journée défilante ───────────────────────────────────────────
+// ── Liste : grand titre qui se réduit ; fiche : fermeture par glissé ──
+(()=>{
+  const list=document.getElementById('terrasseList');
+  const sync=()=>drawer.classList.toggle('scrolled', list.scrollTop>16);
+  list.addEventListener('scroll',sync,{passive:true});
+  new MutationObserver(sync).observe(list,{childList:true});
+  const sheet=document.getElementById('placeSheet');
+  let drag=null;
+  sheet.addEventListener('pointerdown',e=>{
+    if(!sheet.classList.contains('open')) return;
+    if(!e.target.closest('.ps-sheet-head, .ps-hero') || e.target.closest('button, a')) return;
+    drag={id:e.pointerId,y0:e.clientY,lastY:e.clientY,lastT:performance.now(),vel:0,dy:0,moved:false};
+  });
+  sheet.addEventListener('pointermove',e=>{
+    if(!drag || e.pointerId!==drag.id) return;
+    const dy=e.clientY-drag.y0;
+    if(!drag.moved){
+      if(Math.abs(dy)<6) return;
+      if(dy<0){ drag=null; return; }          // glissé vers le haut : on ne fait rien
+      drag.moved=true;
+      sheet.style.transition='none'; sheet.classList.add('dragging');
+      try{ sheet.setPointerCapture(e.pointerId); }catch(err){}
+    }
+    const now=performance.now();
+    if(now>drag.lastT) drag.vel=(e.clientY-drag.lastY)/(now-drag.lastT); // px/ms, positif = vers le bas
+    drag.lastY=e.clientY; drag.lastT=now; drag.dy=Math.max(0,dy);
+    sheet.style.transform=`translateY(${drag.dy}px)`;
+  });
+  const end=e=>{
+    if(!drag || (e && e.pointerId!==drag.id)) return;
+    const d=drag; drag=null;
+    if(!d.moved) return;
+    sheet.style.transition=''; sheet.style.transform=''; sheet.classList.remove('dragging');
+    // Ferme au-delà de 120 px ou d'un geste rapide ; sinon la fiche revient en place.
+    if(d.dy>120 || d.vel>0.6) hidePlaceSheet();
+  };
+  sheet.addEventListener('pointerup',end);
+  sheet.addEventListener('pointercancel',end);
+})();
 const handler=new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 handler.setInputAction(click=>{
   const picked=viewer.scene.pick(click.position);
@@ -2989,7 +3636,7 @@ function paintTerrasses(data, suffix=''){
   sunStates={};
   terrasses.forEach(t=>{sunStates[t.id]=sunStates[t.id] ?? null;});
   primeSunStates();
-  document.getElementById('footerText').textContent=`${terrasses.length} lieux · ${currentCity.nom}${suffix}`;
+  document.getElementById('footerText').textContent=`${terrasses.length.toLocaleString('fr-FR')} lieux · ${currentCity.nom}${suffix}`;
   renderList(currentHeure,searchQuery);
   const launch=()=>{
     syncDots();
@@ -3049,7 +3696,7 @@ async function loadTerrasses(){
     setTimeout(()=>hydrateNearbyInBackground(signature), 3500);
     return;
   }
-  const quick=mergeFeaturedPlaces(mergePlacesByIdentity([...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
+  const quick=mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...localFallbackTerrasses(), ...localFallbackUtilities()])).slice(0,MAX_TERRASSES);
   // Hors des villes déjà embarquées, on lance Google et OpenStreetMap tout de
   // suite et en parallèle. Avant, Google attendait la fin d'Overpass : une
   // ville pouvait donc rester à 0 pendant de longues secondes alors que les
@@ -3228,7 +3875,7 @@ init();
       profile.bookingUrl?sheetLink('ps-btn reserve',profile.bookingUrl,'Réserver','Ouvrir la réservation','placeGoogleReserve'):'',
       profile.menuUrl?sheetLink('ps-btn site',profile.menuUrl,'Voir la carte','Ouvrir la carte du restaurant','placeGoogleMenu'):''
     ].filter(Boolean).join('');
-    const rows=[infoRow('⌖','Adresse',profile.address),infoRow('☎','Téléphone',profile.tel),infoRow('€','Budget',profile.price)].filter(Boolean).join('');
+    const rows=[infoRow(ROW_ICON.pin,'Adresse',profile.address),infoRow(ROW_ICON.phone,'Téléphone',profile.tel),infoRow(ROW_ICON.price,'Budget',profile.price)].filter(Boolean).join('');
     const markup=`${profile.photo?`<img id="placeGooglePhoto" class="place-google-photo" src="${escapeAttr(profile.photo)}" alt="${escapeAttr(place.nom)}" decoding="async">`:''}
       ${profile.photoCredit?`<p id="placeGoogleCredit">${escapeHTML(profile.photoCredit)}</p>`:''}
       <h3 id="placeGoogleName">${escapeHTML(place.nom)}</h3>
@@ -3346,6 +3993,9 @@ init();
     if(event && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (event.type==='click' && event.button>0))) return true;
     const destination=safeDestination(link?.href);
     if(!destination) return true;
+    // Les anciens liens ou un appel direct au gestionnaire restent utilisables.
+    // Ne pas laisser un navigateur intégré absorber silencieusement tel:.
+    if(destination.startsWith('tel:')) return true;
     if(dialog.hidden) returnFocus=link;
     if(!destination.startsWith('tel:') && activeGooglePlace(link,destination)){
       event?.preventDefault();
@@ -3356,7 +4006,6 @@ init();
       event?.preventDefault();
       return false;
     }
-    if(destination.startsWith('tel:')) return true;
     try{
       const opened=window.open(destination,'_blank');
       if(opened){
