@@ -802,6 +802,73 @@
     #btnPlayDay { flex:0 0 auto; width:34px; height:34px; border:0; border-radius:50%; padding:0; background:var(--sun); color:#000; display:grid; place-items:center; cursor:pointer; touch-action:manipulation; box-shadow:0 1px 3px rgba(0,0,0,.18); transition:transform .15s ease, opacity .15s ease; align-self:center; }
     #btnPlayDay:active { transform:scale(.92); opacity:.85; }
     #btnPlayDay svg { width:14px; height:14px; fill:currentColor; display:block; }
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V5 — mouvements naturels, grand titre qui se réduit,
+       cartes de sélection façon App Store, fiche qu'on ferme en la glissant.
+       Se retire d'un seul tenant, comme les blocs précédents.
+       ═══════════════════════════════════════════════════════════════ */
+    :root { --spring:cubic-bezier(.34,1.56,.64,1); --ios:cubic-bezier(.32,.72,0,1); }
+
+    /* 1. Mouvements : courbe iOS pour les feuilles, léger ressort au toucher */
+    #drawer { transition:transform .5s var(--ios); }
+    #placeSheet { transition:transform .45s var(--ios), visibility .45s; }
+    #tooltip { transform:translateY(8px) scale(.96); transition:opacity .2s ease, transform .45s var(--spring); }
+    #tooltip.visible { transform:none; }
+    .ps-btn, .filter-chip, .icon-btn, #btnGeo, .phone-btn, #btnPlayDay, .ps-tab, .sel-card, .city-suggestion {
+      transition:transform .4s var(--spring), background-color .2s ease, opacity .2s ease, box-shadow .2s ease;
+    }
+    .ps-btn:active, .filter-chip:active, .icon-btn:active, #btnGeo:active, .phone-btn:active, #btnPlayDay:active, .sel-card:active {
+      transform:scale(.96); transition-duration:.1s;
+    }
+    .sel-card:hover { transform:none; }
+
+    /* 2. Grand titre de la liste : il se réduit quand on fait défiler */
+    .drawer-title { transition:font-size .3s var(--ios), letter-spacing .3s var(--ios); }
+    .drawer-header, .filter-chips { transition:box-shadow .25s ease; }
+    #drawer.scrolled .drawer-title { font-size:17px; font-weight:600; }
+    #drawer.scrolled .drawer-top { margin-bottom:6px; }
+    #drawer.scrolled .drawer-search { margin-bottom:8px; }
+    #drawer.scrolled .filter-chips { padding-bottom:10px; box-shadow:0 .5px 0 var(--line); }
+
+    /* 3. Sélection : grandes cartes photo, titre par-dessus */
+    .sel-scroll { gap:12px; padding:2px 16px 12px; scroll-snap-type:x mandatory; scroll-padding-left:16px; }
+    .sel-card, .sel-card.partner {
+      position:relative; flex:0 0 min(268px,76vw); width:min(268px,76vw); height:198px; border-radius:20px; overflow:hidden;
+      background:linear-gradient(160deg,#FFE9A8,#F2F3F6); scroll-snap-align:start;
+      box-shadow:0 1px 2px rgba(0,0,0,.08), 0 10px 24px rgba(0,0,0,.14);
+    }
+    .sel-photo-wrap { position:absolute; inset:0; height:auto; border-radius:0; background:none; }
+    .sel-photo { width:100%; height:100%; object-fit:cover; -webkit-user-drag:none; }
+    .sel-card::after { content:''; position:absolute; inset:0; pointer-events:none;
+      background:linear-gradient(to top, rgba(0,0,0,.68) 0%, rgba(0,0,0,.30) 40%, rgba(0,0,0,0) 66%); }
+    .sel-info { position:absolute; left:0; right:0; bottom:0; z-index:1; padding:14px 16px; }
+    .sel-name { color:#fff; font-size:21px; font-weight:700; letter-spacing:-.02em; line-height:1.15; white-space:normal;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-shadow:0 1px 8px rgba(0,0,0,.25); }
+    .sel-sub { color:rgba(255,255,255,.85); font-size:14px; margin-top:3px; }
+    .sel-happy { background:rgba(255,255,255,.22); color:#fff; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+    /* La mention de l'auteur de la photo reste affichée, en haut à droite. */
+    .sel-photo-wrap .photo-credit { top:10px; right:10px; bottom:auto; max-width:70%; z-index:2; }
+
+    /* 4. Fiche : poignée et glissé vers le bas pour fermer */
+    #placeSheet .ps-sheet-head::before { content:''; position:absolute; top:calc(env(safe-area-inset-top,0px) + 6px); left:50%; width:36px; height:5px; margin-left:-18px; border-radius:3px; background:rgba(60,60,67,.3); }
+    #placeSheet .ps-sheet-head, #placeSheet .ps-hero { touch-action:none; }
+    #placeSheet .ps-photo { -webkit-user-drag:none; user-select:none; -webkit-user-select:none; }
+    #placeSheet.dragging { border-radius:14px 14px 0 0; box-shadow:0 -10px 40px rgba(0,0,0,.28); }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V6 — finitions : étoile des favoris, touchers, défilement.
+       ═══════════════════════════════════════════════════════════════ */
+    * { -webkit-tap-highlight-color:transparent; }
+    #topBar, .panel-map, .panel-labels, button, .filter-chip, .card, .sel-card, .drawer-title, .section-label, .list-divider, .sel-head, .ps-tab, .ps-back, #tooltip {
+      -webkit-user-select:none; user-select:none;
+    }
+    button, .filter-chip, .card, .sel-card, .ps-btn, a { touch-action:manipulation; }
+    .list { overscroll-behavior:contain; }
+    #btnClose { position:relative; }
+    #btnClose::after { content:''; position:absolute; inset:-7px; }
+    .sel-card::before { content:'★'; position:absolute; top:12px; left:12px; z-index:2; width:30px; height:30px; border-radius:50%;
+      background:var(--sun); color:#000; display:grid; place-items:center; font-size:16px; line-height:1; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+    #placeSheet .ps-badge::before { content:'★'; margin-right:5px; color:#E09A00; }
   </style>
 </head>
 <body>
@@ -1014,7 +1081,7 @@ async function fetchAreaName(lat,lng,expectedId){
     currentCity.nom = detectedName || currentCity.nom || 'Autour de vous';
     currentCity.localDataIds = localDataCandidateIds(...(currentCity.localDataIds || []), currentCity.id, currentCity.nom, detectedName);
     updateLocationPill();
-    if(terrasses.length) document.getElementById('footerText').textContent=`${terrasses.length} lieux · ${currentCity.nom}`;
+    if(terrasses.length) document.getElementById('footerText').textContent=`${terrasses.length.toLocaleString('fr-FR')} lieux · ${currentCity.nom}`;
     const local = await localTerrassesForCurrentArea();
     if(currentCity.id === expectedId && local.length > 80){
       const merged=mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...localFallbackTerrasses()])).slice(0,MAX_TERRASSES);
@@ -1820,15 +1887,17 @@ function makeSunIcon(sunny){
 }
 const DOT_SUN=makeSunIcon(true),DOT_SHADE=makeSunIcon(false),DOT_UNKNOWN=makeSunIcon(null);
 function makeFeaturedIcon(){
-  // Lieu de la sélection : pastille sombre avec une étoile jaune.
-  const S=108, c=document.createElement('canvas'); c.width=S; c.height=S; const ctx=c.getContext('2d');
-  ctx.shadowColor='rgba(16,24,40,0.38)'; ctx.shadowBlur=12; ctx.shadowOffsetY=5;
-  ctx.beginPath(); ctx.arc(S/2,S/2,40,0,Math.PI*2); ctx.fillStyle='#FFFFFF'; ctx.fill();
+  // Lieu de la sélection : grosse étoile jaune aux angles arrondis, cernée de blanc.
+  // Dessinée 3× plus grande que sa taille d'affichage pour rester nette sur Retina.
+  const S=150, cx=S/2, cy=S/2+3, R=58, r=29, c=document.createElement('canvas'); c.width=S; c.height=S; const ctx=c.getContext('2d');
+  ctx.beginPath();
+  for(let i=0;i<10;i++){ const rad=i%2?r:R, a=-Math.PI/2+i*Math.PI/5; ctx[i?'lineTo':'moveTo'](cx+Math.cos(a)*rad, cy+Math.sin(a)*rad); }
+  ctx.closePath(); ctx.lineJoin='round';
+  ctx.shadowColor='rgba(16,24,40,0.40)'; ctx.shadowBlur=12; ctx.shadowOffsetY=5;
+  ctx.lineWidth=30; ctx.strokeStyle='#FFFFFF'; ctx.stroke();
   ctx.shadowColor='transparent';
-  ctx.beginPath(); ctx.arc(S/2,S/2,33,0,Math.PI*2); ctx.fillStyle='#14161A'; ctx.fill();
-  ctx.fillStyle='#F5B301'; ctx.beginPath();
-  for(let i=0;i<10;i++){ const r=i%2?9.5:22, ang=-Math.PI/2+i*Math.PI/5; ctx[i?'lineTo':'moveTo'](S/2+Math.cos(ang)*r, S/2+1+Math.sin(ang)*r); }
-  ctx.closePath(); ctx.fill();
+  ctx.lineWidth=12; ctx.strokeStyle='#FFB800'; ctx.stroke();
+  ctx.fillStyle='#FFB800'; ctx.fill();
   return c.toDataURL();
 }
 const DOT_FEATURED=makeFeaturedIcon();
@@ -1852,13 +1921,13 @@ const DOT_CATEGORY={
 };
 function markerImageForPlace(t){
   const ref=findReferenced(t);
-  if(ref) return DOT_FEATURED;
+  if(ref || isFavorite(t)) return DOT_FEATURED;
   if(!isFoodPlace(t)) return DOT_CATEGORY[placeCategory(t)] || DOT_CATEGORY.cool;
   const s=sunStates[t.id];
   return s===true?DOT_SUN:s===false?DOT_SHADE:DOT_UNKNOWN;
 }
 function markerSizeForPlace(t){
-  if(findReferenced(t)) return 36;
+  if(findReferenced(t) || isFavorite(t)) return 48;
   return isFoodPlace(t) ? 22 : 26;
 }
 // Les icônes restent aux coordonnées de leur établissement : aucun regroupement,
@@ -2255,9 +2324,8 @@ function fallbackPhotoForPlace(t){
 }
 function neutralPhotoForPlace(t){
   // Une image illustrative peut faire croire qu'il s'agit de la vraie terrasse.
-  // On préfère un fond neutre pendant que Places récupère la photo du lieu.
-  const label=String(t.nom||'Restaurant').slice(0,32).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="760" viewBox="0 0 1100 760"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F8F4E9"/><stop offset="1" stop-color="#E6EEF7"/></linearGradient></defs><rect width="1100" height="760" fill="url(#g)"/><circle cx="550" cy="312" r="74" fill="#FFFFFF" fill-opacity=".72"/><path d="M510 334h80v18h-80zM525 286h50l-7 39h-36z" fill="#C38C25"/><text x="550" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#4A4A4A">${label}</text><text x="550" y="491" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#777">Photo du lieu en chargement</text></svg>`;
+  // On préfère un fond doux et sans texte pendant que Places récupère la photo du lieu.
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="760" viewBox="0 0 1100 760"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFEFB8"/><stop offset="1" stop-color="#E9EDF4"/></linearGradient></defs><rect width="1100" height="760" fill="url(#g)"/><circle cx="550" cy="330" r="62" fill="#FFB800" fill-opacity=".9"/></svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 function cachedDetailsForPlace(t){
@@ -3214,7 +3282,7 @@ function renderList(h,query){
     return distMeters(a.lat,a.lng)-distMeters(b.lat,b.lng);
   });
   const counter=document.getElementById('resultCount');
-  if(counter) counter.textContent=String(sorted.length);
+  if(counter) counter.textContent=sorted.length.toLocaleString('fr-FR');
   list.innerHTML='';
   const fragment=document.createDocumentFragment();
   // ── Section "Sélection" : uniquement les cafés référencés (avec photo) ──
@@ -3434,6 +3502,45 @@ slider.addEventListener('pointerdown',()=>{ if(playDayFrame!==null) stopPlayDay(
 document.addEventListener('visibilitychange',()=>{ if(document.hidden && playDayFrame!==null) stopPlayDay(true,true); });
 setPlayDayButton(false);
 // ── fin Journée défilante ───────────────────────────────────────────
+// ── Liste : grand titre qui se réduit ; fiche : fermeture par glissé ──
+(()=>{
+  const list=document.getElementById('terrasseList');
+  const sync=()=>drawer.classList.toggle('scrolled', list.scrollTop>16);
+  list.addEventListener('scroll',sync,{passive:true});
+  new MutationObserver(sync).observe(list,{childList:true});
+  const sheet=document.getElementById('placeSheet');
+  let drag=null;
+  sheet.addEventListener('pointerdown',e=>{
+    if(!sheet.classList.contains('open')) return;
+    if(!e.target.closest('.ps-sheet-head, .ps-hero') || e.target.closest('button, a')) return;
+    drag={id:e.pointerId,y0:e.clientY,lastY:e.clientY,lastT:performance.now(),vel:0,dy:0,moved:false};
+  });
+  sheet.addEventListener('pointermove',e=>{
+    if(!drag || e.pointerId!==drag.id) return;
+    const dy=e.clientY-drag.y0;
+    if(!drag.moved){
+      if(Math.abs(dy)<6) return;
+      if(dy<0){ drag=null; return; }          // glissé vers le haut : on ne fait rien
+      drag.moved=true;
+      sheet.style.transition='none'; sheet.classList.add('dragging');
+      try{ sheet.setPointerCapture(e.pointerId); }catch(err){}
+    }
+    const now=performance.now();
+    if(now>drag.lastT) drag.vel=(e.clientY-drag.lastY)/(now-drag.lastT); // px/ms, positif = vers le bas
+    drag.lastY=e.clientY; drag.lastT=now; drag.dy=Math.max(0,dy);
+    sheet.style.transform=`translateY(${drag.dy}px)`;
+  });
+  const end=e=>{
+    if(!drag || (e && e.pointerId!==drag.id)) return;
+    const d=drag; drag=null;
+    if(!d.moved) return;
+    sheet.style.transition=''; sheet.style.transform=''; sheet.classList.remove('dragging');
+    // Ferme au-delà de 120 px ou d'un geste rapide ; sinon la fiche revient en place.
+    if(d.dy>120 || d.vel>0.6) hidePlaceSheet();
+  };
+  sheet.addEventListener('pointerup',end);
+  sheet.addEventListener('pointercancel',end);
+})();
 const handler=new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 handler.setInputAction(click=>{
   const picked=viewer.scene.pick(click.position);
@@ -3462,7 +3569,7 @@ function paintTerrasses(data, suffix=''){
   sunStates={};
   terrasses.forEach(t=>{sunStates[t.id]=sunStates[t.id] ?? null;});
   primeSunStates();
-  document.getElementById('footerText').textContent=`${terrasses.length} lieux · ${currentCity.nom}${suffix}`;
+  document.getElementById('footerText').textContent=`${terrasses.length.toLocaleString('fr-FR')} lieux · ${currentCity.nom}${suffix}`;
   renderList(currentHeure,searchQuery);
   const launch=()=>{
     syncDots();
