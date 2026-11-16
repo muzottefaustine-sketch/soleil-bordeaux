@@ -2081,12 +2081,14 @@ function showTooltip(t,x,y,nameOnly=false){
   const w=Math.min(260,window.innerWidth-20);
   tooltip.style.width=w+'px';
   tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
-  tooltip.style.top=Math.min(Math.max(y-130,10),window.innerHeight-180)+'px';
+  // La bulle se pose juste au-dessus du point, quelle que soit sa hauteur (adresse sur 1 ou 2 lignes).
+  const th=tooltip.offsetHeight||130;
+  tooltip.style.top=Math.min(Math.max(y-th-18,10),window.innerHeight-th-170)+'px';
   tooltip.classList.add('visible'); if(navigator.vibrate) navigator.vibrate(10);
   const ml=document.getElementById('ttMaps'); if(ml) ml.href=`https://maps.apple.com/?q=${encodeURIComponent(t.nom+', '+currentCity.nom)}&ll=${t.lat},${t.lng}`;
-  clearTimeout(ttTimeout); ttTimeout=setTimeout(()=>tooltip.classList.remove('visible'),6000);
+  clearTimeout(ttTimeout); ttTimeout=setTimeout(hideTooltip,6000);
 }
-function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');}
+function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');clearSelectionRing();}
 // ══════════════════════════════════════════════
 // CAFÉS RÉFÉRENCÉS — ta sélection mise en avant
 // Les anciens lieux restent disponibles comme lieux ordinaires.
@@ -2869,6 +2871,7 @@ let activePlaceTab='overview';
 let placeSheetReturnFocus=null;
 let placeSheetRequest=0;
 function hidePlaceSheet(){
+  clearSelectionRing();
   activePlaceId=null;
   placeSheetRequest++;
   const sheet=document.getElementById('placeSheet');
@@ -3280,10 +3283,49 @@ function focusPlace(t,duration=0.75){
 function selectTerrasse(t,card){
   document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
   if(card) card.classList.add('active');
+  openPlaceFromList(t);
+}
+// Choisir un lieu dans la liste emmène l'utilisateur dessus : la caméra se centre
+// sur le lieu, qui est entouré d'un halo jaune, puis son nom ou sa fiche s'affiche.
+// Un toucher sur un point de la carte, lui, ne déplace jamais la caméra.
+let selectionRing=null, listFlightToken=0;
+function clearSelectionRing(){
+  if(selectionRing){ viewer.entities.remove(selectionRing); selectionRing=null; }
+}
+function showSelectionRing(t){
+  clearSelectionRing();
+  selectionRing=viewer.entities.add({
+    position:Cesium.Cartesian3.fromDegrees(t.lng,t.lat,0),
+    ellipse:{
+      semiMajorAxis:15, semiMinorAxis:15,
+      material:Cesium.Color.fromCssColorString('#FFB800').withAlpha(0.42),
+      heightReference:Cesium.HeightReference.CLAMP_TO_GROUND
+    }
+  });
+  viewer.scene.requestRender();
+}
+function openPlaceFromList(t){
   closeDrawer();
-  // Ouvrir une fiche ne touche jamais à la caméra : l'utilisateur garde
-  // exactement le quartier et le niveau de zoom qu'il regardait.
-  showPlaceSheet(t);
+  hideTooltip();
+  const token=++listFlightToken;
+  frameArea(t.lng,t.lat,{animate:true,range:300});
+  if(findReferenced(t)){
+    // Les lieux de la sélection ouvrent leur fiche : la carte se recentre derrière.
+    showPlaceSheet(t);
+    showSelectionRing(t);
+    return;
+  }
+  // Les autres lieux affichent leur nom au-dessus du point, une fois la caméra arrivée.
+  setTimeout(()=>{
+    if(token!==listFlightToken) return;
+    const project=Cesium.SceneTransforms.wgs84ToWindowCoordinates || Cesium.SceneTransforms.worldToWindowCoordinates;
+    const ground=viewer.scene.globe.getHeight(Cesium.Cartographic.fromDegrees(t.lng,t.lat));
+    const point=project(viewer.scene,Cesium.Cartesian3.fromDegrees(t.lng,t.lat,(Number.isFinite(ground)?ground:0)+2));
+    const x=point&&Number.isFinite(point.x)?point.x:window.innerWidth/2;
+    const y=point&&Number.isFinite(point.y)?point.y:window.innerHeight/2;
+    showPlaceSheet(t,{x,y});
+    showSelectionRing(t);
+  },1100);
 }
 function renderList(h,query){
   const list=document.getElementById('terrasseList');
@@ -3324,7 +3366,7 @@ function renderList(h,query){
       const happy=ref.happyHours?`<span class="sel-happy">🍹 ${escapeHTML(ref.happyHours)}</span>`:'';
       const c=document.createElement('div'); c.className='sel-card partner';
       c.innerHTML=`${photo}<div class="sel-info"><div class="sel-name">${escapeHTML(t.nom)}</div><div class="sel-sub">${escapeHTML(preferredPlaceType(t,ref))}${ref.priceLevel?' · '+escapeHTML(ref.priceLevel):''}${dist?' · '+escapeHTML(dist):''}</div>${happy}</div>`;
-      c.addEventListener('click',()=>{ closeDrawer(); showPlaceSheet(t); });
+      c.addEventListener('click',()=>openPlaceFromList(t));
       scroll.appendChild(c);
     });
     wrap.appendChild(scroll);
