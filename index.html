@@ -869,6 +869,29 @@
     .sel-card::before { content:'★'; position:absolute; top:12px; left:12px; z-index:2; width:30px; height:30px; border-radius:50%;
       background:var(--sun); color:#000; display:grid; place-items:center; font-size:16px; line-height:1; box-shadow:0 2px 8px rgba(0,0,0,.25); }
     #placeSheet .ps-badge::before { content:'★'; margin-right:5px; color:#E09A00; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V7 — chargement en squelette, écran de lancement plus calme.
+       ═══════════════════════════════════════════════════════════════ */
+    #loadingState { align-items:stretch; justify-content:flex-start; gap:0; padding:6px 0 0 16px; overflow:hidden; }
+    .sk-row { padding:15px 16px 15px 0; border-bottom:.5px solid var(--line); }
+    .sk { display:block; border-radius:6px;
+      background:linear-gradient(90deg, rgba(120,120,128,.10) 25%, rgba(120,120,128,.20) 40%, rgba(120,120,128,.10) 60%); background-size:400% 100%;
+      animation:shimmer 1.5s ease-in-out infinite; }
+    .sk-t { height:16px; width:60%; margin-bottom:9px; }
+    .sk-s { height:12px; width:38%; }
+    .sk-row:nth-child(3n) .sk-t { width:46%; } .sk-row:nth-child(3n+1) .sk-t { width:68%; } .sk-row:nth-child(2n) .sk-s { width:52%; }
+    @keyframes shimmer { 0% { background-position:100% 50%; } 100% { background-position:0 50%; } }
+    /* Écran de lancement : le soleil respire doucement, sans tourner */
+    @keyframes splash-pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.04); } }
+    .splash-sun { animation-duration:3.2s; }
+    .splash-name { font-size:30px; letter-spacing:-.02em; }
+    .splash-tagline { font-size:14px; color:var(--ink-2); max-width:300px; text-wrap:balance; }
+    .splash-progress-wrap { width:120px; bottom:60px; }
+    .splash-progress-track { height:3px; border-radius:2px; background:rgba(120,120,128,.18); }
+    .splash-progress-bar { background:var(--sun); transition:width .5s var(--ios); }
+    .splash-status { font-size:12px; color:var(--ink-3); bottom:34px; }
+    #splash { transition:opacity .5s var(--ios); }
   </style>
 </head>
 <body>
@@ -992,7 +1015,7 @@
     <button class="filter-chip" data-filter="heatwave" type="button">Canicule</button>
   </div>
   <div class="section-title"><span class="section-label">Résultats</span><span class="count-pill" id="resultCount">0</span></div>
-  <div id="loadingState"><div class="spinner"></div><span>Chargement…</span></div>
+  <div id="loadingState" role="status" aria-label="Chargement des lieux"><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div></div>
   <div class="list" id="terrasseList" style="display:none;"></div>
   <div class="drawer-footer">
     <div class="live-dot"></div>
@@ -1894,7 +1917,7 @@ function makeFeaturedIcon(){
   for(let i=0;i<10;i++){ const rad=i%2?r:R, a=-Math.PI/2+i*Math.PI/5; ctx[i?'lineTo':'moveTo'](cx+Math.cos(a)*rad, cy+Math.sin(a)*rad); }
   ctx.closePath(); ctx.lineJoin='round';
   ctx.shadowColor='rgba(16,24,40,0.40)'; ctx.shadowBlur=12; ctx.shadowOffsetY=5;
-  ctx.lineWidth=30; ctx.strokeStyle='#FFFFFF'; ctx.stroke();
+  ctx.lineWidth=24; ctx.strokeStyle='#FFFFFF'; ctx.stroke();
   ctx.shadowColor='transparent';
   ctx.lineWidth=12; ctx.strokeStyle='#FFB800'; ctx.stroke();
   ctx.fillStyle='#FFB800'; ctx.fill();
@@ -1927,7 +1950,7 @@ function markerImageForPlace(t){
   return s===true?DOT_SUN:s===false?DOT_SHADE:DOT_UNKNOWN;
 }
 function markerSizeForPlace(t){
-  if(findReferenced(t) || isFavorite(t)) return 48;
+  if(findReferenced(t) || isFavorite(t)) return 30;
   return isFoodPlace(t) ? 22 : 26;
 }
 // Les icônes restent aux coordonnées de leur établissement : aucun regroupement,
