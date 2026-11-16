@@ -1584,7 +1584,8 @@ const BORDEAUX_FALLBACK_TERRASSES = [
   ['Le Chien de Pavlov','Restaurant','45 Rue de la Devise',44.84098,-0.57280],
   ['Lauza','Restaurant','5 Rue du Hâ',44.83683,-0.57950],
   ['Mampuku','Restaurant','9 Rue Ausone',44.83868,-0.56870],
-  ['Soif','Bar à vin','35 Rue du Cancera',44.83988,-0.57107]
+  ['Soif','Bar à vin','35 Rue du Cancera',44.83988,-0.57107],
+  ['Le Saint Martin','Restaurant','2 Quai des Chartrons',44.84893,-0.57083]
 ];
 const FALLBACK_UTILITY_PLACES = [
   ['Jardin Public','Parc','Cours de Verdun','park',44.84872,-0.57444],
@@ -2063,7 +2064,7 @@ viewer.scene.globe.tileLoadProgressEvent.addEventListener(remaining=>{
   if(remaining===0){markerLayoutDirty=true;viewer.scene.requestRender();}
 });
 window.addEventListener('resize',()=>{markerLayoutDirty=true;viewer.scene.requestRender();});
-const tooltip=document.getElementById('tooltip'); let ttTimeout=null;
+const tooltip=document.getElementById('tooltip'); let ttTimeout=null, tooltipAnchor=null;
 function showTooltip(t,x,y,nameOnly=false){
   tooltip.classList.toggle('name-only',nameOnly);
   document.getElementById('ttName').textContent=t.nom;
@@ -2078,17 +2079,26 @@ function showTooltip(t,x,y,nameOnly=false){
       ttSun.textContent=`${placeIcon(t)} ${utilityHeatNote(t)}`;
     }
   }
-  const w=Math.min(260,window.innerWidth-20);
-  tooltip.style.width=w+'px';
-  tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
-  // La bulle se pose juste au-dessus du point, quelle que soit sa hauteur (adresse sur 1 ou 2 lignes).
-  const th=tooltip.offsetHeight||130;
-  tooltip.style.top=Math.min(Math.max(y-th-18,10),window.innerHeight-th-170)+'px';
+  tooltip.style.width=Math.min(260,window.innerWidth-20)+'px';
+  positionTooltip(x,y);
   tooltip.classList.add('visible'); if(navigator.vibrate) navigator.vibrate(10);
   const ml=document.getElementById('ttMaps'); if(ml) ml.href=`https://maps.apple.com/?q=${encodeURIComponent(t.nom+', '+currentCity.nom)}&ll=${t.lat},${t.lng}`;
   clearTimeout(ttTimeout); ttTimeout=setTimeout(hideTooltip,6000);
 }
-function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');clearSelectionRing();}
+// La bulle se pose juste au-dessus du point, quelle que soit sa hauteur (adresse sur 1 ou 2 lignes).
+function positionTooltip(x,y){
+  const w=tooltip.offsetWidth||Math.min(260,window.innerWidth-20), th=tooltip.offsetHeight||130;
+  tooltip.style.left=Math.min(Math.max(x-w/2,10),window.innerWidth-w-10)+'px';
+  tooltip.style.top=Math.min(Math.max(y-th-18,10),window.innerHeight-th-170)+'px';
+}
+function hideTooltip(){clearTimeout(ttTimeout);tooltip.classList.remove('visible');tooltipAnchor=null;clearSelectionRing();}
+// Un lieu choisi dans la liste garde sa bulle accrochée à son point, même pendant que la caméra arrive.
+viewer.scene.postRender.addEventListener(()=>{
+  if(!tooltipAnchor || !tooltip.classList.contains('visible')) return;
+  const project=Cesium.SceneTransforms.wgs84ToWindowCoordinates || Cesium.SceneTransforms.worldToWindowCoordinates;
+  const point=project(viewer.scene,Cesium.Cartesian3.fromDegrees(tooltipAnchor.lng,tooltipAnchor.lat,tooltipAnchor.h));
+  if(point && Number.isFinite(point.x) && Number.isFinite(point.y)) positionTooltip(point.x,point.y);
+});
 // ══════════════════════════════════════════════
 // CAFÉS RÉFÉRENCÉS — ta sélection mise en avant
 // Les anciens lieux restent disponibles comme lieux ordinaires.
@@ -3324,8 +3334,9 @@ function openPlaceFromList(t){
     const x=point&&Number.isFinite(point.x)?point.x:window.innerWidth/2;
     const y=point&&Number.isFinite(point.y)?point.y:window.innerHeight/2;
     showPlaceSheet(t,{x,y});
+    tooltipAnchor={lng:t.lng,lat:t.lat,h:(Number.isFinite(ground)?ground:0)+2};
     showSelectionRing(t);
-  },1100);
+  },700);
 }
 function renderList(h,query){
   const list=document.getElementById('terrasseList');
