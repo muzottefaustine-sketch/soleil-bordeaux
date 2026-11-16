@@ -891,6 +891,9 @@
     .panel-map h3 { display:grid; grid-template-columns:34px 1fr 34px; align-items:center; justify-content:stretch; gap:0; }
     .panel-map h3 .heure { grid-column:2; justify-self:center; margin-left:0; font-size:22px; }
     .panel-map h3 #btnPlayDay { grid-column:3; justify-self:end; }
+
+    /* Le soleil devant l'heure, l'ensemble restant centré. */
+    .panel-map h3 .heure::before { content:'☀️'; font-size:20px; font-weight:400; margin-right:6px; vertical-align:-1px; }
   </style>
 </head>
 <body>
