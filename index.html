@@ -119,9 +119,6 @@
     .panel-map h3 .heure { font-size: 18px; font-weight: 800; color: var(--text); font-family: inherit; }
     .panel-map input[type=range] { width: 100%; cursor: pointer; -webkit-appearance: none; height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--yellow) var(--pct,46%), rgba(0,0,0,0.1) var(--pct,46%)); outline: none; }
     .panel-map input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: white; border: 3px solid var(--yellow); box-shadow: 0 4px 16px rgba(0,0,0,0.18); cursor: pointer; }
-    #btnPlayDay { width:34px; height:34px; border:0; border-radius:50%; background:var(--yellow); color:#4A3500; display:grid; place-items:center; cursor:pointer; touch-action:manipulation; box-shadow:0 4px 12px rgba(154,114,0,0.25); transition:transform .14s ease; }
-    #btnPlayDay:active { transform:scale(.92); }
-    #btnPlayDay svg { width:14px; height:14px; fill:currentColor; display:block; }
     .panel-labels { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-3); font-weight: 500; }
     #tooltip { position: fixed; z-index: 50; background: rgba(20,20,22,0.93); color: white; padding: 12px 18px; border-radius: 16px; font-size: 15px; font-weight: 600; pointer-events: none; opacity: 0; transform: translateY(6px); transition: opacity 0.18s, transform 0.18s; backdrop-filter: blur(12px); max-width: 260px; text-align: center; border: 1px solid rgba(255,255,255,0.08); }
     #tooltip.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
@@ -805,7 +802,6 @@
     #btnPlayDay { flex:0 0 auto; width:34px; height:34px; border:0; border-radius:50%; padding:0; background:var(--sun); color:#000; display:grid; place-items:center; cursor:pointer; touch-action:manipulation; box-shadow:0 1px 3px rgba(0,0,0,.18); transition:transform .15s ease, opacity .15s ease; align-self:center; }
     #btnPlayDay:active { transform:scale(.92); opacity:.85; }
     #btnPlayDay svg { width:14px; height:14px; fill:currentColor; display:block; }
-
     /* ═══════════════════════════════════════════════════════════════
        DESIGN V5 — mouvements naturels, grand titre qui se réduit,
        cartes de sélection façon App Store, fiche qu'on ferme en la glissant.
@@ -858,6 +854,44 @@
     #placeSheet .ps-sheet-head, #placeSheet .ps-hero { touch-action:none; }
     #placeSheet .ps-photo { -webkit-user-drag:none; user-select:none; -webkit-user-select:none; }
     #placeSheet.dragging { border-radius:14px 14px 0 0; box-shadow:0 -10px 40px rgba(0,0,0,.28); }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V6 — finitions : étoile des favoris, touchers, défilement.
+       ═══════════════════════════════════════════════════════════════ */
+    * { -webkit-tap-highlight-color:transparent; }
+    #topBar, .panel-map, .panel-labels, button, .filter-chip, .card, .sel-card, .drawer-title, .section-label, .list-divider, .sel-head, .ps-tab, .ps-back, #tooltip {
+      -webkit-user-select:none; user-select:none;
+    }
+    button, .filter-chip, .card, .sel-card, .ps-btn, a { touch-action:manipulation; }
+    .list { overscroll-behavior:contain; }
+    #btnClose { position:relative; }
+    #btnClose::after { content:''; position:absolute; inset:-7px; }
+    .sel-card::before { content:'★'; position:absolute; top:12px; left:12px; z-index:2; width:30px; height:30px; border-radius:50%;
+      background:var(--sun); color:#000; display:grid; place-items:center; font-size:16px; line-height:1; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+    #placeSheet .ps-badge::before { content:'★'; margin-right:5px; color:#E09A00; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN V7 — chargement en squelette, écran de lancement plus calme.
+       ═══════════════════════════════════════════════════════════════ */
+    #loadingState { align-items:stretch; justify-content:flex-start; gap:0; padding:6px 0 0 16px; overflow:hidden; }
+    .sk-row { padding:15px 16px 15px 0; border-bottom:.5px solid var(--line); }
+    .sk { display:block; border-radius:6px;
+      background:linear-gradient(90deg, rgba(120,120,128,.10) 25%, rgba(120,120,128,.20) 40%, rgba(120,120,128,.10) 60%); background-size:400% 100%;
+      animation:shimmer 1.5s ease-in-out infinite; }
+    .sk-t { height:16px; width:60%; margin-bottom:9px; }
+    .sk-s { height:12px; width:38%; }
+    .sk-row:nth-child(3n) .sk-t { width:46%; } .sk-row:nth-child(3n+1) .sk-t { width:68%; } .sk-row:nth-child(2n) .sk-s { width:52%; }
+    @keyframes shimmer { 0% { background-position:100% 50%; } 100% { background-position:0 50%; } }
+    /* Écran de lancement : le soleil respire doucement, sans tourner */
+    @keyframes splash-pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.04); } }
+    .splash-sun { animation-duration:3.2s; }
+    .splash-name { font-size:30px; letter-spacing:-.02em; }
+    .splash-tagline { font-size:14px; color:var(--ink-2); max-width:300px; text-wrap:balance; }
+    .splash-progress-wrap { width:120px; bottom:60px; }
+    .splash-progress-track { height:3px; border-radius:2px; background:rgba(120,120,128,.18); }
+    .splash-progress-bar { background:var(--sun); transition:width .5s var(--ios); }
+    .splash-status { font-size:12px; color:var(--ink-3); bottom:34px; }
+    #splash { transition:opacity .5s var(--ios); }
   </style>
 </head>
 <body>
@@ -975,14 +1009,13 @@
   </div>
   <div class="filter-chips" id="filterChips" aria-label="Filtres de recherche">
     <button class="filter-chip active" data-filter="all" type="button">Tous</button>
-    <button class="filter-chip" data-filter="near" type="button">Près de moi</button>
     <button class="filter-chip" data-filter="restaurant" type="button">Restaurants</button>
     <button class="filter-chip" data-filter="cafe" type="button">Cafés</button>
     <button class="filter-chip" data-filter="bar" type="button">Bars</button>
     <button class="filter-chip" data-filter="heatwave" type="button">Canicule</button>
   </div>
   <div class="section-title"><span class="section-label">Résultats</span><span class="count-pill" id="resultCount">0</span></div>
-  <div id="loadingState"><div class="spinner"></div><span>Chargement…</span></div>
+  <div id="loadingState" role="status" aria-label="Chargement des lieux"><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div><div class="sk-row"><i class="sk sk-t"></i><i class="sk sk-s"></i></div></div>
   <div class="list" id="terrasseList" style="display:none;"></div>
   <div class="drawer-footer">
     <div class="live-dot"></div>
@@ -1033,14 +1066,6 @@ const PHOTO_HYDRATE_LIMIT = 6;
 const LOCAL_CITY_RADIUS_METERS = 30000;
 let currentCity = {...CITIES[0], localDataIds: localDataCandidateIds(CITIES[0].id, CITIES[0].nom)};
 let userLat = null, userLng = null;
-const NEAR_ME_RADIUS_METERS = 800; // ~10 min à pied
-let pendingNearFilter = false;
-function applyNearFilter(){
-  activeFilter='near';
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active',c.dataset.filter==='near'));
-  renderList(currentHeure,searchQuery);
-  syncDots();
-}
 let lastLoadedArea = null;
 async function fetchWithTimeout(url, options={}, timeout=10000) {
   const controller = new AbortController();
@@ -1079,7 +1104,7 @@ async function fetchAreaName(lat,lng,expectedId){
     currentCity.nom = detectedName || currentCity.nom || 'Autour de vous';
     currentCity.localDataIds = localDataCandidateIds(...(currentCity.localDataIds || []), currentCity.id, currentCity.nom, detectedName);
     updateLocationPill();
-    if(terrasses.length) document.getElementById('footerText').textContent=`${terrasses.length} lieux · ${currentCity.nom}`;
+    if(terrasses.length) document.getElementById('footerText').textContent=`${terrasses.length.toLocaleString('fr-FR')} lieux · ${currentCity.nom}`;
     const local = await localTerrassesForCurrentArea();
     if(currentCity.id === expectedId && local.length > 80){
       const merged=mergeFeaturedPlaces(mergePlacesByIdentity([...local, ...localFallbackTerrasses()])).slice(0,MAX_TERRASSES);
@@ -1437,9 +1462,7 @@ function geolocate(e) {
     clearPlaces();
     focusUser(lng, lat, true);
     await loadTerrasses();
-    if(pendingNearFilter){ pendingNearFilter=false; applyNearFilter(); }
   }, err => {
-    pendingNearFilter=false;
     btn.classList.remove('locating');
     alert("Position introuvable. Vérifiez que la localisation est autorisée.");
   }, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
@@ -1887,15 +1910,17 @@ function makeSunIcon(sunny){
 }
 const DOT_SUN=makeSunIcon(true),DOT_SHADE=makeSunIcon(false),DOT_UNKNOWN=makeSunIcon(null);
 function makeFeaturedIcon(){
-  // Lieu de la sélection : pastille sombre avec une étoile jaune.
-  const S=108, c=document.createElement('canvas'); c.width=S; c.height=S; const ctx=c.getContext('2d');
-  ctx.shadowColor='rgba(16,24,40,0.38)'; ctx.shadowBlur=12; ctx.shadowOffsetY=5;
-  ctx.beginPath(); ctx.arc(S/2,S/2,40,0,Math.PI*2); ctx.fillStyle='#FFFFFF'; ctx.fill();
+  // Lieu de la sélection : grosse étoile jaune aux angles arrondis, cernée de blanc.
+  // Dessinée 3× plus grande que sa taille d'affichage pour rester nette sur Retina.
+  const S=150, cx=S/2, cy=S/2+3, R=58, r=29, c=document.createElement('canvas'); c.width=S; c.height=S; const ctx=c.getContext('2d');
+  ctx.beginPath();
+  for(let i=0;i<10;i++){ const rad=i%2?r:R, a=-Math.PI/2+i*Math.PI/5; ctx[i?'lineTo':'moveTo'](cx+Math.cos(a)*rad, cy+Math.sin(a)*rad); }
+  ctx.closePath(); ctx.lineJoin='round';
+  ctx.shadowColor='rgba(16,24,40,0.40)'; ctx.shadowBlur=12; ctx.shadowOffsetY=5;
+  ctx.lineWidth=24; ctx.strokeStyle='#FFFFFF'; ctx.stroke();
   ctx.shadowColor='transparent';
-  ctx.beginPath(); ctx.arc(S/2,S/2,33,0,Math.PI*2); ctx.fillStyle='#14161A'; ctx.fill();
-  ctx.fillStyle='#F5B301'; ctx.beginPath();
-  for(let i=0;i<10;i++){ const r=i%2?9.5:22, ang=-Math.PI/2+i*Math.PI/5; ctx[i?'lineTo':'moveTo'](S/2+Math.cos(ang)*r, S/2+1+Math.sin(ang)*r); }
-  ctx.closePath(); ctx.fill();
+  ctx.lineWidth=12; ctx.strokeStyle='#FFB800'; ctx.stroke();
+  ctx.fillStyle='#FFB800'; ctx.fill();
   return c.toDataURL();
 }
 const DOT_FEATURED=makeFeaturedIcon();
@@ -1919,13 +1944,13 @@ const DOT_CATEGORY={
 };
 function markerImageForPlace(t){
   const ref=findReferenced(t);
-  if(ref) return DOT_FEATURED;
+  if(ref || isFavorite(t)) return DOT_FEATURED;
   if(!isFoodPlace(t)) return DOT_CATEGORY[placeCategory(t)] || DOT_CATEGORY.cool;
   const s=sunStates[t.id];
   return s===true?DOT_SUN:s===false?DOT_SHADE:DOT_UNKNOWN;
 }
 function markerSizeForPlace(t){
-  if(findReferenced(t)) return 36;
+  if(findReferenced(t) || isFavorite(t)) return 30;
   return isFoodPlace(t) ? 22 : 26;
 }
 // Les icônes restent aux coordonnées de leur établissement : aucun regroupement,
@@ -3234,7 +3259,6 @@ function matchesActiveFilter(t){
   if(activeFilter==='parking') return category==='parking';
   if(activeFilter==='cool') return category==='cool';
   if(activeFilter==='restaurant') return isFoodPlace(t) && (type.includes('restaurant')||type.includes('brasserie')||type.includes('bistrot'));
-  if(activeFilter==='near') return isFoodPlace(t) && distMeters(t.lat,t.lng)<=NEAR_ME_RADIUS_METERS;
   if(activeFilter==='cafe') return isFoodPlace(t) && type.includes('cafe');
   if(activeFilter==='bar') return isFoodPlace(t) && (type.includes('bar')||type.includes('pub'));
   return isFoodPlace(t);
@@ -3281,7 +3305,7 @@ function renderList(h,query){
     return distMeters(a.lat,a.lng)-distMeters(b.lat,b.lng);
   });
   const counter=document.getElementById('resultCount');
-  if(counter) counter.textContent=String(sorted.length);
+  if(counter) counter.textContent=sorted.length.toLocaleString('fr-FR');
   list.innerHTML='';
   const fragment=document.createDocumentFragment();
   // ── Section "Sélection" : uniquement les cafés référencés (avec photo) ──
@@ -3353,12 +3377,6 @@ document.getElementById('filterChips').addEventListener('click',e=>{
   if(!chip) return;
   if(chip.dataset.city){
     switchCity(chip.dataset.city);
-    return;
-  }
-  if(chip.dataset.filter==='near' && userLat===null){
-    // Pas encore de position : on la demande, puis le filtre s'applique tout seul.
-    pendingNearFilter=true;
-    geolocate();
     return;
   }
   activeFilter=chip.dataset.filter||'all';
@@ -3507,7 +3525,6 @@ slider.addEventListener('pointerdown',()=>{ if(playDayFrame!==null) stopPlayDay(
 document.addEventListener('visibilitychange',()=>{ if(document.hidden && playDayFrame!==null) stopPlayDay(true,true); });
 setPlayDayButton(false);
 // ── fin Journée défilante ───────────────────────────────────────────
-
 // ── Liste : grand titre qui se réduit ; fiche : fermeture par glissé ──
 (()=>{
   const list=document.getElementById('terrasseList');
@@ -3575,7 +3592,7 @@ function paintTerrasses(data, suffix=''){
   sunStates={};
   terrasses.forEach(t=>{sunStates[t.id]=sunStates[t.id] ?? null;});
   primeSunStates();
-  document.getElementById('footerText').textContent=`${terrasses.length} lieux · ${currentCity.nom}${suffix}`;
+  document.getElementById('footerText').textContent=`${terrasses.length.toLocaleString('fr-FR')} lieux · ${currentCity.nom}${suffix}`;
   renderList(currentHeure,searchQuery);
   const launch=()=>{
     syncDots();
