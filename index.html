@@ -795,6 +795,13 @@
     .phone-number { font-weight:700; letter-spacing:-.01em; }
     .phone-btn { min-height:50px; border-radius:12px; font-size:17px; font-weight:400; background:var(--fill); letter-spacing:-.02em; }
     .phone-btn.primary { background:var(--sun); color:#000; font-weight:600; }
+
+    /* Bouton ▶ : fait défiler la journée du lever au coucher du soleil. */
+    .panel-map h3 { justify-content:flex-start; gap:12px; }
+    .panel-map h3 .heure { margin-left:auto; font-variant-numeric:tabular-nums; }
+    #btnPlayDay { flex:0 0 auto; width:34px; height:34px; border:0; border-radius:50%; padding:0; background:var(--sun); color:#000; display:grid; place-items:center; cursor:pointer; touch-action:manipulation; box-shadow:0 1px 3px rgba(0,0,0,.18); transition:transform .15s ease, opacity .15s ease; align-self:center; }
+    #btnPlayDay:active { transform:scale(.92); opacity:.85; }
+    #btnPlayDay svg { width:14px; height:14px; fill:currentColor; display:block; }
   </style>
 </head>
 <body>
@@ -843,7 +850,9 @@
 <div id="locationPill"><span class="location-dot"></span><span id="locationPillText">Position détectée</span></div>
 <div id="mode3dPill">Test 3D: clé Map Tiles non renseignée</div>
 <div class="panel-map">
-  <h3>☀️ <span class="heure" id="heureAffichee">14h00</span></h3>
+  <h3>☀️ <span class="heure" id="heureAffichee">14h00</span>
+    <button id="btnPlayDay" type="button" aria-label="Lancer la journée" aria-pressed="false" title="Voir la journée défiler"></button>
+  </h3>
   <input type="range" id="timeSlider" min="6" max="21" value="14" step="0.25">
   <div class="panel-labels"><span>6h</span><span>21h</span></div>
 </div>
@@ -3360,6 +3369,71 @@ slider.addEventListener('blur',()=>{
   sliderIsDragging=false;
   commitSliderChange();
 });
+// ── Journée défilante ───────────────────────────────────────────────
+// Le bouton ▶ fait avancer le curseur tout seul, du lever au coucher du soleil,
+// en 10 secondes : on voit les ombres des bâtiments traverser la ville.
+// Même coût que de glisser le curseur à la main ; la liste et les icônes ne
+// sont mises à jour qu'à la fin ou à la pause.
+const PLAY_DAY_DURATION_MS = 10000;
+const PLAY_DAY_STEP_MS = 50;
+const ICON_PLAY  = '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9-5.5z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5h3v11H3zM8 1.5h3v11H8z"/></svg>';
+const btnPlayDay = document.getElementById('btnPlayDay');
+let playDayFrame = null, playDayPausedAt = null;
+function daylightRange(){
+  const lng=currentCity.lng, lat=currentCity.lat;
+  let first=null, last=null;
+  for(let h=6; h<=21; h+=0.25){
+    const d=new Date(currentDate);
+    d.setHours(Math.floor(h), Math.round((h%1)*60), 0, 0);
+    if(sunAboveHorizon(lng,lat,getSunDir(Cesium.JulianDate.fromDate(d)))){
+      if(first===null) first=h;
+      last=h;
+    }
+  }
+  return first===null ? [6,21] : [first,last];
+}
+function setPlayDayButton(playing){
+  btnPlayDay.innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+  btnPlayDay.setAttribute('aria-label', playing ? 'Mettre la journée en pause' : 'Lancer la journée');
+  btnPlayDay.setAttribute('aria-pressed', String(playing));
+}
+function stopPlayDay(commit=true, paused=false){
+  if(playDayFrame!==null){ cancelAnimationFrame(playDayFrame); playDayFrame=null; }
+  // Une pause (bouton) se reprend là où elle s'est arrêtée ; sinon on repart du lever.
+  playDayPausedAt = paused ? parseFloat(slider.value) : null;
+  setPlayDayButton(false);
+  if(commit) commitSliderChange();
+}
+function startPlayDay(){
+  const [start,end]=daylightRange();
+  let value=start;
+  if(playDayPausedAt!==null && Math.abs(parseFloat(slider.value)-playDayPausedAt)<0.3 && playDayPausedAt<end-0.25) value=playDayPausedAt;
+  playDayPausedAt=null;
+  const speed=(end-start)/PLAY_DAY_DURATION_MS; // heures par milliseconde
+  let last=performance.now(), lastApply=0;
+  setPlayDayButton(true);
+  const tick=now=>{
+    value=Math.min(end, value+(now-last)*speed);
+    last=now;
+    if(now-lastApply>=PLAY_DAY_STEP_MS || value>=end){
+      lastApply=now;
+      slider.value=value;
+      sliderPendingValue=value;
+      updateSliderLabel(value);
+      updateSliderClock(value);
+    }
+    if(value>=end){ playDayFrame=null; stopPlayDay(); return; }
+    playDayFrame=requestAnimationFrame(tick);
+  };
+  playDayFrame=requestAnimationFrame(tick);
+}
+btnPlayDay.addEventListener('click',()=>{ playDayFrame===null ? startPlayDay() : stopPlayDay(true,true); });
+// Toucher le curseur ou quitter la page met la lecture en pause.
+slider.addEventListener('pointerdown',()=>{ if(playDayFrame!==null) stopPlayDay(false); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden && playDayFrame!==null) stopPlayDay(true,true); });
+setPlayDayButton(false);
+// ── fin Journée défilante ───────────────────────────────────────────
 const handler=new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 handler.setInputAction(click=>{
   const picked=viewer.scene.pick(click.position);
